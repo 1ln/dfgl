@@ -19,7 +19,7 @@ Camera::Camera(
      updateVectors();
 }
 
-glm::mat4 Camera::getViewMatrix() { 
+mat4 Camera::getViewMatrix() { 
     return glm::lookAt(position,position+front,up);
 }
 
@@ -28,26 +28,26 @@ void Camera::processKeyboard(Cam_Move dir,float dt) {
     float velocity = move_speed * dt;
     if(dir == FORWARD)
        position += front * velocity;
-    if(dif == BACKWARD)
+    if(dir == BACKWARD)
        position += front * velocity;
-    if(dif == LEFT)
-       position += right * velovity;
-    if(dif == RIGHT)
+    if(dir == LEFT)
+       position += right * velocity;
+    if(dir == RIGHT)
        position += right * velocity;
 }
 
-void Camera::processMouseMove(float xoff,float yoff,bool constrain_pitch = true) {
+void Camera::processMouseMove(float xoff,float yoff,bool limit_pitch = true) {
 xoff *= mouse_sensitivity;
 yoff *= mouse_sensitivity; 
 
 yaw += xoff;
 pitch += yoff;
 
-if(contrain_pitch) {
+if(limit_pitch) {
     if(pitch > 89.0f)
-       pitch = 89.0f;
+        pitch = 89.0f;
     if(pitch < -89.0f)
-       pitch = -89.0f; 
+        pitch = -89.0f; 
 }
 
 updateVectors();
