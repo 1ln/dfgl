@@ -1,13 +1,32 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp> 
+
+#include "Shader.h"
+#include "Camera.h"
+
 #include <iostream>
 
-void framebuffer_resize(GLFWwindow* window,int w,int h);
+void framebuffer_size_callback(GLFWwindow* window,int w,int h);
+void mouse_callback(GLFWwindow* window,double xpos,double ypos);
+void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
 void processInput(GLFWwindow *window);
 
 const unsigned int width  = 512;
 const unsigned int height = 512;
+
+Camera cam(glm::vec3(0.0f,0.0f,5.0f));
+
+float lastx = width / 2.0;
+float lasty = height / 2.0;
+
+bool init_mouse = true;
+
+float dt         = 0.0f;
+float last_frame = 0.0f;
 
 int main() {
 
@@ -27,18 +46,49 @@ int main() {
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window,framebuffer_resize);
+    glfwSetCursorPosCallback(window,mouse_callback);
+    glfeSetScrollCallback(window,scroll_callback);
+
+    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initalize GLAD" << std::endl;
         return -1;
     }
 
+    glEnable(GL_DEPTH_TEST); 
+
+    Shader shader("vert.vert","frag.frag");
+    shader.use();
+
+    unsigned int vbo,vao;
+
+    glGenVertexArrays(1,&vao);
+    glGenBuffers(1,&vbo);
+    glBindVertexArray(vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+   
     while (!glfwWindowShouldClose(window)) {
   
+        float current_frame = glfwGetTime(); 
+        dt = current_frame - last_frame;
+        last_frame = current_frame;
+
         processInput(window);
 
         glClearColor(0.5f,0.0f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        shader.use();
+
+        glm::mat4 projection = glm::perspective(
+        glm::radians(cam.zoom),(float)width/(float)height,0.0,1.0);
+            
+        shader.setMat4("projection",projection);
+  
+        glm::mat4 view = cam.getViewMatrix(); 
+        shader.setMat4("view",view);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -54,10 +104,46 @@ void processInput(GLFWwindow *window) {
 
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
+
+    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) 
+        cam.processKeyboard(UP,dt);
+
+    if(glfwGetKey(window(GLFW_KEY_A) == GLFW_PRESS)
+        cam.processKeyboard(LEFT,dt);
+
+    if(glfwGetkey(window(GLFW_KEY_D) == GLFW_PRESS) 
+        cam.processKeyboard(RIGHT,dt);
+
+    if(glfwGetKey(window(GLFW_KEY_S) == GLFW_PRESS)
+        cam.processKeyboard(DOWN,dt);
+
 }
 
-void framebuffer_resize(GLFWwindow* window,int w,int h) {
+void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
     glViewport(0,0,w,h);
 }
 
+void mouse_callback(GLFWwindow* window,double xpos,double ypos) { 
+
+     if(init_mouse) {
+
+         lastx = xpos;
+         lasty = ypos; 
+         init_mouse = false;
+
+     }
+
+    float xoff = xpos - lastx;
+    float yoff = lasty - ypos;
+
+    lastx = xpos;
+    lasty = ypos;
+
+    cam.processMouseMove(xoff,yoff);
+
+}
+
+void scroll_callback(GLFWwindow* window,double xoff, double yoff) {
+    cam.processMouseScroll(yoff);
+}
 
