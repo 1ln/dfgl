@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
+#include <glm/glm.hpp>
 
 #include <string>
 #include <fstream>
@@ -17,7 +17,8 @@ void use();
 
 void setBool(const std::string &name,bool value) const;
 void setInt(const std::string &name,int value) const;
-void setFloat(const std::string &name,int value) const;
+void setFloat(const std::string &name,float value) const;
+void setMat4(const std::string &name,int count,glm::mat4 &m4) const;
 
 unsigned int id;
 

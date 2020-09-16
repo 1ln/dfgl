@@ -1,7 +1,6 @@
-#include <glad/glad.h>
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <glm/glm.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
 
@@ -29,7 +28,7 @@ float dt         = 0.0f;
 float last_frame = 0.0f;
 
 int main() {
-
+ 
     glfwInit();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
@@ -45,21 +44,25 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
+   
+    glewExperimental = GL_TRUE;
+    glewInit();
+
     glfwSetFramebufferSizeCallback(window,framebuffer_resize);
     glfwSetCursorPosCallback(window,mouse_callback);
-    glfeSetScrollCallback(window,scroll_callback);
+    glfwSetScrollCallback(window,scroll_callback);
 
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
-
-    if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Failed to initalize GLAD" << std::endl;
-        return -1;
-    }
 
     glEnable(GL_DEPTH_TEST); 
 
     Shader shader("vert.vert","frag.frag");
-    shader.use();
+    
+    float verts[] = {
+    -1.,3.,0.,
+    -1.,-1.,0.,
+     3.,-1.,0.
+    };
 
     unsigned int vbo,vao;
 
@@ -68,7 +71,13 @@ int main() {
     glBindVertexArray(vao);
     
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
-   
+    glBufferData(GL_ARRAY_BUFFER,size(verts),verts,GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+    glEnableVertexAttribArray(0);
+
+    shader.use();
+
     while (!glfwWindowShouldClose(window)) {
   
         float current_frame = glfwGetTime(); 
@@ -90,10 +99,20 @@ int main() {
         glm::mat4 view = cam.getViewMatrix(); 
         shader.setMat4("view",view);
 
+        glBindVertexArray(vao);
+
+        glm::mat4 model = glm::mat4(1.0f);
+        shader.setMat4("model",model);
+   
+        glDrawArrays(GL_TRIANGLES,0,3);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
 
     }
+
+    glDeleteVertexArrays(0,&vao);
+    glDeleteBuffers(0,&vbo);
 
     glfwTerminate();
     return 0;

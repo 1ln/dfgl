@@ -56,31 +56,32 @@ Shader::Shader(const char* vertPath,const char* fragPath) {
     checkCompileErrors(id,"PROGRAM");
     
     glDeleteShader(vert);
-    glDeletShader(frag);
+    glDeleteShader(frag);
 
 }
 
-void use() {
+void Shader::use() {
 
     glUseProgram(id);
 }
 
-void setBool(const std::string &name,bool value) const {
-
+void Shader::setBool(const std::string &name,bool value) const {
     glUniform1i(glGetUniformLocation(id,name.c_str()),(int)value);
 }
 
-void setInt(const std::string &name,int value) const {
-
+void Shader::setInt(const std::string &name,int value) const {
     glUniform1i(glGetUniformLocation(id,name.c_str()),value);
 }
 
-void setFloat(const std::string &name,int value) const {
-
-   glUniform1f(glGetUniformLocation(id,name.c_str()),value);
+void Shader::setFloat(const std::string &name,int value) const {
+    glUniform1f(glGetUniformLocation(id,name.c_str()),value);
 }
 
-void checkCompileErrors(unsigned int shader,std::string type) {
+void Shader::setMat4(const std::string &name,int count,glm::mat4 &m4) const {
+   glUniform4fv(glGetUniformLocation(id,name.c_str()),m4[0][0]);
+}
+
+void Shader::checkCompileErrors(unsigned int shader,std::string type) {
 
     int success;
     char infoLog[1024];
