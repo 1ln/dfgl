@@ -1,9 +1,12 @@
 #version 430 core
 
-out vec4 out_FragColor;
+out vec4 FragColor;
 
-int main() {
+uniform vec2 resolution;
+uniform float time;
 
-out_FragColor = vec4(1.,0.,0.,0.);
+void main() {
+
+FragColor = vec4(0.,1.,0.,0.);
 
 }

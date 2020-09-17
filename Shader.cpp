@@ -8,8 +8,8 @@ Shader::Shader(const char* vertPath,const char* fragPath) {
     std::ifstream vShaderFile;
     std::ifstream fShaderFile;
 
-    vShaderFile.exception (std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exception (std::ifstream::failbit | std::ifstream::badbit);
+    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
 
     try {
 
@@ -61,7 +61,6 @@ Shader::Shader(const char* vertPath,const char* fragPath) {
 }
 
 void Shader::use() {
-
     glUseProgram(id);
 }
 
@@ -73,12 +72,12 @@ void Shader::setInt(const std::string &name,int value) const {
     glUniform1i(glGetUniformLocation(id,name.c_str()),value);
 }
 
-void Shader::setFloat(const std::string &name,int value) const {
+void Shader::setFloat(const std::string &name,float value) const {
     glUniform1f(glGetUniformLocation(id,name.c_str()),value);
 }
 
 void Shader::setMat4(const std::string &name,int count,glm::mat4 &m4) const {
-   glUniform4fv(glGetUniformLocation(id,name.c_str()),m4[0][0]);
+   glUniform4fv(glGetUniformLocation(id,name.c_str()),count,&m4[0][0]);
 }
 
 void Shader::checkCompileErrors(unsigned int shader,std::string type) {

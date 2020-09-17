@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
@@ -24,19 +25,20 @@ class Camera {
 public:
 
     Camera(glm::vec3 pos = glm::vec3(0.0f,0.0f,0.0f),
-           glm::vec3 up  = glm::vec3(0.0f,1.0f,0.0f),
+           glm::vec3 upd  = glm::vec3(0.0f,1.0f,0.0f),
            float yawd    = YAW,
            float pitchd  = PITCH);
                     
     glm::mat4 getViewMatrix();
 
     void processKeyboard(Cam_Move dir,float dt);
-    void processMouseMove(float xoff,float yoff,bool limit_pitch = true);
+    void processMouseMove(float xoff,float yoff,bool limit_pitch);
     void processMouseScroll(float yoff);
     
     glm::vec3 position;
     glm::vec3 front;
     glm::vec3 right;
+    glm::vec3 up;
     glm::vec3 world_up;
 
     float yaw;

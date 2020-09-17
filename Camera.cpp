@@ -3,7 +3,7 @@
 Camera::Camera(
 
      glm::vec3 pos,
-     glm::vec3 up,
+     glm::vec3 upd,
      float yawd,
      float pitchd):
      front(glm::vec3(0.0f,0.0f,-1.0f)),
@@ -12,14 +12,14 @@ Camera::Camera(
      zoom(ZOOM) {
 
      position = pos;
-     world_up = up;
+     world_up = upd;
      yaw = yawd;          
      pitch = pitchd;
      
      updateVectors();
 }
 
-mat4 Camera::getViewMatrix() { 
+glm::mat4 Camera::getViewMatrix() { 
     return glm::lookAt(position,position+front,up);
 }
 

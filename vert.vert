@@ -4,9 +4,9 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 model;
 
-in vec4 pos;
+layout (location = 0) in vec3 pos;
 
-int main() {
+void main() {
 
 gl_Position = vec4(model * view * projection * pos,1.);
 
