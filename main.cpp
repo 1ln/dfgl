@@ -54,7 +54,7 @@ int main() {
 
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    glEnable(GL_DEPTH_TEST); 
+    //glEnable(GL_DEPTH_TEST); 
 
     Shader shader("vert.vert","frag.frag");
     
@@ -124,17 +124,17 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
-    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) 
+    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
         cam.processKeyboard(FORWARD,dt);
 
     if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
         cam.processKeyboard(LEFT,dt);
 
-    if(glfwGetkey(window,GLFW_KEY_D) == GLFW_PRESS) 
-        cam.processKeyboard(RIGHT,dt);
-
     if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
         cam.processKeyboard(BACKWARD,dt);
+
+    if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
+        cam.processKeyboard(RIGHT,dt);
 
 }
 
@@ -158,7 +158,7 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
     lastx = xpos;
     lasty = ypos;
 
-    cam.processMouseMove(xoff,yoff);
+    cam.processMouseMove(xoff,yoff,true);
 
 }
 
