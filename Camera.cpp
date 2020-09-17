@@ -67,7 +67,7 @@ void Camera::updateVectors() {
    
     glm::vec3 nfront;
 
-    nfront.x = cos(glm:radians(yaw)) * cos(glm::radians(pitch));
+    nfront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
     nfront.y = sin(glm::radians(pitch)); 
     nfront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
