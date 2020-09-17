@@ -26,4 +26,4 @@ private:
 
 void checkCompileErrors(unsigned int shader,std::string type);
 
-}
+};

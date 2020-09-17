@@ -48,7 +48,7 @@ int main() {
     glewExperimental = GL_TRUE;
     glewInit();
 
-    glfwSetFramebufferSizeCallback(window,framebuffer_resize);
+    glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
     glfwSetCursorPosCallback(window,mouse_callback);
     glfwSetScrollCallback(window,scroll_callback);
 
@@ -71,7 +71,7 @@ int main() {
     glBindVertexArray(vao);
     
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBufferData(GL_ARRAY_BUFFER,size(verts),verts,GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(verts),verts,GL_STATIC_DRAW);
 
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
@@ -92,17 +92,17 @@ int main() {
         shader.use();
 
         glm::mat4 projection = glm::perspective(
-        glm::radians(cam.zoom),(float)width/(float)height,0.0,1.0);
+        glm::radians(cam.zoom),(float)width/(float)height,0.0f,1.0f);
             
-        shader.setMat4("projection",projection);
+        shader.setMat4("projection",1,projection);
   
         glm::mat4 view = cam.getViewMatrix(); 
-        shader.setMat4("view",view);
+        shader.setMat4("view",1,view);
 
         glBindVertexArray(vao);
 
         glm::mat4 model = glm::mat4(1.0f);
-        shader.setMat4("model",model);
+        shader.setMat4("model",1,model);
    
         glDrawArrays(GL_TRIANGLES,0,3);
 
@@ -125,16 +125,16 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window,true);
 
     if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) 
-        cam.processKeyboard(UP,dt);
+        cam.processKeyboard(FORWARD,dt);
 
-    if(glfwGetKey(window(GLFW_KEY_A) == GLFW_PRESS)
+    if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
         cam.processKeyboard(LEFT,dt);
 
-    if(glfwGetkey(window(GLFW_KEY_D) == GLFW_PRESS) 
+    if(glfwGetkey(window,GLFW_KEY_D) == GLFW_PRESS) 
         cam.processKeyboard(RIGHT,dt);
 
-    if(glfwGetKey(window(GLFW_KEY_S) == GLFW_PRESS)
-        cam.processKeyboard(DOWN,dt);
+    if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
+        cam.processKeyboard(BACKWARD,dt);
 
 }
 
