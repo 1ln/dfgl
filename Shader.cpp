@@ -49,6 +49,7 @@ Shader::Shader(const char* vertPath,const char* fragPath) {
     checkCompileErrors(frag,"FRAGMENT");
 
     id = glCreateProgram();
+
     glAttachShader(id,vert);
     glAttachShader(id,frag);
 
@@ -76,7 +77,15 @@ void Shader::setFloat(const std::string &name,float value) const {
     glUniform1f(glGetUniformLocation(id,name.c_str()),value);
 }
 
-void Shader::setMat4(const std::string &name,int count,glm::mat4 &m4) const {
+void Shader::setVec2(const std::string &name,int count,glm::vec2 const& v) {
+    glUniform2fv(glGetUniformLocation(id,name.c_str()),count,&v[0]); 
+}
+
+void Shader::setVec3(const std::string &name,int count,glm::vec3 const& v) {
+    glUniform3fv(glGetUniformLocation(id,name.c_str()),count,&v[0]);
+}
+
+void Shader::setMat4(const std::string &name,int count,glm::mat4 const& m4) const {
    glUniform4fv(glGetUniformLocation(id,name.c_str()),count,&m4[0][0]);
 }
 
