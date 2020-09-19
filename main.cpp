@@ -91,9 +91,11 @@ int main() {
 
         shader.use();
 
+        glm::vec2 resolution = glm::vec2(width,height);
+        shader.setVec2("resolution",1,resolution);
+
         glm::mat4 projection = glm::perspective(
         glm::radians(cam.zoom),(float)width/(float)height,0.0f,1.0f);
-            
         shader.setMat4("projection",1,projection);
   
         glm::mat4 view = cam.getViewMatrix(); 

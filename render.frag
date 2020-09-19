@@ -7,15 +7,15 @@ out vec4 FragColor;
 uniform vec2 resolution;
 uniform float time;
 
-#define fov 2.;
-#define seed 536323;
-#define steps 100;
-#define eps 0.001;
-#define dmin 0.0;
-#define dmax 225.;
-#define shsteps 45.;
-#define shmax 25.;
-#define shblur 10.;
+#define fov 2.
+#define seed 536323
+#define steps 100
+#define eps 0.001
+#define dmin 0.0
+#define dmax 225.
+#define shsteps 45.
+#define shmax 25.
+#define shblur 10.
 
 const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
@@ -75,10 +75,6 @@ float radial(vec2 uv,float b) {
     vec2 p = vec2(.5) - uv;
     float a = atan(p.y,p.x);
     return cos(a * b);
-}
-
-float sedge(float v) {
-    return smoothstep(0.,1. / res.x,v);
 }
  
 float cell(vec3 x,float iterations,int type) {
