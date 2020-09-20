@@ -56,7 +56,7 @@ int main() {
 
     //glEnable(GL_DEPTH_TEST); 
 
-    Shader shader("vert.vert","frag.frag");
+    Shader shader("vert.vert","render.frag");
     
     float verts[] = {
     -1.,3.,0.,
@@ -76,6 +76,10 @@ int main() {
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
 
+    unsigned int tex;
+    glGenTextures(1,&tex);
+    glBindTexture(GL_TEXTURE_2D,tex);
+
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {
@@ -93,6 +97,9 @@ int main() {
 
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
+
+        glm::vec3 cam_pos = glm::vec3(cam.position);
+        shader.setVec3("camPosition",1,cam_pos);
 
         glm::mat4 projection = glm::perspective(
         glm::radians(cam.zoom),(float)width/(float)height,0.0f,1.0f);
