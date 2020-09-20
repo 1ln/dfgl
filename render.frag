@@ -4,8 +4,12 @@
 
 out vec4 FragColor;
 
+uniform sampler2D tex;
+
 uniform vec2 resolution;
 uniform float time;
+
+uniform vec3 camPosition;
 
 #define fov 2.
 #define seed 536323
@@ -25,6 +29,11 @@ const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 const float fog_distance = 0.0001;
 const float fog_density = 3.;
 
+float fcos(float x) {
+    float w = fwidth(x);
+    return cos(x) * smoothstep(PI2,0.,w);
+}
+
 vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
@@ -42,38 +51,44 @@ float hash(vec2 p) {
 }
 
 vec3 hash3(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) *  uvec3(uint(int(seed)),2531151992.0,2860486313U);
-   h = (h.x ^ h.y ^ h.z) * uvec3(uint(int(seed)),2531151992U,2860486313U);
+   uvec3 h = uvec3(ivec3(  p)) *  
+   uvec3(uint(int(seed)),2531151992.0,2860486313U);
+   h = (h.x ^ h.y ^ h.z) * 
+   uvec3(uint(int(seed)),2531151992U,2860486313U);
    return vec3(h) * (1.0/float(0xffffffffU));
-
 }
 
-vec2 diag(vec2 uv) {
+vec2 rndPtCircle(float p) {
+    float a = PI2 * hash(p);
+    return vec2(cos(a),sin(a));
+}
+
+vec2 diag(vec2 p) {
    vec2 r = vec2(0.);
-   r.x = 1.1547 * uv.x;
-   r.y = uv.y + .5 * r.x;
+   r.x = 1.1547 * p.x;
+   r.y = p.y + .5 * r.x;
    return r;
 }
 
-vec3 simplexGrid(vec2 uv) {
+vec3 simplexGrid(vec2 p) {
 
     vec3 q = vec3(0.);
-    vec2 p = fract(diag(uv));
+    vec2 l = fract(diag(p));
     
-    if(p.x > p.y) {
-        q.xy = 1. - vec2(p.x,p.y-p.x);
-        q.z = p.y;
+    if(l.x > l.y) {
+        q.xy = 1. - vec2(l.x-l.y,l.x);
+        q.z = l.y;
     } else {
-        q.yz = 1. - vec2(p.x-p.y,p.y);
-        q.x = p.x;
+        q.yz = 1. - vec2(l.x-l.y,l.y);
+        q.x = l.x;
     }
     return q;
 
 }
 
-float radial(vec2 uv,float b) {
-    vec2 p = vec2(.5) - uv;
-    float a = atan(p.y,p.x);
+float radial(vec2 p,float b) {
+    vec2 l = vec2(.5) - p;
+    float a = atan(l.y,l.x);
     return cos(a * b);
 }
  
@@ -679,24 +694,16 @@ vec2 scene(vec3 p) {
     p.zy *= rot2(t*s);
 
     d = box(p,vec3(1.));
-
     d = menger(p,5,1.,box(p,vec3(1.)));
- 
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-    
     d = menger(p,4,2.,octahedron(p,1.));
-
-    d = max(
-    -plane(q*.5,vec4(1.,-1.,-1.,0.)),
-    menger(p,4,1.,box(p,vec3(1.)))); 
-
+    d = menger(p,4,1.,box(p,vec3(1.))); 
     d = gyroid(p,5.,.35,.015,sphere(p,1.));
-
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
+    d = circle(rev(p,f,0.,pow(2.,1./3.)),1.);
 
-    d = circle(rev(p,1.,pow(2.,1./3.)),0.);
+    //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
 
     res = opu(res,vec2(d,2.)); 
 
@@ -854,9 +861,11 @@ if(d.y == 2.) {
     linear += dif * vec3(hash(135.),hash(34.),hash(344.));
     linear += amb * vec3(.05);
     linear += ref * vec3(hash(245.),hash(123.),hash(335.)) * .04;
-    linear += fre * vec3(hash(126.),hash(45.),hash(646.))  * .06; 
+    linear += fre * vec3(hash(126.),hash(45.),hash(646.))  * .6; 
 
-    float nl = f3(p+f3(p,5,.5),6,.5); 
+    float nl;
+    nl = f3(p+f3(p,5,.5),6,.5);
+    nl = f3(p+sin3(p,10.),4,mix(p,col,.45));
 
     col += fmCol(p.y + nl,vec3(hash(112.),hash(33.),hash(21.)),
                           vec3(hash(12.),hash(105.),hash(156.)), 
