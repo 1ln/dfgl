@@ -7,19 +7,29 @@ out vec4 FragColor;
 uniform sampler2D tex;
 
 uniform vec2 resolution;
+
 uniform float time;
+uniform float speed;
 
-uniform vec3 camPosition;
+uniform int seed;
 
-#define fov 2.
-#define seed 536323
+uniform vec3 cam_position;
+uniform vec3 cam_target;
+uniform float fov;
+
+uniform float mouse;
+uniform int mouse_pressed;
+
+uniform int aa;
+
 #define steps 100
-#define eps 0.001
+#define eps 0.0001
 #define dmin 0.0
 #define dmax 225.
 #define shsteps 45.
 #define shmax 25.
 #define shblur 10.
+#define aosteps 5
 
 const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
@@ -477,7 +487,6 @@ float eqTriangle(vec2 p,float r) {
      return -length(p) * sign(p.y);    
 
 } 
-
 float rect(vec2 p,vec2 b) {
     vec2 d = abs(p)-b;
     return length(max(d,0.)) + min(max(d.x,d.y),0.);
@@ -701,7 +710,7 @@ vec2 scene(vec3 p) {
     d = gyroid(p,5.,.35,.015,sphere(p,1.));
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
-    d = circle(rev(p,f,0.,pow(2.,1./3.)),1.);
+    d = circle(rev(p,0.,pow(2.,1./3.)),1.);
 
     //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
 
@@ -747,6 +756,25 @@ vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l) {
     vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
     return mix(col,fog_col,light_depth);
 }
+
+float ao(vec3 p,vec3 n) {
+
+    float o = 0.;
+    float s = 1.;
+
+    for(int i = 0; i < aosteps; i++) {
+ 
+        float h = .01 + .125 * float(i) / 4.; 
+        float d = scene(p + h * n).x;  
+        o += (h-d) * s;
+        s *= .9;
+        if(o > .33) break;
+    
+     }
+
+     return clamp(1. + 3. * o ,0.0,1.0) * (.5+.5*n);   
+}
+
 
 float shadow(vec3 ro,vec3 rd ) {
 
@@ -865,7 +893,7 @@ if(d.y == 2.) {
 
     float nl;
     nl = f3(p+f3(p,5,.5),6,.5);
-    nl = f3(p+sin3(p,10.),4,mix(p,col,.45));
+    nl = f3(p+sin3(p,10.),5,cos(p.y));
 
     col += fmCol(p.y + nl,vec3(hash(112.),hash(33.),hash(21.)),
                           vec3(hash(12.),hash(105.),hash(156.)), 
@@ -888,16 +916,25 @@ void main() {
  
 vec3 color = vec3(0.);
 
-vec3 cam_tar = vec3(0.);
-vec3 cam_pos = vec3(0.,0.,5.);
+vec3 cam_tar = cam_target;
+vec3 cam_pos = cam_position;
 
-vec2 uv = -1. + 2. * gl_FragCoord.xy/resolution.xy; 
-uv.x *= resolution.x/resolution.y; 
+for(int k = 0; k < aa; ++k) {
+    for(int l = 0; l < aa; ++l) {
 
-vec3 dir = rayCamDir(uv,cam_pos,cam_tar,fov); 
-color = render(cam_pos,dir);  
+    vec2 o = vec2(float(l),float(k)) / float(aa) * .5;
+
+    vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
+    uv.x *= resolution.x/resolution.y; 
+
+    vec3 dir = rayCamDir(uv,cam_pos,cam_tar,fov); 
+    vec3 col = render(cam_pos,dir);  
+    color += col;
+    }
+
+color /= float(aa*aa);
 color = pow(color,vec3(.4545));
-
 FragColor = vec4(color,1.0);
+}
 
 }
