@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp> 
 
 #include "Shader.h"
-#include "Camera.h"
 
 #include <iostream>
 
@@ -14,10 +13,8 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos);
 void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
 void processInput(GLFWwindow *window);
 
-const unsigned int width  = 512;
-const unsigned int height = 512;
-
-Camera cam(glm::vec3(0.0f,0.0f,5.0f));
+const unsigned int width  = 800;
+const unsigned int height = 600;
 
 float lastx = width / 2.0;
 float lasty = height / 2.0;
@@ -26,6 +23,10 @@ bool init_mouse = true;
 
 float dt         = 0.0f;
 float last_frame = 0.0f;
+
+glm::vec3 cam_position;
+glm::vec3 cam_target;
+glm::vec3 fov;
 
 int main() {
  
@@ -98,21 +99,18 @@ int main() {
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
 
-        glm::vec3 cam_pos = glm::vec3(cam.position);
-        shader.setVec3("camPosition",1,cam_pos);
+        shader.setFloat("time",last_frame);   
 
-        glm::mat4 projection = glm::perspective(
-        glm::radians(cam.zoom),(float)width/(float)height,0.0f,1.0f);
-        shader.setMat4("projection",1,projection);
-  
-        glm::mat4 view = cam.getViewMatrix(); 
-        shader.setMat4("view",1,view);
+        shader.setInt("seed",seed);
+
+        shader.setint("aa",aa);
+
+        shader.setVec3("cam_position",1,cam_position);        
+        shader.setVec3("cam_target",1,cam_target);
+        shader.setFloat("fov",fov);
 
         glBindVertexArray(vao);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        shader.setMat4("model",1,model);
-   
         glDrawArrays(GL_TRIANGLES,0,3);
 
         glfwSwapBuffers(window);
@@ -134,16 +132,16 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window,true);
 
     if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
-        cam.processKeyboard(FORWARD,dt);
+        
 
     if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
-        cam.processKeyboard(LEFT,dt);
+       
 
     if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
-        cam.processKeyboard(BACKWARD,dt);
+       
 
     if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
-        cam.processKeyboard(RIGHT,dt);
+        
 
 }
 
@@ -167,11 +165,14 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
     lastx = xpos;
     lasty = ypos;
 
-    cam.processMouseMove(xoff,yoff,true);
+    float x = (2.0f * xpos ) / width - 1.0f;
+    float y = 1.0f - (2.0f * ypos ) / height;
+    glm::vec3 ray_nds = glm::vec3(x,y,1);
+    cam_target = ray_nds;
 
 }
 
 void scroll_callback(GLFWwindow* window,double xoff, double yoff) {
-    cam.processMouseScroll(yoff);
+    fov -= float(yoff);
 }
 
