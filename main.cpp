@@ -24,9 +24,15 @@ bool init_mouse = true;
 float dt         = 0.0f;
 float last_frame = 0.0f;
 
-glm::vec3 cam_position;
-glm::vec3 cam_target;
-glm::vec3 fov;
+glm::vec2 mouse;
+bool mouse_pressed = false; 
+float mouse_scroll = 0.0f;
+
+bool key_w = false;
+bool key_s = false;
+bool key_a = false;
+bool key_d = false;
+bool key_space = false; 
 
 int main() {
  
@@ -77,9 +83,21 @@ int main() {
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
 
+    unsigned int fb = 0;
+    glGenFramebuffers(1,&fb);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb);
+
     unsigned int tex;
     glGenTextures(1,&tex);
     glBindTexture(GL_TEXTURE_2D,tex);
+
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
+    GL_UNSIGNED_BYTE,0);
+
+    glTexParameter(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
+    glTexParameter(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
+    
 
     shader.use();
 
@@ -101,13 +119,14 @@ int main() {
 
         shader.setFloat("time",last_frame);   
 
-        shader.setInt("seed",seed);
+        shader.setVec2("mouse",mouse);
+        shader.setBool("mouse_pressed");
 
-        shader.setint("aa",aa);
-
-        shader.setVec3("cam_position",1,cam_position);        
-        shader.setVec3("cam_target",1,cam_target);
-        shader.setFloat("fov",fov);
+        shader.setBool("key_space",key_space);
+        shader.setBool("key_w",key_w);
+        shader.setBool("key_s",key_s);
+        shader.setBool("key_a",key_a);       
+        shader.setBool("key_d",key_d);
 
         glBindVertexArray(vao);
 
@@ -132,16 +151,17 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window,true);
 
     if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
-        
+        key_w = true;
 
     if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
-       
+        key_s = true;       
 
     if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
-       
+        key_a = true;
 
     if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
-        
+        key_d = true;
+
 
 }
 
@@ -165,14 +185,11 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
     lastx = xpos;
     lasty = ypos;
 
-    float x = (2.0f * xpos ) / width - 1.0f;
-    float y = 1.0f - (2.0f * ypos ) / height;
-    glm::vec3 ray_nds = glm::vec3(x,y,1);
-    cam_target = ray_nds;
+    mouse = glm::vec2(lastx,lasty); 
 
 }
 
 void scroll_callback(GLFWwindow* window,double xoff, double yoff) {
-    fov -= float(yoff);
+    mouse_scroll -= float(yoff);
 }
 
