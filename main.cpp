@@ -92,12 +92,13 @@ int main() {
     glBindTexture(GL_TEXTURE_2D,tex);
 
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
-    GL_UNSIGNED_BYTE,0);
+    GL_UNSIGNED_BYTE,NULL);
 
-    glTexParameter(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
-    glTexParameter(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    
+    GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
+    glDrawBuffers(1,draw_buffers);  
 
     shader.use();
 
@@ -119,8 +120,8 @@ int main() {
 
         shader.setFloat("time",last_frame);   
 
-        shader.setVec2("mouse",mouse);
-        shader.setBool("mouse_pressed");
+        shader.setVec2("mouse",1,mouse);
+        shader.setBool("mouse_pressed",mouse_pressed);
 
         shader.setBool("key_space",key_space);
         shader.setBool("key_w",key_w);
