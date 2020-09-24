@@ -9,19 +9,14 @@ uniform sampler2D tex;
 uniform vec2 resolution;
 
 uniform float time;
-uniform float speed;
 
-uniform int seed;
-
-uniform vec3 cam_position;
-uniform vec3 cam_target;
-uniform float fov;
-
-uniform float mouse;
+uniform vec2 mouse;
+uniform float mouse_scroll;
 uniform int mouse_pressed;
 
-uniform int aa;
-
+#define seed 25162232
+#define fov 1
+#define aa 2
 #define steps 100
 #define eps 0.0001
 #define dmin 0.0
@@ -30,6 +25,9 @@ uniform int aa;
 #define shmax 25.
 #define shblur 10.
 #define aosteps 5
+
+vec3 cam_pos = vec3(0.,2.,5.);
+vec3 cam_tar = vec3(0.);
 
 const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
@@ -772,7 +770,7 @@ float ao(vec3 p,vec3 n) {
     
      }
 
-     return clamp(1. + 3. * o ,0.0,1.0) * (.5+.5*n);   
+     return clamp(1. + 3. * o ,0.0,1.0) * (.5+.5*n.y);   
 }
 
 
@@ -916,13 +914,10 @@ void main() {
  
 vec3 color = vec3(0.);
 
-vec3 cam_tar = cam_target;
-vec3 cam_pos = cam_position;
-
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
 
-    vec2 o = vec2(float(l),float(k)) / float(aa) * .5;
+    vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
 
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 

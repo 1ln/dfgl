@@ -83,9 +83,9 @@ int main() {
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
 
-    unsigned int fb = 0;
-    glGenFramebuffers(1,&fb);
-    glBindFramebuffer(GL_FRAMEBUFFER,fb);
+    //unsigned int fb = 0;
+    //glGenFramebuffers(1,&fb);
+    //glBindFramebuffer(GL_FRAMEBUFFER,fb);
 
     unsigned int tex;
     glGenTextures(1,&tex);
@@ -97,8 +97,8 @@ int main() {
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
-    glDrawBuffers(1,draw_buffers);  
+    //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
+    //glDrawBuffers(1,draw_buffers);  
 
     shader.use();
 
@@ -121,6 +121,7 @@ int main() {
         shader.setFloat("time",last_frame);   
 
         shader.setVec2("mouse",1,mouse);
+        shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
 
         shader.setBool("key_space",key_space);
