@@ -4,6 +4,10 @@
 
 out vec4 FragColor;
 
+layout(std430,binding=0) buffer Config {
+float v[];
+};
+
 uniform sampler2D tex;
 
 uniform vec2 resolution;
@@ -707,8 +711,11 @@ vec2 scene(vec3 p) {
     d = menger(p,4,1.,box(p,vec3(1.))); 
     d = gyroid(p,5.,.35,.015,sphere(p,1.));
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
+    d = mix(sphere(p,1.),box(p,vec3(1.)),-1.);    
+    d = max(-torus(p,vec2(.5,1.)),box(p,vec3(1.))); 
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
     d = circle(rev(p,0.,pow(2.,1./3.)),1.);
+    
 
     //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
 
