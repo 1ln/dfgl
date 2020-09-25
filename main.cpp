@@ -100,6 +100,14 @@ int main() {
     //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
     //glDrawBuffers(1,draw_buffers);  
 
+    float d[5];
+    unsigned int sb;
+    glGenBuffers(1,&sb);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(d),d,GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb);  
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);
+
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {
