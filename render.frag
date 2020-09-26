@@ -19,7 +19,6 @@ uniform float mouse_scroll;
 uniform int mouse_pressed;
 
 #define seed 25162232
-#define fov 1
 #define aa 2
 #define steps 100
 #define eps 0.0001
@@ -29,6 +28,8 @@ uniform int mouse_pressed;
 #define shmax 25.
 #define shblur 10.
 #define aosteps 5
+
+float fov = 2.;
 
 vec3 cam_pos = vec3(0.,2.,5.);
 vec3 cam_tar = vec3(0.);
@@ -696,13 +697,15 @@ vec2 scene(vec3 p) {
     vec2 res = vec2(1.,0.);
 
     float d = 0.;     
-    float s = 0.001;
+    float s = 0.1;
     float t = time;  
     
     vec3 q = p;
 
     p.xz *= rot2(t*s);
     p.zy *= rot2(t*s);
+
+    p = repeat(p,vec3(10.));  
 
     d = box(p,vec3(1.));
     d = menger(p,5,1.,box(p,vec3(1.)));
@@ -711,11 +714,11 @@ vec2 scene(vec3 p) {
     d = menger(p,4,1.,box(p,vec3(1.))); 
     d = gyroid(p,5.,.35,.015,sphere(p,1.));
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-    d = mix(sphere(p,1.),box(p,vec3(1.)),-1.);    
-    d = max(-torus(p,vec2(.5,1.)),box(p,vec3(1.))); 
+    d = mix(box(p,vec3(1.)),sphere(p,1.),-2.);    
+    d = max(-torus(p,vec2(1.5,.61)),box(p,vec3(1.))); 
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
     d = circle(rev(p,0.,pow(2.,1./3.)),1.);
-    
+     
 
     //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
 
@@ -762,7 +765,7 @@ vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l) {
     return mix(col,fog_col,light_depth);
 }
 
-float ao(vec3 p,vec3 n) {
+float calcAO(vec3 p,vec3 n) {
 
     float o = 0.;
     float s = 1.;
@@ -873,6 +876,8 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
 float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
+float ao = calcAO(p,n);    
+
 vec3 linear = vec3(0.);
 
 dif *= shadow(p,l);
@@ -898,7 +903,9 @@ if(d.y == 2.) {
 
     float nl;
     nl = f3(p+f3(p,5,.5),6,.5);
-    nl = f3(p+sin3(p,10.),5,cos(p.y));
+    nl = cell(p,12.,0);
+    nl = f3(p,6,octahedron(p,1.)*n3(p));
+    nl = f3(p+sin3(p,10.),5,.45);
 
     col += fmCol(p.y + nl,vec3(hash(112.),hash(33.),hash(21.)),
                           vec3(hash(12.),hash(105.),hash(156.)), 
@@ -920,6 +927,13 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
+
+vec2 m = mouse / resolution.xy;
+
+mat4 mx = rotAxis(vec3(1.,0.,0.),m.x*PI2);
+mat4 my = rotAxis(vec3(0.,1.,0.),m.y*PI2);
+
+fov -= mouse_scroll;
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
