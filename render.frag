@@ -4,8 +4,8 @@
 
 out vec4 FragColor;
 
-layout(std430,binding=0) buffer Config {
-float v[];
+layout(std430,binding=0) buffer Cam {
+vec3 cam_pos;
 };
 
 uniform sampler2D tex;
@@ -18,8 +18,9 @@ uniform vec2 mouse;
 uniform float mouse_scroll;
 uniform int mouse_pressed;
 
-#define seed 25162232
-#define aa 2
+uniform int seed;
+uniform int aa;
+
 #define steps 100
 #define eps 0.0001
 #define dmin 0.0
@@ -31,7 +32,6 @@ uniform int mouse_pressed;
 
 float fov = 2.;
 
-vec3 cam_pos = vec3(0.,2.,5.);
 vec3 cam_tar = vec3(0.);
 
 const float E    =  2.7182818;
@@ -932,6 +932,17 @@ vec2 m = mouse / resolution.xy;
 
 mat4 mx = rotAxis(vec3(1.,0.,0.),m.x*PI2);
 mat4 my = rotAxis(vec3(0.,1.,0.),m.y*PI2);
+
+if(mouse_pressed == 1) {
+
+cam_pos = (vec4(cam_pos,1.)*mx*my).xyz
+c_pos = cam_pos;
+
+} else {
+
+cam_pos = c_pos;
+
+}
 
 fov -= mouse_scroll;
 

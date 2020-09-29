@@ -10,6 +10,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h);
 void mouse_callback(GLFWwindow* window,double xpos,double ypos);
+void mouse_button_callback(GLFWwindow* window,int button,int action,int mods); 
 void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
 void processInput(GLFWwindow *window);
 
@@ -33,6 +34,25 @@ bool key_s = false;
 bool key_a = false;
 bool key_d = false;
 bool key_space = false; 
+
+glm::vec3 cam_pos;
+glm::vec3 cam_tar;
+
+int aa = 2;
+
+int seed = 1251623;
+
+int steps = 100;
+float dmin = 0.0f;
+float dmax = 245.0f;
+float eps = 0.000f;
+
+struct Camera {
+
+glm::vec3 pos;
+glm::vec3 tar;
+
+};
 
 int main() {
  
@@ -58,6 +78,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
     glfwSetCursorPosCallback(window,mouse_callback);
     glfwSetScrollCallback(window,scroll_callback);
+    glfwSetMouseButtonCallback(window,mouse_button_callback);
 
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
@@ -100,12 +121,11 @@ int main() {
     //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
     //glDrawBuffers(1,draw_buffers);  
 
-    float d[5];
-    unsigned int sb;
-    glGenBuffers(1,&sb);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(d),d,GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb);  
+    unsigned int sb_cam;
+    glGenBuffers(1,&sb_cam);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb_cam);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(&cam_pos),&cam_pos,GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb_cam);  
     glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);
 
     shader.use();
@@ -127,6 +147,15 @@ int main() {
         shader.setVec2("resolution",1,resolution);
 
         shader.setFloat("time",last_frame);   
+
+        shader.setInt("seed",seed);
+
+        shader.setInt("aa",aa);
+        
+        shader.setInt("steps",steps);     
+        shader.setFloat("dmin",dmin);
+        shader.setFloat("dmax",dmax);
+        shader.setFloat("eps",eps);
 
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
@@ -159,6 +188,9 @@ void processInput(GLFWwindow *window) {
 
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
+
+    if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS)
+        key_space = true;
 
     if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
         key_w = true;
@@ -196,6 +228,16 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
     lasty = ypos;
 
     mouse = glm::vec2(lastx,lasty); 
+
+}
+
+void mouse_button_callback(GLFWwindow* window,int button,int action,int mods) {
+  
+    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        mouse_pressed = true;
+    } else {
+        mouse_pressed = false;
+    }
 
 }
 
