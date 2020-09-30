@@ -35,9 +35,6 @@ bool key_a = false;
 bool key_d = false;
 bool key_space = false; 
 
-glm::vec3 cam_pos;
-glm::vec3 cam_tar;
-
 int aa = 2;
 
 int seed = 1251623;
@@ -52,7 +49,7 @@ struct Camera {
 glm::vec4 pos;
 glm::vec4 tar;
 
-};
+} Camera;
 
 int main() {
  
@@ -127,7 +124,7 @@ int main() {
     unsigned int sb_cam;
     glGenBuffers(1,&sb_cam);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb_cam);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(Camera),Camera,GL_DYNAMIC_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(Camera),&Camera,GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb_cam);  
     glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);
 

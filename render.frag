@@ -7,7 +7,7 @@ out vec4 FragColor;
 layout(std430,binding=0) buffer Cam {
 vec4 pos;
 vec4 tar;
-} Cam;
+} cam;
 
 uniform sampler2D tex;
 
@@ -932,7 +932,7 @@ vec3 color = vec3(0.);
 vec4 cam_pos;
 vec4 cam_tar;
 
-cam_tar = Cam.tar;
+cam_tar = cam.tar;
 
 vec2 m = mouse / resolution.xy;
 
@@ -941,12 +941,12 @@ mat4 my = rotAxis(vec3(0.,1.,0.),m.y*PI2);
 
 if(mouse_pressed == 1) {
 
-Cam.pos = (vec4(Cam.pos)*mx*my).xyz
-cam_pos = Cam.pos;
+cam.pos = (vec4(cam.pos)*mx*my);
+cam_pos = cam.pos;
 
 } else {
 
-cam_pos = Cam.pos;
+cam_pos = cam.pos;
 
 }
 
@@ -960,8 +960,8 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,cam_pos,cam_tar,fov); 
-    vec3 col = render(cam_pos,dir);  
+    vec3 dir = rayCamDir(uv,cam_pos.xyz,cam_tar.xyz,fov); 
+    vec3 col = render(cam_pos.xyz,dir);  
     color += col;
     }
 
