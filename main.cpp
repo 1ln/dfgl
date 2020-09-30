@@ -49,8 +49,8 @@ float eps = 0.000f;
 
 struct Camera {
 
-glm::vec3 pos;
-glm::vec3 tar;
+glm::vec4 pos;
+glm::vec4 tar;
 
 };
 
@@ -121,10 +121,13 @@ int main() {
     //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
     //glDrawBuffers(1,draw_buffers);  
 
+    Camera.pos = glm::vec4(0.0,0.0,5.0,1.0);
+    Camera.tar = glm::vec4(0.0,0.0,0.0,1.0);
+
     unsigned int sb_cam;
     glGenBuffers(1,&sb_cam);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb_cam);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(&cam_pos),&cam_pos,GL_DYNAMIC_COPY);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(Camera),Camera,GL_DYNAMIC_COPY);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb_cam);  
     glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);
 
