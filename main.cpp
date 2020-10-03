@@ -7,6 +7,7 @@
 #include "Shader.h"
 
 #include <iostream>
+#include <string>
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h);
 void mouse_callback(GLFWwindow* window,double xpos,double ypos);
@@ -51,8 +52,10 @@ glm::vec4 tar;
 
 } Camera;
 
-int main() {
+int main(int argc,char** argv) {
  
+    std::string frag = argv[1]; 
+
     glfwInit();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
@@ -81,7 +84,7 @@ int main() {
 
     //glEnable(GL_DEPTH_TEST); 
 
-    Shader shader("vert.vert","render.frag");
+    Shader shader("vert.vert",frag.c_str());
     
     float verts[] = {
     -1.,3.,0.,
