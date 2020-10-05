@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp> 
 
 #include "Shader.h"
+#include "Camera.h"
 
 #include <iostream>
 #include <string>
@@ -30,12 +31,6 @@ glm::vec2 mouse;
 bool mouse_pressed = false; 
 float mouse_scroll = 0.0f;
 
-bool key_w = false;
-bool key_s = false;
-bool key_a = false;
-bool key_d = false;
-bool key_space = false; 
-
 int aa = 2;
 
 int seed = 1251623;
@@ -44,13 +39,6 @@ int steps = 100;
 float dmin = 0.0f;
 float dmax = 245.0f;
 float eps = 0.000f;
-
-struct Camera {
-
-glm::vec4 pos;
-glm::vec4 tar;
-
-} Camera;
 
 int main(int argc,char** argv) {
  
@@ -85,7 +73,11 @@ int main(int argc,char** argv) {
     //glEnable(GL_DEPTH_TEST); 
 
     Shader shader("vert.vert",frag.c_str());
-    
+
+    Camera cam(glm::vec3(0.0f,0.0f,5.0f),
+               glm::vec3(0.0f,0.0f,0.0f)
+    );    
+
     float verts[] = {
     -1.,3.,0.,
     -1.,-1.,0.,
@@ -121,16 +113,6 @@ int main(int argc,char** argv) {
     //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
     //glDrawBuffers(1,draw_buffers);  
 
-    Camera.pos = glm::vec4(0.0,0.0,5.0,1.0);
-    Camera.tar = glm::vec4(0.0,0.0,0.0,1.0);
-
-    unsigned int sb_cam;
-    glGenBuffers(1,&sb_cam);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER,sb_cam);
-    glBufferData(GL_SHADER_STORAGE_BUFFER,sizeof(Camera),&Camera,GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,sb_cam);  
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);
-
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {
@@ -153,6 +135,9 @@ int main(int argc,char** argv) {
 
         shader.setInt("seed",seed);
 
+        shader.setVec3("camPos",cam.position);
+        shader.setVec3("camTar",cam.target);
+
         shader.setInt("aa",aa);
         
         shader.setInt("steps",steps);     
@@ -161,15 +146,7 @@ int main(int argc,char** argv) {
         shader.setFloat("eps",eps);
 
         shader.setVec2("mouse",1,mouse);
-        shader.setFloat("mouse_scroll",mouse_scroll);
-        shader.setBool("mouse_pressed",mouse_pressed);
-
-        shader.setBool("key_space",key_space);
-        shader.setBool("key_w",key_w);
-        shader.setBool("key_s",key_s);
-        shader.setBool("key_a",key_a);       
-        shader.setBool("key_d",key_d);
-
+        
         glBindVertexArray(vao);
 
         glDrawArrays(GL_TRIANGLES,0,3);
@@ -193,21 +170,31 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window,true);
 
     if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS)
-        key_space = true;
+        cam.processKeyboard(UP,dt);
 
     if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
-        key_w = true;
+        cam.processKeyboard(FORWARD,dt);
 
     if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
-        key_s = true;       
+        cam.processKeyboard(LEFT,dt);       
 
     if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
-        key_a = true;
+        cam.processKeyboard(BACKWARD,dt);
 
     if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
-        key_d = true;
+        cam.processKeyboard(RIGHT,dt);
 
+    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS)
+        cam.processKeyboard(PITCH_FORWARD,dt);
 
+    if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS)
+        cam.processKeyboard(YAW_LEFT,dt);       
+
+    if(glfwGetKey(window,GLFW_KEY_DOWN) == GLFW_PRESS)
+        cam.processKeyboard(PITCH_BACKWARD,dt);
+
+    if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS)
+        cam.processKeyboard(YAW_RIGHT,dt);
 }
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
@@ -229,8 +216,6 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
 
     lastx = xpos;
     lasty = ypos;
-
-    mouse = glm::vec2(lastx,lasty); 
 
 }
 

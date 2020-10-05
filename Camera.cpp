@@ -3,6 +3,7 @@
 Camera::Camera(
 
      glm::vec3 pos,
+     glm::vec3 tar,
      glm::vec3 upd,
      float yawd,
      float pitchd):
@@ -26,14 +27,27 @@ glm::mat4 Camera::getViewMatrix() {
 void Camera::processKeyboard(Cam_Move dir,float dt) {
 
     float velocity = move_speed * dt;
+
     if(dir == FORWARD)
        position += front * velocity;
+
     if(dir == BACKWARD)
-       position += front * velocity;
+       position -= front * velocity;
+
     if(dir == LEFT)
-       position += right * velocity;
+       position += glm::normalize(glm::cross(front,up)) * velocity;
+
     if(dir == RIGHT)
-       position += right * velocity;
+       position -= glm::normalize(glm::cross(front,up))  * velocity;
+
+    if(dir == PITCH_FORWARD)  
+       target += sin(glm::radians(pitch) * velocity;
+  
+    
+ 
+
+
+
 }
 
 void Camera::processMouseMove(float xoff,float yoff,bool limit_pitch = true) {
