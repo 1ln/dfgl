@@ -19,7 +19,7 @@ enum Cam_Move {
 
 };
 
-const float YAW = -90.0f;
+const float YAW = -1.57f;
 const float PITCH = 0.0f;
 const float SPEED = 2.25f;
 const float SENSITIVITY = 0.1f;
@@ -37,6 +37,8 @@ public:
                     
     glm::mat4 getViewMatrix();
 
+    void update();
+
     void processKeyboard(Cam_Move dir,float dt);
     void processMouseMove(float xoff,float yoff,bool limit_pitch);
     void processMouseScroll(float yoff);
@@ -46,7 +48,6 @@ public:
     glm::vec3 front;
     glm::vec3 right;
     glm::vec3 up;
-    glm::vec3 world_up;
 
     float yaw;
     float pitch;
@@ -56,8 +57,5 @@ public:
     float move_speed;
     float mouse_sensitivity;
 
-private:
-
-    void updateVectors();
 
 };

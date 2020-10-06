@@ -13,11 +13,10 @@ Camera::Camera(
      zoom(ZOOM) {
 
      position = pos;
-     world_up = upd;
+     up = upd;
      yaw = yawd;          
      pitch = pitchd;
      
-     updateVectors();
 }
 
 glm::mat4 Camera::getViewMatrix() { 
@@ -35,19 +34,30 @@ void Camera::processKeyboard(Cam_Move dir,float dt) {
        position -= front * velocity;
 
     if(dir == LEFT)
-       position += glm::normalize(glm::cross(front,up)) * velocity;
+       position += right * velocity;
 
     if(dir == RIGHT)
-       position -= glm::normalize(glm::cross(front,up))  * velocity;
+       position -= right  * velocity;
 
     if(dir == PITCH_FORWARD)  
-       target += sin(glm::radians(pitch) * velocity;
-  
-    
+       front = glm::normalize(front * cos(pitch) +      
+                              up    * sin(pitch) ) *   
+                              velocity;
  
+    if(dir == PITCH_BACKWARD)    
+       front = glm::normalize(front * cos(pitch) -       
+                              up    * sin(pitch) ) *
+                              velocity;
 
+    if(dir == YAW_LEFT) 
+       front = glm::normalize(front * cos(yaw) +
+                              right * sin(yaw) ) *
+                              velocity;
 
-
+    if(dir == YAW_RIGHT) 
+       front = glm::normalize(front * cos(yaw) -  
+                              right * sin(yaw) ) * 
+                              velocity;
 }
 
 void Camera::processMouseMove(float xoff,float yoff,bool limit_pitch = true) {
@@ -63,8 +73,6 @@ if(limit_pitch) {
     if(pitch < -89.0f)
         pitch = -89.0f; 
 }
-
-updateVectors();
 }
 
 void Camera::processMouseScroll(float yoff) {
@@ -77,17 +85,11 @@ void Camera::processMouseScroll(float yoff) {
         zoom = 45.0f;
 }
 
-void Camera::updateVectors() {
+void Camera::update() {
    
-    glm::vec3 nfront;
-
-    nfront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    nfront.y = sin(glm::radians(pitch)); 
-    nfront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-    front = glm::normalize(nfront);
-
-    right = glm::normalize(glm::cross(front,world_up));
+    right = glm::normalize(glm::cross(front,up));
     up = glm::normalize(glm::cross(right,front));
+
+    target = position + front;
  
 }

@@ -70,8 +70,6 @@ int main(int argc,char** argv) {
 
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    //glEnable(GL_DEPTH_TEST); 
-
     Shader shader("vert.vert",frag.c_str());
 
     Camera cam(glm::vec3(0.0f,0.0f,5.0f),
@@ -96,9 +94,9 @@ int main(int argc,char** argv) {
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
     glEnableVertexAttribArray(0);
 
-    //unsigned int fb = 0;
-    //glGenFramebuffers(1,&fb);
-    //glBindFramebuffer(GL_FRAMEBUFFER,fb);
+    unsigned int fb = 0;
+    glGenFramebuffers(1,&fb);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb);
 
     unsigned int tex;
     glGenTextures(1,&tex);
@@ -110,8 +108,11 @@ int main(int argc,char** argv) {
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    //GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
-    //glDrawBuffers(1,draw_buffers);  
+    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
+                         tex,0);
+
+    GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
+    glDrawBuffers(1,draw_buffers);  
 
     shader.use();
 
@@ -123,10 +124,13 @@ int main(int argc,char** argv) {
 
         processInput(window);
 
-        glClearColor(0.5f,0.0f,0.0f,1.0f);
+        glBindFramebuffer(GL_FRAMEBUFFER,fb);
+        glViewport(0,0,width,height);
         glClear(GL_COLOR_BUFFER_BIT);
 
         shader.use();
+
+        cam.update();
 
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
@@ -147,6 +151,10 @@ int main(int argc,char** argv) {
 
         shader.setVec2("mouse",1,mouse);
         
+        glBindFramebuffer(GL_FRAMEBUFFER,0); 
+        glViewport(0,0,width,height);
+        glClear(GL_COLOR_BUFFER_BIT); 
+
         glBindVertexArray(vao);
 
         glDrawArrays(GL_TRIANGLES,0,3);
