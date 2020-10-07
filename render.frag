@@ -4,16 +4,14 @@
 
 out vec4 FragColor;
 
-layout(std430,binding=0) buffer Cam {
-vec4 pos;
-vec4 tar;
-} cam;
-
 uniform sampler2D tex;
 
 uniform vec2 resolution;
 
 uniform float time;
+
+uniform vec3 camPos;  
+uniform vec3 camTar;
 
 uniform vec2 mouse;
 uniform float mouse_scroll;
@@ -32,8 +30,6 @@ uniform int aa;
 #define aosteps 5
 
 float fov = 2.;
-
-vec3 cam_tar = vec3(0.);
 
 const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
@@ -703,10 +699,10 @@ vec2 scene(vec3 p) {
     
     vec3 q = p;
 
-    p.xz *= rot2(t*s);
-    p.zy *= rot2(t*s);
+    //p.xz *= rot2(t*s);
+    //p.zy *= rot2(t*s);
 
-    p = repeat(p,vec3(10.));  
+    //p = repeat(p,vec3(10.));  
 
     d = box(p,vec3(1.));
     d = menger(p,5,1.,box(p,vec3(1.)));
@@ -929,29 +925,6 @@ void main() {
  
 vec3 color = vec3(0.);
 
-vec4 cam_pos;
-vec4 cam_tar;
-
-cam_tar = cam.tar;
-
-vec2 m = mouse / resolution.xy;
-
-mat4 mx = rotAxis(vec3(1.,0.,0.),m.x*PI2);
-mat4 my = rotAxis(vec3(0.,1.,0.),m.y*PI2);
-
-if(mouse_pressed == 1) {
-
-cam.pos = (vec4(cam.pos)*mx*my);
-cam_pos = cam.pos;
-
-} else {
-
-cam_pos = cam.pos;
-
-}
-
-fov -= mouse_scroll;
-
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
 
@@ -960,14 +933,17 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,cam_pos.xyz,cam_tar.xyz,fov); 
-    vec3 col = render(cam_pos.xyz,dir);  
+    vec3 dir = rayCamDir(uv,camPos,camTar,fov); 
+    vec3 col = render(camPos,dir);  
     color += col;
     }
 
 color /= float(aa*aa);
 color = pow(color,vec3(.4545));
-FragColor = vec4(color,1.0);
+
+vec3 rt_col = texture(tex,gl_FragCoord.xy / resolution.xy).xyz; 
+vec3 rm_col = (rt_col + color);
+FragColor = vec4(rm_col,1.0);
 }
 
 }
