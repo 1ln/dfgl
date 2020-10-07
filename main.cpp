@@ -40,6 +40,9 @@ float dmin = 0.0f;
 float dmax = 245.0f;
 float eps = 0.000f;
 
+Camera cam(glm::vec3(0.0f,0.0f,5.0f),
+           glm::vec3(0.0f,0.0f,0.0f));
+
 int main(int argc,char** argv) {
  
     std::string frag = argv[1]; 
@@ -71,10 +74,6 @@ int main(int argc,char** argv) {
     glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     Shader shader("vert.vert",frag.c_str());
-
-    Camera cam(glm::vec3(0.0f,0.0f,5.0f),
-               glm::vec3(0.0f,0.0f,0.0f)
-    );    
 
     float verts[] = {
     -1.,3.,0.,
@@ -139,8 +138,8 @@ int main(int argc,char** argv) {
 
         shader.setInt("seed",seed);
 
-        shader.setVec3("camPos",cam.position);
-        shader.setVec3("camTar",cam.target);
+        shader.setVec3("camPos",1,cam.position);
+        shader.setVec3("camTar",1,cam.target);
 
         shader.setInt("aa",aa);
         

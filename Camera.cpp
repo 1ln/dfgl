@@ -39,24 +39,27 @@ void Camera::processKeyboard(Cam_Move dir,float dt) {
     if(dir == RIGHT)
        position -= right  * velocity;
 
+    if(dir == UP)
+       position += up * velocity;
+
     if(dir == PITCH_FORWARD)  
-       front = glm::normalize(front * cos(pitch) +      
-                              up    * sin(pitch) ) *   
+       front = glm::normalize(front * cosf(pitch) +      
+                              up    * sinf(pitch) ) *   
                               velocity;
  
     if(dir == PITCH_BACKWARD)    
-       front = glm::normalize(front * cos(pitch) -       
-                              up    * sin(pitch) ) *
+       front = glm::normalize(front * cosf(pitch) -       
+                              up    * sinf(pitch) ) *
                               velocity;
 
     if(dir == YAW_LEFT) 
-       front = glm::normalize(front * cos(yaw) +
-                              right * sin(yaw) ) *
+       front = glm::normalize(front * cosf(yaw) +
+                              right * sinf(yaw) ) *
                               velocity;
 
     if(dir == YAW_RIGHT) 
-       front = glm::normalize(front * cos(yaw) -  
-                              right * sin(yaw) ) * 
+       front = glm::normalize(front * cosf(yaw) -  
+                              right * sinf(yaw) ) * 
                               velocity;
 }
 

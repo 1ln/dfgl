@@ -16,6 +16,7 @@ enum Cam_Move {
     PITCH_FORWARD,
     YAW_RIGHT,
     PITCH_BACKWARD,
+    UP
 
 };
 
