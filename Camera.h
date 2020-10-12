@@ -21,7 +21,7 @@ enum Cam_Move {
 };
 
 const float YAW = -1.57f;
-const float PITCH = 0.0f;
+const float PITCH = -1.57f;
 const float SPEED = 2.25f;
 const float SENSITIVITY = 0.1f;
 const float ZOOM = 45.0f;
@@ -49,6 +49,7 @@ public:
     glm::vec3 front;
     glm::vec3 right;
     glm::vec3 up;
+    glm::vec3 wup;
 
     float yaw;
     float pitch;

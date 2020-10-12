@@ -13,7 +13,7 @@ Camera::Camera(
      zoom(ZOOM) {
 
      position = pos;
-     up = upd;
+     wup = upd;
      yaw = yawd;          
      pitch = pitchd;
      
@@ -43,24 +43,24 @@ void Camera::processKeyboard(Cam_Move dir,float dt) {
        position += up * velocity;
 
     if(dir == PITCH_FORWARD)  
-       front = glm::normalize(front * cosf(pitch) +      
-                              up    * sinf(pitch) ) *   
-                              velocity;
+       front += glm::normalize(front * cosf(pitch) -      
+                               up    * sinf(pitch) ) *   
+                               velocity;
  
     if(dir == PITCH_BACKWARD)    
-       front = glm::normalize(front * cosf(pitch) -       
-                              up    * sinf(pitch) ) *
-                              velocity;
+       front += glm::normalize(front * cosf(pitch) +       
+                               up    * sinf(pitch) ) *
+                               velocity;
 
     if(dir == YAW_LEFT) 
-       front = glm::normalize(front * cosf(yaw) +
-                              right * sinf(yaw) ) *
-                              velocity;
+       front += glm::normalize(front * cosf(yaw) -
+                               right * sinf(yaw) ) *
+                               velocity;
 
     if(dir == YAW_RIGHT) 
-       front = glm::normalize(front * cosf(yaw) -  
-                              right * sinf(yaw) ) * 
-                              velocity;
+       front += glm::normalize(front * cosf(yaw) +  
+                               right * sinf(yaw) ) * 
+                               velocity;
 }
 
 void Camera::processMouseMove(float xoff,float yoff,bool limit_pitch = true) {
@@ -90,7 +90,7 @@ void Camera::processMouseScroll(float yoff) {
 
 void Camera::update() {
    
-    right = glm::normalize(glm::cross(front,up));
+    right = glm::normalize(glm::cross(front,wup));
     up = glm::normalize(glm::cross(right,front));
 
     target = position + front;
