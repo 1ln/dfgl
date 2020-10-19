@@ -4,32 +4,15 @@
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
-
 uniform vec2 resolution;
-
 uniform float time;
+//uniform vec3 ro;  
 
-uniform vec3 camPos;  
-uniform vec3 camTar;
-
-uniform int seed;
-uniform int aa;
-
-const int steps = 100;
-const float eps = 0.0001;
-const float dmin = 0.0;
-const float dmax = 225.0;
-
-const float fov = 2.;
-
-const float PI   =  radians(180.0); 
-const float PI2  =  PI * 2.;
+const int seed = 51499145; 
 
 vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
-
 
 float ns2(vec2 p) {
 
@@ -70,11 +53,11 @@ float ns2(vec2 p) {
     return 130. * dot(m,g);
 }
 
-float f2(vec2 x,int octaves) {
+float f2(vec2 x) {
 
     float f = 0.;
 
-    for(int i = 1; i < octaves; i++) {
+    for(int i = 1; i < 6; i++) {
  
     float e = pow(2.,float(i));
     float s = (1./e);
@@ -85,207 +68,51 @@ float f2(vec2 x,int octaves) {
     return f * .5 + .5;
 }
 
-float sin2(vec2 p,float s) {
-    
-    return sin(p.x*s) * sin(p.y*s);
-}
+float dd(vec2 p) {
 
-float envSt(float x,float k,float n) {
+vec2 q = vec2(f2(p + vec2(0.0,1.0)),
+              f2(p + vec2(2.4,1.5)));
 
-    return exp(-k * pow(x,n));
-}
+vec2 r = vec2(f2(p + 4.0 * q + vec2(5.4,4.8)),
+              f2(p + 4.0 * q + vec2(6.8,9.1)));
 
-vec2 opu(vec2 d1,vec2 d2) {
-
-    return (d1.x < d2.x) ? d1 : d2;
-} 
-
-float plane(vec3 p,vec4 n) {
-
-    return dot(p,n.xyz) + n.w;
+return f2(p + 4.0 * r);
 }
 
 float hyperbola(vec3 p) { 
 
 vec2 l = vec2(length(p.xz) ,-p.y);
 float a = 0.5;
-float d = sqrt((p.x+p.y)*(p.x+p.y)- 4. *(p.x*p.y-a)) + 0.5; 
-return (-p.x-p.y+d)/2.0;
+float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
+return (-l.x-l.y+d)/2.0;
 
-}
-
-vec2 scene(vec3 p) {
-
-    vec2 res = vec2(1.,0.);
-
-    float d = 0.;     
-    float s = 0.1;
-    float t = time;  
-    
-    vec3 q = p;
-
-    d = hyperbola(p);
-     
-    res = opu(res,vec2(d,2.)); 
-  
-  return res;
-
-}
-
-vec2 rayScene(vec3 ro,vec3 rd) {
-    
-    float d = -1.0;
-    float s = dmin;
-    float e = dmax;  
-
-    for(int i = 0; i < steps; i++) {
-
-        vec3 p = ro + s * rd;
-        vec2 dist = scene(p);
-   
-        if(abs(dist.x) < eps || e <  dist.x ) { break; }
-        s += dist.x;
-        d = dist.y;
-
-        }
- 
-        if(e < s) { d = -1.0; }
-        return vec2(s,d);
-
-}
-
-float shadow(vec3 ro,vec3 rd ) {
-
-    float res = 1.0;
-    float t = 0.005;
-    float ph = 1e10;
-    
-    for(int i = 0; i < 45; i++ ) {
-        
-        float h = scene(ro + rd * t  ).x;
-
-        float y = h * h / (2. * ph);
-        float d = sqrt(h*h-y*y);         
-        res = min(res,25.0 * d/max(0.,t-y));
-        ph = h;
-        t += h;
-    
-        if(res < eps || t > 75.0) { break; }
-
-        }
-
-        return clamp(res,0.0,1.0);
-
-}
-
-vec3 calcNormal(vec3 p) {
-
-    vec2 e = vec2(1.0,-1.0) * eps;
-
-    return normalize(vec3(
-    vec3(e.x,e.y,e.y) * scene(p + vec3(e.x,e.y,e.y)).x +
-    vec3(e.y,e.x,e.y) * scene(p + vec3(e.y,e.x,e.y)).x +
-    vec3(e.y,e.y,e.x) * scene(p + vec3(e.y,e.y,e.x)).x + 
-    vec3(e.x,e.x,e.x) * scene(p + vec3(e.x,e.x,e.x)).x
-
-    ));
-    
-}
-
-vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
-
-     vec3 camForward = normalize(camTarget - camPosition);
-     vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
-     vec3 camUp = normalize(cross(camForward,camRight));
-
-
-     vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
-
-     return vDir;
-}
-
-vec3 renderNormals(vec3 ro,vec3 rd) {
-
-   vec2 d = rayScene(ro,rd);
-   vec3 p = ro + rd * d.x;
-   vec3 n = calcNormal(p);   
-   vec3 col = vec3(n);
-   
-   return col;
-}
-
-vec3 render(vec3 ro,vec3 rd) {
- 
-vec2 d = rayScene(ro, rd);
-
-vec3 col = vec3(1.) - max(rd.y,0.);
-
-if(d.y >= 0.) { 
-
-vec3 p = ro + rd * d.x;
-vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(0.,10.,10.));
-vec3 h = normalize(l - rd);
-vec3 r = reflect(rd,n);
-
-float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
-float dif = clamp(dot(n,l),0.0,1.0);
-
-float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
-* dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
-
-float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
-float ref = smoothstep(-.2,.2,r.y);
-
-vec3 linear = vec3(0.);
-
-dif *= shadow(p,l);
-ref *= shadow(p,r);
-
-linear += dif * vec3(.5);
-linear += amb * vec3(.05);
-linear += ref * vec3(4.);
-linear += fre * vec3(.25);
-
-if(d.y == 2.) {
-
-    float nl;
-    nl = f3(p+f3(p,5,.5),6,.5);
-    col += vec3(0.5,nl,dif.y);     
-               
-}
-
-col = col * linear;
-
-col += 5. * spe * vec3(.5);
-
-
-} 
-
-return col;
 }
 
 void main() {
  
-vec3 color = vec3(0.);
-
-for(int k = 0; k < aa; ++k) {
-    for(int l = 0; l < aa; ++l) {
-
-    vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
-
-    vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
+    vec2 uv = -1. + 2. * gl_FragCoord.xy / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,camPos,camTar,fov); 
-    vec3 col = render(camPos,dir);  
-    color += col;
+    float fov = 1.0;
+    float a = -0.75;
+     
+    vec3 p = vec3(0.0,-0.75,-1.0);
+
+    vec3 d = vec3(uv*fov,1.);
+    d.yz *= mat2(cos(a),sin(a),-sin(a),cos(a));
+
+    for(int i = 0; i < 100; ++i) {
+        p += d * hyperbola(p);        
     }
 
-color /= float(aa*aa);
-color = pow(color,vec3(.4545));
+    float fd = 3.0;
 
-FragColor = vec4(color,1.0);
-}
+    float fs = 1.0;
+    float fa = 1.0;
+
+    float n = dd(p.xz*0.12)+0.12;
+
+    vec4 col = vec4(n * log((p.y+fd)*fs)/log((fd-fa)*fs));
+    FragColor = vec4(col);
 
 }
