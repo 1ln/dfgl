@@ -20,29 +20,17 @@ uniform int mouse_pressed;
 uniform int seed;
 uniform int aa;
 
-#define steps 100
-#define eps 0.0001
-#define dmin 0.0
-#define dmax 225.
+uniform int steps;
+uniform float eps;
+uniform float dmin;
+uniform float dmax;
+
 #define shsteps 45.
-#define shmax 25.
-#define shblur 10.
 #define aosteps 5
 
-float fov = 2.;
-
-const float E    =  2.7182818;
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
-
-const float fog_distance = 0.0001;
-const float fog_density = 3.;
-
-float fcos(float x) {
-    float w = fwidth(x);
-    return cos(x) * smoothstep(PI2,0.,w);
-}
 
 vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
@@ -68,40 +56,6 @@ vec3 hash3(vec3 p) {
    return vec3(h) * (1.0/float(0xffffffffU));
 }
 
-vec2 rndPtCircle(float p) {
-    float a = PI2 * hash(p);
-    return vec2(cos(a),sin(a));
-}
-
-vec2 diag(vec2 p) {
-   vec2 r = vec2(0.);
-   r.x = 1.1547 * p.x;
-   r.y = p.y + .5 * r.x;
-   return r;
-}
-
-vec3 simplexGrid(vec2 p) {
-
-    vec3 q = vec3(0.);
-    vec2 l = fract(diag(p));
-    
-    if(l.x > l.y) {
-        q.xy = 1. - vec2(l.x-l.y,l.x);
-        q.z = l.y;
-    } else {
-        q.yz = 1. - vec2(l.x-l.y,l.y);
-        q.x = l.x;
-    }
-    return q;
-
-}
-
-float radial(vec2 p,float b) {
-    vec2 l = vec2(.5) - p;
-    float a = atan(l.y,l.x);
-    return cos(a * b);
-}
- 
 float cell(vec3 x,float iterations,int type) {
  
     x *= iterations;
@@ -226,8 +180,13 @@ float f3(vec3 x,int octaves,float hurst) {
     return s;
 }
 
-float sin2(vec2 p,float s) {
+vec2 rndPntCircle(float p) {
     
+    float a = PI2 * hash(p);
+    return vec2(cos(a),sin(a)); 
+}
+
+float sin2(vec2 p,float s) {
     return sin(p.x*s) * sin(p.y*s);
 }
 
@@ -249,9 +208,7 @@ float envImp(float x,float k) {
 }
 
 float envSt(float x,float k,float n) {
-
     return exp(-k * pow(x,n));
-
 }
 
 float cubicImp(float x,float c,float w) {
@@ -271,7 +228,6 @@ float sincPh(float x,float k) {
 }
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    
     return a + b * cos( (PI*2.0) * (c * t + d));
 }
 
@@ -286,15 +242,11 @@ vec3 rgbHsv(vec3 c) {
 }
 
 float easeIn4(float t) {
-
     return t * t;
-
 }
 
 float easeOut4(float t) {
-
     return -1.0 * t * (t - 2.0);
-
 }
 
 float easeInOut4(float t) {
@@ -307,15 +259,11 @@ float easeInOut4(float t) {
 }
 
 float easeIn3(float t) {
-
     return t * t * t;
-
 }
 
 float easeOut3(float t) {
-
     return (t = t - 1.0) * t * t + 1.0;
-
 }
 
 float easeInOut3(float t) {
@@ -363,16 +311,6 @@ axis = normalize(axis);
 
 }
 
-mat4 translate(vec3 p) {
- 
-    return mat4(
-        vec4(1,0,0,p.x),
-        vec4(0,1,0,p.y),
-        vec4(0,0,1,p.z),
-        vec4(0,0,0,1)  
-);
-}
-
 vec3 repLim(vec3 p,float c,vec3 l) {
   
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
@@ -395,22 +333,18 @@ vec3 id(vec3 p,float s) {
 }
 
 vec2 opu(vec2 d1,vec2 d2) {
-
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
 float opu(float d1,float d2) {
-    
     return min(d1,d2);
 }
 
 float opi(float d1,float d2) {
-
     return max(d1,d2);
 }
 
 float opd(float d1,float d2) {
-
     return max(-d1,d2);
 }
 
@@ -619,7 +553,10 @@ float hexPrism(vec3 p,vec2 h) {
     p = abs(p); 
     p.xy -= 2.0 * min(dot(k.xy,p.xy),0.0) * k.xy;
  
-    vec2 d = vec2(length(p.xy - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x)) * sign(p.y-h.x),p.z-h.y);
+    vec2 d = vec2(length(p.xy 
+           - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x))
+           * sign(p.y-h.x),p.z-h.y);
+
     return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
@@ -750,13 +687,13 @@ vec2 rayScene(vec3 ro,vec3 rd) {
 
 }
 
-vec3 fog(vec3 col,vec3 fog_col) {
-    float fog_depth = 1. - exp(-fog_distance * fog_density);
+vec3 fog(vec3 col,vec3 fog_col,float fog_dist,float fog_de) {
+    float fog_depth = 1. - exp(-fog_dist * fog_de);
     return mix(col,fog_col,fog_depth);
 }
 
-vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l) {
-    float fog_depth  = 1. - exp(-fog_distance * fog_density);
+vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float fog_dist,float fog_de) {
+    float fog_depth  = 1. - exp(-fog_dist * fog_de);
     float light_depth = max(dot(rd,l),0.);
     vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
     return mix(col,fog_col,light_depth);
@@ -776,12 +713,10 @@ float calcAO(vec3 p,vec3 n) {
         if(o > .33) break;
     
      }
-
-     return clamp(1. + 3. * o ,0.0,1.0) * (.5+.5*n.y);   
+     return clamp(1. - 3. * o ,0.0,1.0) * (.5+.5*n.y);   
 }
 
-
-float shadow(vec3 ro,vec3 rd ) {
+float shadow(vec3 ro,vec3 rd,float shmax,float shblur) {
 
     float res = 1.0;
     float t = 0.005;
@@ -873,42 +808,25 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
 float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
 float ref = smoothstep(-.2,.2,r.y);
 
-float ao = calcAO(p,n);    
-
 vec3 linear = vec3(0.);
 
-dif *= shadow(p,l);
-ref *= shadow(p,r);
+//dif *= shadow(p,l);
+//ref *= shadow(p,r);
 
-if(d.y == 1.) {
-
-    linear += dif * vec3(.5);
-    linear += amb * vec3(.05);
-    linear += ref * vec3(4.);
-    linear += fre * vec3(.25);
-
-    col = vec3(.5);
-
-}
+linear += dif * vec3(.5);
+linear += amb * vec3(.05);
+linear += ref * vec3(4.);
+linear += fre * vec3(.25);
 
 if(d.y == 2.) {
 
-    linear += dif * vec3(hash(135.),hash(34.),hash(344.));
-    linear += amb * vec3(.05);
-    linear += ref * vec3(hash(245.),hash(123.),hash(335.)) * .04;
-    linear += fre * vec3(hash(126.),hash(45.),hash(646.))  * .6; 
-
-    float nl;
-    nl = f3(p+f3(p,5,.5),6,.5);
-    nl = cell(p,12.,0);
-    nl = f3(p,6,octahedron(p,1.)*n3(p));
-    nl = f3(p+sin3(p,10.),5,.45);
-
+    float nl = f3(p+f3(p,5,.5),6,.5);
+    
     col += fmCol(p.y + nl,vec3(hash(112.),hash(33.),hash(21.)),
                           vec3(hash(12.),hash(105.),hash(156.)), 
                           vec3(hash(32.),hash(123.),hash(25.)),         
                           vec3(hash(10.),hash(15.),hash(27.)));               
-                        
+                       
 }
 
 col = col * linear;
@@ -933,7 +851,7 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,camPos,camTar,fov); 
+    vec3 dir = rayCamDir(uv,camPos,camTar,1.); 
     vec3 col = render(camPos,dir);  
     color += col;
     }
