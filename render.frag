@@ -18,14 +18,17 @@ uniform float mouse_scroll;
 uniform int mouse_pressed;
 
 uniform int seed;
-uniform int aa;
-
 uniform int steps;
 uniform float eps;
 uniform float dmin;
 uniform float dmax;
 
-#define shsteps 45.
+const int aa = 2;
+ 
+const int shsteps = 45; 
+float shblur = 10.0;
+float shmax = 100.; 
+
 #define aosteps 5
 
 const float PI   =  radians(180.0); 
@@ -309,6 +312,15 @@ axis = normalize(axis);
         0.0,
         0.0,0.0,0.0,1.0);
 
+}
+
+mat3 camEuler(float yaw,float pitch,float roll) {
+
+     vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
+     vec3 r = normalize(cross(r,vec3(0.0,1.0,0.0)));
+     vec3 u = normalize(cross(r,f));
+
+     return rotAxis(f,roll) * mat3(r,u,f);
 }
 
 vec3 repLim(vec3 p,float c,vec3 l) {
@@ -716,7 +728,7 @@ float calcAO(vec3 p,vec3 n) {
      return clamp(1. - 3. * o ,0.0,1.0) * (.5+.5*n.y);   
 }
 
-float shadow(vec3 ro,vec3 rd,float shmax,float shblur) {
+float shadow(vec3 ro,vec3 rd) {
 
     float res = 1.0;
     float t = 0.005;
@@ -766,13 +778,25 @@ vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
      return vDir;
 }
 
-vec3 renderPhong(vec2 uv,vec3 n,vec3 light_pos,vec3 ambc,vec3 difc) {
+vec3 renderPhong(vec3 p,vec3 lp,vec3 rd,vec3 dif,vec3 spe,vec3 k,float a) {
 
-     vec3 ld = normalize(vec3(light_pos - vec3(uv,0.)));
-     float dif = max(0.,dot(n,ld));
-     vec3 ref = normalize(reflect(-ld,n));
-     float spe = pow(max(0.,dot(n,ref)),8.); 
-     return min(vec3(1.),ambc + difc * dif + spe);
+     vec3 n = calcNormal(p);
+
+     vec3 l = normalize(lp - p);
+     vec3 v = normalize(rd - p);
+
+     vec3 r = normalize(reflect(-l,n));
+     vec3 h = normalize(l + v);  
+
+     float nl = clamp(dot(l,n),0.0,,1.0 );
+
+     float rv = dot(r,h);
+    
+     if(nl < 0.0) { return vec3(0.0); }
+     if(rv < 0.0) { return k * (dif * nl); } 
+     
+     return k * (dif * nl + spe * pow(rv,a));
+
 }
 
 vec3 renderNormals(vec3 ro,vec3 rd) {
@@ -785,21 +809,16 @@ vec3 renderNormals(vec3 ro,vec3 rd) {
    return col;
 }
 
-vec3 render(vec3 ro,vec3 rd) {
+vec3 render(vec3 ro,vec3 rd,vec3 lp,vec3 col) {
  
 vec2 d = rayScene(ro, rd);
 
-vec3 col = vec3(1.) - max(rd.y,0.);
-
-if(d.y >= 0.) { 
-
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(0.,10.,10.));
+vec3 l = normalize(lp);
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
-float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
 float dif = clamp(dot(n,l),0.0,1.0);
 
 float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
@@ -810,31 +829,15 @@ float ref = smoothstep(-.2,.2,r.y);
 
 vec3 linear = vec3(0.);
 
-//dif *= shadow(p,l);
-//ref *= shadow(p,r);
+dif *= shadow(p,l);
+ref *= shadow(p,r);
 
 linear += dif * vec3(.5);
-linear += amb * vec3(.05);
 linear += ref * vec3(4.);
 linear += fre * vec3(.25);
 
-if(d.y == 2.) {
-
-    float nl = f3(p+f3(p,5,.5),6,.5);
-    
-    col += fmCol(p.y + nl,vec3(hash(112.),hash(33.),hash(21.)),
-                          vec3(hash(12.),hash(105.),hash(156.)), 
-                          vec3(hash(32.),hash(123.),hash(25.)),         
-                          vec3(hash(10.),hash(15.),hash(27.)));               
-                       
-}
-
 col = col * linear;
-col += 5. * spe * vec3(hash(146.),hash(925.),hash(547.));
-
-col = mix(col,vec3(1.),1. - exp(-.0001 * d.x * d.x * d.x));
-
-} 
+col += spe; 
 
 return col;
 }
@@ -842,6 +845,8 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
+vec3 ro = vec3(0.0,0.0,5.0);
+vec3 ta = vec3(0.0);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
@@ -851,8 +856,8 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,camPos,camTar,1.); 
-    vec3 col = render(camPos,dir);  
+    vec3 dir = rayCamDir(uv,ro,ta,1.); 
+    vec3 col = render(ro,dir);  
     color += col;
     }
 
