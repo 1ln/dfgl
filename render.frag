@@ -7,29 +7,25 @@ out vec4 FragColor;
 uniform sampler2D tex;
 
 uniform vec2 resolution;
-
 uniform float time;
-
-uniform vec3 camPos;  
-uniform vec3 camTar;
 
 uniform vec2 mouse;
 uniform float mouse_scroll;
 uniform int mouse_pressed;
 
 uniform int seed;
-uniform int steps;
-uniform float eps;
-uniform float dmin;
-uniform float dmax;
 
+const int steps = 250;
+float eps = 0.00001;
+float dmin = 0.;
+float dmax = 750.;
 const int aa = 2;
  
 const int shsteps = 45; 
 float shblur = 10.0;
 float shmax = 100.; 
 
-#define aosteps 5
+const int aosteps = 5;
 
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
@@ -287,7 +283,7 @@ mat2 rot2(float a) {
     return mat2(c,-s,s,c);
 }
 
-mat4 rotAxis(vec3 axis,float theta) {
+mat3 rotAxis(vec3 axis,float theta) {
 
 axis = normalize(axis);
 
@@ -296,28 +292,36 @@ axis = normalize(axis);
 
     float oc = 1.0 - c;
 
-    return mat4(
+    return mat3(
  
         oc * axis.x * axis.x + c, 
         oc * axis.x * axis.y - axis.z * s,
         oc * axis.z * axis.x + axis.y * s, 
-        0.0,
+    
         oc * axis.x * axis.y + axis.z * s,
         oc * axis.y * axis.y + c, 
         oc * axis.y * axis.z - axis.x * s,
-        0.0,
+
         oc * axis.z * axis.x - axis.y * s,
         oc * axis.y * axis.z + axis.x * s, 
-        oc * axis.z * axis.z + c, 
-        0.0,
-        0.0,0.0,0.0,1.0);
+        oc * axis.z * axis.z + c);
 
 }
+
+mat3 camOrthographic(vec3 ro,vec3 ta,float r) {
+     
+     vec3 w = normalize(ta - ro); 
+     vec3 p = vec3(sin(r),cos(r),0.);           
+     vec3 u = normalize(cross(w,p)); 
+     vec3 v = normalize(cross(u,w));
+
+     return mat3(u,v,w); 
+} 
 
 mat3 camEuler(float yaw,float pitch,float roll) {
 
      vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
-     vec3 r = normalize(cross(r,vec3(0.0,1.0,0.0)));
+     vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
      vec3 u = normalize(cross(r,f));
 
      return rotAxis(f,roll) * mat3(r,u,f);
@@ -788,7 +792,7 @@ vec3 renderPhong(vec3 p,vec3 lp,vec3 rd,vec3 dif,vec3 spe,vec3 k,float a) {
      vec3 r = normalize(reflect(-l,n));
      vec3 h = normalize(l + v);  
 
-     float nl = clamp(dot(l,n),0.0,,1.0 );
+     float nl = clamp(dot(l,n),0.0,1.0 );
 
      float rv = dot(r,h);
     
@@ -856,8 +860,8 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
-    vec3 dir = rayCamDir(uv,ro,ta,1.); 
-    vec3 col = render(ro,dir);  
+    vec3 dir = rayCamDir(uv,ro,ta,1.);
+    vec3 col = renderNormals(ro,dir);  
     color += col;
     }
 
