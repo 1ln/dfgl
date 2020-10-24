@@ -31,14 +31,22 @@ glm::vec2 mouse;
 bool mouse_pressed = false; 
 float mouse_scroll = 0.0f;
 
-int aa = 2;
+bool key_w = false;
+bool key_a = false;
+bool key_s = false;
+bool key_d = false;
+
+bool key_up = false;
+bool key_down = false;
+bool key_right = false;
+bool key_left = false;
+
+bool key_q = false;
+bool key_e = false; 
+
+bool key_space = false;
 
 int seed = 1251623;
-
-int steps = 100;
-float dmin = 0.0f;
-float dmax = 245.0f;
-float eps = 0.000f;
 
 Camera cam(glm::vec3(0.0f,0.0f,5.0f),
            glm::vec3(0.0f,0.0f,0.0f));
@@ -138,17 +146,19 @@ int main(int argc,char** argv) {
 
         shader.setInt("seed",seed);
 
-        shader.setVec3("camPos",1,cam.position);
-        shader.setVec3("camTar",1,cam.target);
-
-        shader.setInt("aa",aa);
-        
-        shader.setInt("steps",steps);     
-        shader.setFloat("dmin",dmin);
-        shader.setFloat("dmax",dmax);
-        shader.setFloat("eps",eps);
-
+        shader.setBool("key_w",key_w);
+        shader.setBool("key_s",key_s);
+        shader.setBool("key_d",key_d);
+        shader.setBool("key_a",key_a);
+        shader.setBool("key_up",key_up);
+        shader.setBool("key_down",key_down);
+        shader.setBool("key_right",key_right);
+        shader.setBool("key_left",key_left);
+        shader.setBool("key_space",key_space);
+  
         shader.setVec2("mouse",1,mouse);
+        shader.setFloat("mouse_scroll",mouse_scroll);
+        shader.setBool("mouse_pressed",mouse_pressed);
         
         glBindFramebuffer(GL_FRAMEBUFFER,0); 
         glViewport(0,0,width,height);
@@ -176,32 +186,60 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
-    if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS)
-        cam.processKeyboard(UP,dt);
+    if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
+        key_space = true;
+    } else { 
+        key_space = false;
+    }
+  
+    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) {
+        key_w = true; 
+    } else {
+        key_w = false; 
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS)
-        cam.processKeyboard(FORWARD,dt);
+    if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS) {
+        key_a = true;
+    } else {
+        key_a = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS)
-        cam.processKeyboard(LEFT,dt);       
+    if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS) { 
+        key_s = true;
+    } else { 
+        key_s = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS)
-        cam.processKeyboard(BACKWARD,dt);
+    if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS) {
+        key_d = true;
+    } else {
+        key_d = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS)
-        cam.processKeyboard(RIGHT,dt);
+    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS) { 
+        key_up = true;
+    } else {
+        key_up = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS)
-        cam.processKeyboard(PITCH_FORWARD,dt);
+    if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS) {  
+        key_left = true;
+    } else {      
+        key_left = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS)
-        cam.processKeyboard(YAW_LEFT,dt);       
+    if(glfwGetKey(window,GLFW_KEY_DOWN) == GLFW_PRESS) {
+        key_down = true;
+    } else {
+        key_down = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_DOWN) == GLFW_PRESS)
-        cam.processKeyboard(PITCH_BACKWARD,dt);
+    if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        key_right = true;
+    } else {
+        key_right = false;
+    }
 
-    if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS)
-        cam.processKeyboard(YAW_RIGHT,dt);
 }
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
@@ -223,6 +261,9 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
 
     lastx = xpos;
     lasty = ypos;
+
+    mouse.x = lastx;
+    mouse.y = lasty; 
 
 }
 
