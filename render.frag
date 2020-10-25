@@ -15,6 +15,16 @@ uniform int mouse_pressed;
 
 uniform int seed;
 
+uniform int key_a;
+uniform int key_w;
+uniform int key_s;
+uniform int key_d;
+uniform int key_up;
+uniform int key_down;
+uniform int key_right;
+uniform int key_left;
+uniform int key_space;
+
 const int steps = 250;
 float eps = 0.00001;
 float dmin = 0.;
@@ -31,9 +41,24 @@ const float PI   =  radians(180.0);
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 
+mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
+mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6);
+
+float dot2(vec2 v) { return dot(v,v); }
+float dot2(vec3 v) { return dot(v,v); }
+float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
+
 vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
 vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
+
+float h11(float p) {
+    return(fract(sin(p) * 4358.5453));
+}
+
+float h21(vec2 p) {
+    return fract(sin(dot(p,vec2(12.9898,78.233))) *  4358.5453);
+}
 
 float hash(float p) {
     uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
@@ -179,6 +204,17 @@ float f3(vec3 x,int octaves,float hurst) {
     return s;
 }
 
+float dd(vec2 p) {
+
+   vec2 q = vec2(f2(p+vec2(3.,0.5)),
+                 f2(p+vec2(1.,2.5)));
+
+   vec2 r = vec2(f2(p + 4. * q + vec2(7.5,4.35)),
+                 f2(p + 4. * q + vec2(5.6,2.2))); 
+
+   return f2(p + 4. * r);
+}
+
 vec2 rndPntCircle(float p) {
     
     float a = PI2 * hash(p);
@@ -238,6 +274,10 @@ vec3 rgbHsv(vec3 c) {
     rgb = rgb * rgb * (3. - 2. * rgb);
     return c.z * mix(vec3(1.),rgb,c.y);
 
+}
+
+vec3 contrast(vec3 c) {
+return smoothstep(0.,1.,c);
 }
 
 float easeIn4(float t) {
@@ -327,6 +367,14 @@ mat3 camEuler(float yaw,float pitch,float roll) {
      return rotAxis(f,roll) * mat3(r,u,f);
 }
 
+vec3 camOrbit(vec3 ro) {
+
+     vec2 m = mouse / resolution.xy;
+     ro.xz *= rot2(-m.x * PI);    
+     ro.yz *= rot2(-m.y * PI2);
+     return ro;
+}
+
 vec3 repLim(vec3 p,float c,vec3 l) {
   
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
@@ -406,13 +454,8 @@ vec3 twist(vec3 p,float k) {
 }
 
 float layer(float d,float h) {
-
     return abs(d) - h;
 }
-
-float dot2(vec2 v) { return dot(v,v); }
-float dot2(vec3 v) { return dot(v,v); }
-float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 float circle(vec2 p,float r) {
     return length(p) - r;
@@ -668,10 +711,8 @@ vec2 scene(vec3 p) {
     d = max(-torus(p,vec2(1.5,.61)),box(p,vec3(1.))); 
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
     d = circle(rev(p,0.,pow(2.,1./3.)),1.);
-     
-
+    
     //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
-
     res = opu(res,vec2(d,2.)); 
 
     float pl = plane(q+vec3(0.,1.5,0.),vec4(0.,1.,0.,1.));
@@ -782,8 +823,10 @@ vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
      return vDir;
 }
 
-vec3 renderPhong(vec3 p,vec3 lp,vec3 rd,vec3 dif,vec3 spe,vec3 k,float a) {
+vec3 renderPhong(vec3 ro,vec3 rd,vec3 lp,vec3 dif,vec3 spe,vec3 k,float a) {
 
+     vec2 d = rayScene(ro,rd); 
+     vec3 p = ro + rd * d.x; 
      vec3 n = calcNormal(p);
 
      vec3 l = normalize(lp - p);
@@ -795,7 +838,7 @@ vec3 renderPhong(vec3 p,vec3 lp,vec3 rd,vec3 dif,vec3 spe,vec3 k,float a) {
      float nl = clamp(dot(l,n),0.0,1.0 );
 
      float rv = dot(r,h);
-    
+
      if(nl < 0.0) { return vec3(0.0); }
      if(rv < 0.0) { return k * (dif * nl); } 
      
@@ -808,20 +851,27 @@ vec3 renderNormals(vec3 ro,vec3 rd) {
    vec2 d = rayScene(ro,rd);
    vec3 p = ro + rd * d.x;
    vec3 n = calcNormal(p);   
-   vec3 col = vec3(n);
    
-   return col;
+   return n;
 }
 
-vec3 render(vec3 ro,vec3 rd,vec3 lp,vec3 col) {
+vec3 renderScene(vec3 ro,vec3 rd,vec3 lp,vec3 c) {
  
 vec2 d = rayScene(ro, rd);
+
+vec3 col = c * max(0.,rd.y);
+
+if(d.y >= 0.) {
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
 vec3 l = normalize(lp);
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
+
+col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
+
+float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
 float dif = clamp(dot(n,l),0.0,1.0);
 
@@ -837,11 +887,16 @@ dif *= shadow(p,l);
 ref *= shadow(p,r);
 
 linear += dif * vec3(.5);
-linear += ref * vec3(4.);
-linear += fre * vec3(.25);
+linear += amb * vec3(0.01,0.05,0.05);
+linear += ref * vec3(4.  );
+linear += fre * vec3(0.25,0.5,0.35);
 
 col = col * linear;
-col += spe; 
+col += spe * vec3(1.,0.97,1.); 
+
+col = mix(col,c,1.-exp(-0.00001 * d.x*d.x*d.x)); 
+
+}
 
 return col;
 }
@@ -857,12 +912,16 @@ for(int k = 0; k < aa; ++k) {
 
     vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
 
-    vec2 uv = -1. + 2. * (gl_FragCoord.xy + o) / resolution.xy; 
-    uv.x *= resolution.x/resolution.y; 
+    vec2 uv = (2. * (gl_FragCoord.xy + o) - resolution.xy) / resolution.y; 
 
-    vec3 dir = rayCamDir(uv,ro,ta,1.);
-    vec3 col = renderNormals(ro,dir);  
-    color += col;
+    mat3 cm = camOrthographic(ro,ta,0.);
+    vec3 rd = cm * normalize(vec3(uv.xy,2.));
+
+    vec3 render = renderNormals(ro,rd);  
+    render = renderPhong(ro,rd,vec3(10.),vec3(0.5),vec3(0.5),vec3(1.),15.);  
+    render = renderScene(ro,rd,vec3(10.),vec3(1.));    
+
+    color += render;
     }
 
 color /= float(aa*aa);
