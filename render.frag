@@ -37,48 +37,60 @@ float shmax = 100.;
 
 const int aosteps = 5;
 
+const int octaves = 5;
+float hurst = 0.5;
+
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 
 mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
-mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6);
+mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
 
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
-vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
+#define hash 1 
+#if hash == 0
 
-float h11(float p) {
-    return(fract(sin(p) * 4358.5453));
+float h(float p) {
+    return(fract(sin(p) * 4358.5453 + seed));
 }
 
-float h21(vec2 p) {
-    return fract(sin(dot(p,vec2(12.9898,78.233))) *  4358.5453);
+float h(vec2 p) {
+    return fract(sin(dot(p,vec2(12.9898,78.233))) *
+    4358.5453 + seed);
 }
 
-float hash(float p) {
+vec3 h33(vec3 p) {
+    return fract(sin(dot(p,vec3(9.,113.,157.))) * 
+                           vec3(141.,252.,10.)+seed) * 2. - 1.;
+}
+
+#else
+
+float h(float p) {
     uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
     uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
-float hash(vec2 p) {
+float h(vec2 p) {
     uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(seed)),2531151992.0);
     uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
-vec3 hash3(vec3 p) {
+vec3 h33(vec3 p) {
    uvec3 h = uvec3(ivec3(  p)) *  
    uvec3(uint(int(seed)),2531151992.0,2860486313U);
    h = (h.x ^ h.y ^ h.z) * 
    uvec3(uint(int(seed)),2531151992U,2860486313U);
    return vec3(h) * (1.0/float(0xffffffffU));
 }
+
+#endif
 
 float cell(vec3 x,float iterations,int type) {
  
@@ -94,7 +106,7 @@ float cell(vec3 x,float iterations,int type) {
             for(int k = -1; k <= 1; k++) { 
 
                 vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = hash3( p + b );
+                vec3 r = h33( p + b );
                 
                 vec3 diff = (b + r - f);
 
@@ -105,11 +117,14 @@ float cell(vec3 x,float iterations,int type) {
                     }
  
                     if(type == 1) {
-                        min_dist = min(min_dist,abs(diff.x)+abs(diff.y)+abs(diff.z));
+                        min_dist = min(min_dist,
+                        abs(diff.x)+abs(diff.y)+abs(diff.z));
                     }
 
                     if(type == 2) {
-                        min_dist = min(min_dist,max(abs(diff.x),max(abs(diff.y),abs(diff.z))));
+                        min_dist = min(min_dist,
+                        max(abs(diff.x),max(abs(diff.y),
+                        abs(diff.z))));
                     }
 
             }
@@ -120,43 +135,16 @@ float cell(vec3 x,float iterations,int type) {
 
 }
 
-float ns2(vec2 p) {
+float n2(vec2 x) {
 
-    const float k1 = (3. - sqrt(3.))/6.;
-    const float k2 = .5 * (sqrt(3.) -1.);
-    const float k3 = -.5773;
-    const float k4 = 1./41.;
+    vec3 p = floor(x);
+    vec3 f = fract(x);
 
-    const vec4 c = vec4(k1,k2,k3,k4);
-    
-    vec2 i = floor(p + dot(p,c.yy));
-    vec2 x0 = p - i + dot(i,c.xx);
-  
-    vec2 i1;
-    i1 = (x0.x > x0.y) ? vec2(1.,0.) : vec2(0.,1.);
-    vec4 x12 = x0.xyxy + c.xxzz;
-    x12.xy -= i1;
+    f = f * f * (3.0 - 2.0 * f);  
+    float n = p.x + p.y * 57.;  
 
-    i = mod289(i);
-    
-    vec3 p1 = permute(permute(i.y + vec3(0.,i1.y,1.))
-        + i.x + vec3(0.,i1.x,1.));
-        p1 = permute(mod289(p1 + vec3(float(seed))));
-
-    vec3 m = max(.5 - vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
-    m = m * m; 
-    m = m * m;
-
-    vec3 x = fract(p1 * c.www) - 1.;
-    vec3 h = abs(x) - .5;
-    vec3 ox = floor(x + .5);
-    vec3 a0 = x - ox; 
-    m *= 1.792842 - 0.853734 * (a0 * a0 + h * h);
-     
-    vec3 g;
-    g.x = a0.x * x0.x + h.x * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-    return 130. * dot(m,g);
+    return mix(mix(h(n+0.),h(n+1.),f.x),
+               mix(h(n+57.),h(n+58.),f.x),f.y);  
 }
 
 float n3(vec3 x) {
@@ -167,28 +155,34 @@ float n3(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
     float n = p.x + p.y * 157.0 + 113.0 * p.z;
 
-    return mix(mix(mix(hash(  n +   0.0) , hash(   n +   1.0)   ,f.x),
-                   mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
-               mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
-                   mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
+    return mix(mix(mix(hash(n + 0.0), 
+                       hash(n + 1.0),f.x),
+                   mix(hash(n + 157.0),
+                       hash(n + 158.0),f.x),f.y),
+               mix(mix(hash(n + 113.0), 
+                       hash(n + 114.0),f.x),
+                   mix(hash(n + 270.0), 
+                       hash(n + 271.0),f.x),f.y),f.z);
 }
 
-float f2(vec2 x,int octaves) {
+float f2(vec2 x) {
 
-    float f = 0.;
+    float s = 0.;
+    float h = exp2(-hurst);     
+    float f = 1.;
+    float a = 0.5;
 
     for(int i = 1; i < octaves; i++) {
  
-    float e = pow(2.,float(i));
-    float s = (1./e);
-    f += ns2(x*e)*s;   
-    
+        s += a * n2(f * x);
+        f *= 2.;
+        a *= h;
     }    
 
-    return f * .5 + .5;
+    return s;
 }
 
-float f3(vec3 x,int octaves,float hurst) {
+float f3(vec3 x) {
 
     float s = 0.;
     float h = exp2(-hurst);
