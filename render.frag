@@ -1,6 +1,7 @@
-#version 430 core     
+#version 330 core     
 
-// dolson,2019
+//Dan Olson
+//2020
 
 out vec4 FragColor;
 
@@ -14,16 +15,6 @@ uniform float mouse_scroll;
 uniform int mouse_pressed;
 
 uniform int seed;
-
-uniform int key_a;
-uniform int key_w;
-uniform int key_s;
-uniform int key_d;
-uniform int key_up;
-uniform int key_down;
-uniform int key_right;
-uniform int key_left;
-uniform int key_space;
 
 const int steps = 250;
 float eps = 0.00001;
@@ -51,118 +42,28 @@ float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
-#define hash 1 
-#if hash == 0
-
-float h(float p) {
-    return(fract(sin(p) * 4358.5453 + seed));
-}
-
-float h(vec2 p) {
-    return fract(sin(dot(p,vec2(12.9898,78.233))) *
-    4358.5453 + seed);
-}
-
-vec3 h33(vec3 p) {
-    return fract(sin(dot(p,vec3(9.,113.,157.))) * 
-                           vec3(141.,252.,10.)+seed) * 2. - 1.;
-}
-
-#else
-
-float h(float p) {
+float h11(float p) {
     uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
     uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
-float h(vec2 p) {
+float h21(vec2 p) {
     uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(seed)),2531151992.0);
     uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
-vec3 h33(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) *  
-   uvec3(uint(int(seed)),2531151992.0,2860486313U);
-   h = (h.x ^ h.y ^ h.z) * 
-   uvec3(uint(int(seed)),2531151992U,2860486313U);
-   return vec3(h) * (1.0/float(0xffffffffU));
-}
+float n2(vec2 x) { 
 
-#endif
-
-float cell(vec3 x,float iterations,int type) {
- 
-    x *= iterations;
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
- 
-    float min_dist = 1.0;
-    
-    for(int i = -1; i <= 1; i++) {
-        for(int j = -1; j <= 1; j++) {
-            for(int k = -1; k <= 1; k++) { 
-
-                vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = h33( p + b );
-                
-                vec3 diff = (b + r - f);
-
-                float d = length(diff);
-
-                    if(type == 0) { 
-                        min_dist = min(min_dist,d);
-                    }
- 
-                    if(type == 1) {
-                        min_dist = min(min_dist,
-                        abs(diff.x)+abs(diff.y)+abs(diff.z));
-                    }
-
-                    if(type == 2) {
-                        min_dist = min(min_dist,
-                        max(abs(diff.x),max(abs(diff.y),
-                        abs(diff.z))));
-                    }
-
-            }
-        }
-    }
- 
-    return min_dist;  
-
-}
-
-float n2(vec2 x) {
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
+    vec2 p = floor(x);
+    vec2 f = fract(x);
 
     f = f * f * (3.0 - 2.0 * f);  
     float n = p.x + p.y * 57.;  
 
-    return mix(mix(h(n+0.),h(n+1.),f.x),
-               mix(h(n+57.),h(n+58.),f.x),f.y);  
-}
-
-float n3(vec3 x) {
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);
-    float n = p.x + p.y * 157.0 + 113.0 * p.z;
-
-    return mix(mix(mix(hash(n + 0.0), 
-                       hash(n + 1.0),f.x),
-                   mix(hash(n + 157.0),
-                       hash(n + 158.0),f.x),f.y),
-               mix(mix(hash(n + 113.0), 
-                       hash(n + 114.0),f.x),
-                   mix(hash(n + 270.0), 
-                       hash(n + 271.0),f.x),f.y),f.z);
+    return mix(mix(h11(n+0.),h11(n+1.),f.x),
+               mix(h11(n+57.),h11(n+58.),f.x),f.y);  
 }
 
 float f2(vec2 x) {
@@ -182,22 +83,6 @@ float f2(vec2 x) {
     return s;
 }
 
-float f3(vec3 x) {
-
-    float s = 0.;
-    float h = exp2(-hurst);
-    float f = 1.;
-    float a = .5;
-
-    for(int i = 0; i < octaves; i++) {
-
-        s += a * n3(f * x);  
-        f *= 2.;
-        a *= h;
-    }
-    return s;
-}
-
 float dd(vec2 p) {
 
    vec2 q = vec2(f2(p+vec2(3.,0.5)),
@@ -207,53 +92,6 @@ float dd(vec2 p) {
                  f2(p + 4. * q + vec2(5.6,2.2))); 
 
    return f2(p + 4. * r);
-}
-
-vec2 rndPntCircle(float p) {
-    
-    float a = PI2 * hash(p);
-    return vec2(cos(a),sin(a)); 
-}
-
-float sin2(vec2 p,float s) {
-    return sin(p.x*s) * sin(p.y*s);
-}
-
-float sin3(vec3 p,float s) {
-    return sin(p.x * s) * sin(p.y * s) * sin(p.z * s);
-}
-
-float fib(float n) {
-
-    return pow(( 1. + sqrt(5.)) /2.,n) -
-           pow(( 1. - sqrt(5.)) /2.,n) / sqrt(5.); 
-
-}
-
-float envImp(float x,float k) {
-
-    float h = k * x;
-    return h * exp(1.0 - h);
-}
-
-float envSt(float x,float k,float n) {
-    return exp(-k * pow(x,n));
-}
-
-float cubicImp(float x,float c,float w) {
-
-    x = abs(x - c);
-    if( x > w) { return 0.0; }
-    x /= w;
-    return 1.0 - x * x  * (3.0 - 2.0 * x);
-
-}
-
-float sincPh(float x,float k) {
-
-    float a = PI * (k * x - 1.0);
-    return sin(a)/a;
-
 }
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
@@ -268,45 +106,6 @@ vec3 rgbHsv(vec3 c) {
     rgb = rgb * rgb * (3. - 2. * rgb);
     return c.z * mix(vec3(1.),rgb,c.y);
 
-}
-
-vec3 contrast(vec3 c) {
-return smoothstep(0.,1.,c);
-}
-
-float easeIn4(float t) {
-    return t * t;
-}
-
-float easeOut4(float t) {
-    return -1.0 * t * (t - 2.0);
-}
-
-float easeInOut4(float t) {
-
-    if((t *= 2.0) < 1.0) {
-        return 0.5 * t * t;
-    } else {
-        return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
-    }
-}
-
-float easeIn3(float t) {
-    return t * t * t;
-}
-
-float easeOut3(float t) {
-    return (t = t - 1.0) * t * t + 1.0;
-}
-
-float easeInOut3(float t) {
-
-    if((t *= 2.0) < 1.0) {
-        return 0.5 * t * t * t;
-    } else { 
-        return 0.5 * ((t -= 2.0) * t * t + 2.0);
-
-    }
 }
 
 mat2 rot2(float a) {
@@ -359,14 +158,6 @@ mat3 camEuler(float yaw,float pitch,float roll) {
      vec3 u = normalize(cross(r,f));
 
      return rotAxis(f,roll) * mat3(r,u,f);
-}
-
-vec3 camOrbit(vec3 ro) {
-
-     vec2 m = mouse / resolution.xy;
-     ro.xz *= rot2(-m.x * PI);    
-     ro.yz *= rot2(-m.y * PI2);
-     return ro;
 }
 
 vec3 repLim(vec3 p,float c,vec3 l) {
@@ -684,15 +475,12 @@ vec2 scene(vec3 p) {
     vec2 res = vec2(1.,0.);
 
     float d = 0.;     
-    float s = 0.1;
     float t = time;  
     
     vec3 q = p;
 
-    //p.xz *= rot2(t*s);
-    //p.zy *= rot2(t*s);
-
-    //p = repeat(p,vec3(10.));  
+    p.xz *= rot2(t);
+    p.zy *= rot2(t);
 
     d = box(p,vec3(1.));
     d = menger(p,5,1.,box(p,vec3(1.)));
@@ -701,11 +489,9 @@ vec2 scene(vec3 p) {
     d = menger(p,4,1.,box(p,vec3(1.))); 
     d = gyroid(p,5.,.35,.015,sphere(p,1.));
     d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-    d = mix(box(p,vec3(1.)),sphere(p,1.),-2.);    
-    d = max(-torus(p,vec2(1.5,.61)),box(p,vec3(1.))); 
+    d = mix(box(p,vec3(1.)),sphere(p,1.),-2.);     
     d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
-    d = circle(rev(p,0.,pow(2.,1./3.)),1.);
-    
+
     //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
     res = opu(res,vec2(d,2.)); 
 
@@ -736,18 +522,6 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         if(e < s) { d = -1.0; }
         return vec2(s,d);
 
-}
-
-vec3 fog(vec3 col,vec3 fog_col,float fog_dist,float fog_de) {
-    float fog_depth = 1. - exp(-fog_dist * fog_de);
-    return mix(col,fog_col,fog_depth);
-}
-
-vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float fog_dist,float fog_de) {
-    float fog_depth  = 1. - exp(-fog_dist * fog_de);
-    float light_depth = max(dot(rd,l),0.);
-    vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
-    return mix(col,fog_col,light_depth);
 }
 
 float calcAO(vec3 p,vec3 n) {
@@ -803,18 +577,6 @@ vec3 calcNormal(vec3 p) {
 
     ));
     
-}
-
-vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
-
-     vec3 camForward = normalize(camTarget - camPosition);
-     vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
-     vec3 camUp = normalize(cross(camForward,camRight));
-
-
-     vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
-
-     return vDir;
 }
 
 vec3 renderPhong(vec3 ro,vec3 rd,vec3 lp,vec3 dif,vec3 spe,vec3 k,float a) {
@@ -887,7 +649,6 @@ linear += fre * vec3(0.25,0.5,0.35);
 
 col = col * linear;
 col += spe * vec3(1.,0.97,1.); 
-
 col = mix(col,c,1.-exp(-0.00001 * d.x*d.x*d.x)); 
 
 }
@@ -898,7 +659,7 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(0.0,0.0,5.0);
+vec3 ro = vec3(1.,5.,10.);
 vec3 ta = vec3(0.0);
 
 for(int k = 0; k < aa; ++k) {
@@ -906,13 +667,13 @@ for(int k = 0; k < aa; ++k) {
 
     vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
 
-    vec2 uv = (2. * (gl_FragCoord.xy + o) - resolution.xy) / resolution.y; 
+    vec2 uv = (2. * (gl_FragCoord.xy + o) -
+    resolution.xy) / resolution.y; 
 
     mat3 cm = camOrthographic(ro,ta,0.);
     vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
     vec3 render = renderNormals(ro,rd);  
-    render = renderPhong(ro,rd,vec3(10.),vec3(0.5),vec3(0.5),vec3(1.),15.);  
     render = renderScene(ro,rd,vec3(10.),vec3(1.));    
 
     color += render;
