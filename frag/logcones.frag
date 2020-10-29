@@ -9,15 +9,18 @@ uniform vec2 resolution;
 uniform float time;
 
 const int steps = 250;
-const float eps = 0.0001;
+const float eps = 0.00001;
 const float trace_dist = 500.;
 
 const float PI  =  radians(180.0); 
 const float PI2 = PI * 2.;
 
-vec3 fcos(vec3 x) { 
-vec3 w = fwidth(x);
-return cos(x) * smoothstep(PI2,0.,w);
+mat2 rot(float a) {
+ 
+    float s = sin(a);
+    float c = cos(a);
+ 
+    return mat2(c,s,-s,c);
 }
 
 float hash(float p) {
@@ -67,7 +70,7 @@ float sin3(vec3 p,float h) {
 }
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    return a + b * fcos((2. * PI) * (c * t + d));
+    return a + b * cos((2. * PI) * (c * t + d));
 }
 
 vec2 opu(vec2 d1,vec2 d2) {
@@ -112,7 +115,7 @@ return res;
 
 vec2 rayScene(vec3 ro,vec3 rd) {
     
-    float depth = 0.0;
+    float depth = 5.0;
     float d = -1.0;
 
     for(int i = 0; i < steps; i++) {
@@ -175,7 +178,6 @@ vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
      vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
      vec3 camUp = normalize(cross(camForward,camRight));
 
-
      vec3 vDir = normalize(uv.x * camRight + uv.y * camUp + camForward * fPersp);  
 
      return vDir;
@@ -185,7 +187,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
 vec2 d = rayScene(ro, rd);
 
-vec3 col = vec3(1.);
+vec3 col = vec3(1.) * max(1.,rd.y);
 
 if(d.y >= 0.) {
 
@@ -223,6 +225,9 @@ col = fmCol(p.y,vec3(n1,hash(15.),hash(44.)),
 
 col = col * linear;
 col += 5. * spe * vec3(.5);
+col = mix(col,vec3(1.), 1. - exp(-0.001 *d.x*d.x*d.x));
+
+
 }
 return col;
 }
@@ -230,12 +235,18 @@ return col;
 void main() {
 
 vec3 cam_target = vec3(0.);
-vec3 cam_pos = vec3(10.,25.,45.);
+vec3 cam_pos = vec3(1.,5.,3.);
+
+cam_pos.xy *= rot(time * 0.01) 
+             * cos(time * 0.001) 
+             * sin(time * 0.1) + 0.15;
+
+cam_pos.zy *= rot(time * 0.1);
 
 vec2 uv = -1. + 2. * gl_FragCoord.xy / resolution.xy;
 uv.x *= resolution.x / resolution.y; 
 
-vec3 dir = rayCamDir(uv,cam_pos,cam_target,5.);
+vec3 dir = rayCamDir(uv,cam_pos,cam_target,3.);
 vec3 color = render(cam_pos,dir);
       
 color = pow(color,vec3(.4545));      
