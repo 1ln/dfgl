@@ -190,7 +190,7 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         if(abs(dist.x) < eps || e <  dist.x ) { break; }
         s += dist.x;
         d = dist.y;
-
+        
         }
  
         if(e < s) { d = -1.0; }
@@ -251,8 +251,7 @@ vec3 l = normalize(lp);
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
-col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
-col *= dd(p.xz * 0.5)+0.5; 
+col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,4.,3.));
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
@@ -276,7 +275,7 @@ linear += fre * vec3(0.25,0.5,0.35);
 
 col = col * linear;
 col += spe * vec3(1.,0.97,1.); 
-col = mix(col,c,1.-exp(-0.01 * d.x*d.x*d.x)); 
+col = mix(col,c,1.-exp(-0.001 * d.x*d.x*d.x)); 
 
 }
 
