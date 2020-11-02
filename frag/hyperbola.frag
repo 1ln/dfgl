@@ -6,77 +6,37 @@ out vec4 FragColor;
 
 uniform vec2 resolution;
 uniform float time;
-//uniform vec3 ro;  
 
 const int seed = 51499145; 
 
-vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
+mat2 m = mat2(0.8,0.6,-0.6,0.8);
 
-float ns2(vec2 p) {
-
-    const float k1 = (3. - sqrt(3.))/6.;
-    const float k2 = .5 * (sqrt(3.) -1.);
-    const float k3 = -.5773;
-    const float k4 = 1./41.;
-
-    const vec4 c = vec4(k1,k2,k3,k4);
-    
-    vec2 i = floor(p + dot(p,c.yy));
-    vec2 x0 = p - i + dot(i,c.xx);
-  
-    vec2 i1;
-    i1 = (x0.x > x0.y) ? vec2(1.,0.) : vec2(0.,1.);
-    vec4 x12 = x0.xyxy + c.xxzz;
-    x12.xy -= i1;
-
-    i = mod289(i);
-    
-    vec3 p1 = permute(permute(i.y + vec3(0.,i1.y,1.))
-        + i.x + vec3(0.,i1.x,1.));
-        p1 = permute(mod289(p1 + vec3(float(seed))));
-
-    vec3 m = max(.5 - vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
-    m = m * m; 
-    m = m * m;
-
-    vec3 x = fract(p1 * c.www) - 1.;
-    vec3 h = abs(x) - .5;
-    vec3 ox = floor(x + .5);
-    vec3 a0 = x - ox; 
-    m *= 1.792842 - 0.853734 * (a0 * a0 + h * h);
-     
-    vec3 g;
-    g.x = a0.x * x0.x + h.x * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-    return 130. * dot(m,g);
+float n(vec2 p) {
+return sin(p.x)*sin(p.y);
 }
 
-float f2(vec2 x) {
+float f6(vec2 p) {
 
-    float f = 0.;
+    float f = 1.;
+    f += 0.5      * n(p); p = m*p*2.01;
+    f += 0.25     * n(p); p = m*p*2.02;
+    f += 0.125    * n(p); p = m*p*2.04;
+    f += 0.0625   * n(p); p = m*p*2.03;
+    f += 0.0325   * n(p); p = m*p*2.06;
+    f += 0.015625 * n(p);
+    return f/0.92;    
 
-    for(int i = 1; i < 6; i++) {
- 
-    float e = pow(2.,float(i));
-    float s = (1./e);
-    f += ns2(x*e)*s;   
-    
-    }    
-
-    return f * .5 + .5;
 }
 
 float dd(vec2 p) {
 
-vec2 q = vec2(f2(p + vec2(0.0,1.0)),
-              f2(p + vec2(2.4,1.5)));
+vec2 q = vec2(f6(p + vec2(0.0,1.0)),
+              f6(p + vec2(2.4,1.5)));
 
-vec2 r = vec2(f2(p + 4.0 * q + vec2(5.4,4.8)),
-              f2(p + 4.0 * q + vec2(6.8,9.1)));
+vec2 r = vec2(f6(p + 4.0 * q + vec2(5.4,4.8)),
+              f6(p + 4.0 * q + vec2(6.8,9.1)));
 
-return f2(p + 4.0 * r);
+return f6(p + 4.0 * r);
 }
 
 float hyperbola(vec3 p) { 
@@ -90,6 +50,7 @@ return (-l.x-l.y+d)/2.0;
 
 void main() {
  
+    vec3 col;
     vec2 uv = -1. + 2. * gl_FragCoord.xy / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
@@ -107,12 +68,14 @@ void main() {
 
     float fd = 3.0;
 
-    float fs = 1.0;
-    float fa = 1.0;
+    float fs = 2.;
+    float fa = 0.125;
 
-    float n = dd(p.xz*0.12)+0.12;
+    float nl = dd(p.xz*0.12)+0.12;
+    nl += f6(p.xz+f6(p.yx)) * dot(uv,uv);
 
-    vec4 col = vec4(n * log((p.y+fd)*fs)/log((fd-fa)*fs));
-    FragColor = vec4(col);
+    col = vec3(nl * log((p.y+fd)*fs)/log((fd-fa)*fs));
+    col = pow(col,vec3(0.4545));
+    FragColor = vec4(col,1.);
 
 }
