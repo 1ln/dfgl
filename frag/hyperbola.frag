@@ -1,15 +1,23 @@
-#version 430 core     
+#version 330 core     
 
-// dolson,2019
+//dolson
+//2020
 
 out vec4 FragColor;
 
 uniform vec2 resolution;
 uniform float time;
-
-const int seed = 51499145; 
+uniform int seed; 
 
 mat2 m = mat2(0.8,0.6,-0.6,0.8);
+
+float h(float p) {
+
+p = fract(p*0.1493);
+p += p * (float(seed) * 0.000001); 
+return p;
+
+}
 
 float n(vec2 p) {
 return sin(p.x)*sin(p.y);
@@ -18,6 +26,7 @@ return sin(p.x)*sin(p.y);
 float f6(vec2 p) {
 
     float f = 1.;
+
     f += 0.5      * n(p); p = m*p*2.01;
     f += 0.25     * n(p); p = m*p*2.02;
     f += 0.125    * n(p); p = m*p*2.04;
@@ -31,9 +40,9 @@ float f6(vec2 p) {
 float dd(vec2 p) {
 
 vec2 q = vec2(f6(p + vec2(0.0,1.0)),
-              f6(p + vec2(2.4,1.5)));
+              f6(p + vec2(h(103.)*25.,1.5)));
 
-vec2 r = vec2(f6(p + 4.0 * q + vec2(5.4,4.8)),
+vec2 r = vec2(f6(p + 4.0 * q + vec2(h(144.)*45.,4.8)),
               f6(p + 4.0 * q + vec2(6.8,9.1)));
 
 return f6(p + 4.0 * r);
@@ -54,9 +63,12 @@ void main() {
     vec2 uv = -1. + 2. * gl_FragCoord.xy / resolution.xy; 
     uv.x *= resolution.x/resolution.y; 
 
+    float ra = time*0.1;
+    mat2 r = mat2(cos(ra),sin(ra),-sin(ra),cos(ra));
+
     float fov = 1.0;
     float a = -0.75;
-     
+    
     vec3 p = vec3(0.0,-0.75,-1.0);
 
     vec3 d = vec3(uv*fov,1.);
@@ -70,10 +82,9 @@ void main() {
 
     float fs = 2.;
     float fa = 0.125;
-
-    float nl = dd(p.xz*0.12)+0.12;
+    
+    float nl = dd(p.xz*r);
     nl += f6(p.xz+f6(p.yx)) * dot(uv,uv);
-
     col = vec3(nl * log((p.y+fd)*fs)/log((fd-fa)*fs));
     col = pow(col,vec3(0.4545));
     FragColor = vec4(col,1.);
