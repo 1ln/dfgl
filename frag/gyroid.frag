@@ -5,14 +5,8 @@
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
-
 uniform vec2 resolution;
 uniform float time;
-
-uniform vec2 mouse;
-uniform float mouse_scroll;
-uniform int mouse_pressed;
 
 uniform int seed;
 
@@ -33,14 +27,6 @@ float hurst = 0.5;
 
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
-const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
-
-mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
-mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
-
-float dot2(vec2 v) { return dot(v,v); }
-float dot2(vec3 v) { return dot(v,v); }
-float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 float h11(float p) {
     uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
@@ -83,27 +69,8 @@ float f2(vec2 x) {
     return s;
 }
 
-float dd(vec2 p) {
-
-   vec2 q = vec2(f2(p+vec2(3.,0.5)),
-                 f2(p+vec2(1.,2.5)));
-
-   vec2 r = vec2(f2(p + 4. * q + vec2(7.5,4.35)),
-                 f2(p + 4. * q + vec2(5.6,2.2))); 
-
-   return f2(p + 4. * r);
-}
-
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos( (PI*2.0) * (c * t + d));
-}
-
-mat2 rot2(float a) {
-
-    float c = cos(a);
-    float s = sin(a);
-    
-    return mat2(c,-s,s,c);
 }
 
 mat3 rotAxis(vec3 axis,float theta) {
@@ -131,16 +98,6 @@ axis = normalize(axis);
 
 }
 
-mat3 camOrthographic(vec3 ro,vec3 ta,float r) {
-     
-     vec3 w = normalize(ta - ro); 
-     vec3 p = vec3(sin(r),cos(r),0.);           
-     vec3 u = normalize(cross(w,p)); 
-     vec3 v = normalize(cross(u,w));
-
-     return mat3(u,v,w); 
-} 
-
 mat3 camEuler(float yaw,float pitch,float roll) {
 
      vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
@@ -153,18 +110,6 @@ mat3 camEuler(float yaw,float pitch,float roll) {
 vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
-
-float opu(float d1,float d2) {
-    return min(d1,d2);
-}
-
-float opi(float d1,float d2) {
-    return max(d1,d2);
-}
-
-float opd(float d1,float d2) {
-    return max(-d1,d2);
-}
 
 float smou(float d1,float d2,float k) {
 
@@ -198,33 +143,6 @@ float sphere(vec3 p,float r) {
     return length(p) - r;
 }
 
-float box(vec3 p,vec3 b) {
-
-    vec3 d = abs(p) - b;
-    return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
-}
-
-float octahedron(vec3 p,float s) {
-
-    p = abs(p);
-
-    float m = p.x + p.y + p.z - s;
-    vec3 q;
-
-    if(3.0 * p.x < m) {
-       q = vec3(p.x,p.y,p.z);  
-    } else if(3.0 * p.y < m) {
-       q = vec3(p.y,p.z,p.x); 
-    } else if(3.0 * p.z < m) { 
-       q = vec3(p.z,p.x,p.y);
-    } else { 
-       return m * 0.57735027;
-    }
-
-    float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
-    return length(vec3(q.x,q.y-s+k,q.z - k)); 
-}
-
 float gyroid(vec3 p,float s,float b,float v,float d) {
 
     p *= s;
@@ -240,13 +158,10 @@ vec2 scene(vec3 p) {
     float d = 0.;     
     float t = time;  
     
-    vec3 q = p;
+    d = gyroid(p,12.,0.12,0.0045,-dot(sin(p),cos(p.zxy)));
 
-    d = gyroid(p,6.,.5,.05,octahedron(p,1.));
-    
     res = opu(res,vec2(d,2.)); 
 
-  
     return res;
 
 }
@@ -342,7 +257,8 @@ vec3 l = normalize(vec3(12.));
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
-col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
+col = 0.2 + 0.2 * sin(2.*d.y + vec3(3.,1.,2.));
+col += f2(p.xz+f2(p.xy*rd.y)); 
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
@@ -359,13 +275,13 @@ vec3 linear = vec3(0.);
 dif *= shadow(p,l);
 ref *= shadow(p,r);
 
-linear += dif * vec3(.5);
+linear += dif * vec3(0.5,0.24,0.34);
 linear += amb * vec3(0.01,0.05,0.05);
-linear += ref * vec3(4.  );
-linear += fre * vec3(0.25,0.5,0.35);
+linear += ref * vec3(0.1);
+linear += fre * vec3(0.25,0.005,0.0035);
 
 col = col * linear;
-col += spe * vec3(1.,0.97,1.); 
+col += spe * vec3(0.97); 
 col = mix(col,vec3(0.5),1.-exp(-0.00001 * d.x*d.x*d.x)); 
 
 }
@@ -377,7 +293,6 @@ void main() {
  
 vec3 color = vec3(0.);
 vec3 ro = vec3(1.,5.,10.);
-vec3 ta = vec3(0.0);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
@@ -387,7 +302,7 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = (2. * (gl_FragCoord.xy + o) -
     resolution.xy) / resolution.y; 
 
-    mat3 cm = camOrthographic(ro,ta,0.);
+    mat3 cm = camEuler(time*PI2*0.01,0.45,0.);
     vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
     vec3 render = renderScene(ro,rd);   
