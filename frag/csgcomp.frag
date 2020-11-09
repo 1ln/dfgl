@@ -1,18 +1,11 @@
-#version 330 core     
+#version 430 core     
 
-//Dan Olson
-//2020
+// dolson,2019
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
-
 uniform vec2 resolution;
 uniform float time;
-
-uniform vec2 mouse;
-uniform float mouse_scroll;
-uniform int mouse_pressed;
 
 uniform int seed;
 
@@ -35,9 +28,6 @@ const float PI   =  radians(180.0);
 const float PI2  =  PI * 2.;
 const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
 
-mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
-mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
-
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
@@ -54,8 +44,55 @@ float h21(vec2 p) {
     return float(h) * (1./float(0xffffffffU));
 }
 
-float n2(vec2 x) { 
+vec3 h33(vec3 p) {
+   uvec3 h = uvec3(ivec3(  p)) *  
+   uvec3(uint(int(seed)),2531151992.0,2860486313U);
+   h = (h.x ^ h.y ^ h.z) * 
+   uvec3(uint(int(seed)),2531151992U,2860486313U);
+   return vec3(h) * (1.0/float(0xffffffffU));
+}
 
+float cell(vec3 x,float iterations,int type) {
+    x *= iterations;
+    vec3 p = floor(x);
+    vec3 f = fract(x);
+ 
+    float min_dist = 1.0;
+    
+    for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+            for(int k = -1; k <= 1; k++) { 
+
+                vec3 b = vec3(float(k),float(j),float(i));
+                vec3 r = h33( p + b );
+                
+                vec3 diff = (b + r - f);
+
+                float d = length(diff);
+
+                    if(type == 0) { 
+                        min_dist = min(min_dist,d);
+                    }
+ 
+                    if(type == 1) {
+                        min_dist = min(min_dist,
+                        abs(diff.x)+abs(diff.y)+abs(diff.z));
+                    }
+
+                    if(type == 2) {
+                        min_dist = min(min_dist,
+                        max(abs(diff.x),max(abs(diff.y),
+                        abs(diff.z))));
+                    }
+
+            }
+        }
+    }
+ 
+    return min_dist;
+}
+
+float n2(vec2 x) {
     vec2 p = floor(x);
     vec2 f = fract(x);
 
@@ -66,8 +103,24 @@ float n2(vec2 x) {
                mix(h11(n+57.),h11(n+58.),f.x),f.y);  
 }
 
-float f2(vec2 x) {
+float n3(vec3 x) {
+    vec3 p = floor(x);
+    vec3 f = fract(x);
 
+    f = f * f * (3.0 - 2.0 * f);
+    float n = p.x + p.y * 157.0 + 113.0 * p.z;
+
+    return mix(mix(mix(h11(n + 0.0), 
+                       h11(n + 1.0),f.x),
+                   mix(h11(n + 157.0),
+                       h11(n + 158.0),f.x),f.y),
+               mix(mix(h11(n + 113.0), 
+                       h11(n + 114.0),f.x),
+                   mix(h11(n + 270.0), 
+                       h11(n + 271.0),f.x),f.y),f.z);
+}
+
+float f2(vec2 x) {
     float s = 0.;
     float h = exp2(-hurst);     
     float f = 1.;
@@ -83,8 +136,22 @@ float f2(vec2 x) {
     return s;
 }
 
-float dd(vec2 p) {
+float f3(vec3 x) {
+    float s = 0.;
+    float h = exp2(-hurst);
+    float f = 1.;
+    float a = .5;
 
+    for(int i = 0; i < octaves; i++) {
+
+        s += a * n3(f * x);  
+        f *= 2.;
+        a *= h;
+    }
+    return s;
+}
+
+float dd(vec2 p) {
    vec2 q = vec2(f2(p+vec2(3.,0.5)),
                  f2(p+vec2(1.,2.5)));
 
@@ -94,21 +161,99 @@ float dd(vec2 p) {
    return f2(p + 4. * r);
 }
 
+vec2 rndPntCircle(float p) {
+    float a = PI2 * h11(p);
+    return vec2(cos(a),sin(a)); 
+}
+
+float sin2(vec2 p,float s) {
+    return sin(p.x*s) * sin(p.y*s);
+}
+
+float sin3(vec3 p,float s) {
+    return sin(p.x * s) * sin(p.y * s) * sin(p.z * s);
+}
+
+float fib(float n) {
+    return pow(( 1. + sqrt(5.)) /2.,n) -
+           pow(( 1. - sqrt(5.)) /2.,n) / sqrt(5.); 
+}
+
+float envImp(float x,float k) {
+
+    float h = k * x;
+    return h * exp(1.0 - h);
+}
+
+float envSt(float x,float k,float n) {
+    return exp(-k * pow(x,n));
+}
+
+float cubicImp(float x,float c,float w) {
+
+    x = abs(x - c);
+    if( x > w) { return 0.0; }
+    x /= w;
+    return 1.0 - x * x  * (3.0 - 2.0 * x);
+
+}
+
+float sincPh(float x,float k) {
+    float a = PI * (k * x - 1.0);
+    return sin(a)/a;
+}
+
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos( (PI*2.0) * (c * t + d));
 }
 
 vec3 rgbHsv(vec3 c) {
-
-    vec3 rgb = clamp(abs(mod(c.x * 6. + vec3(0.,4.,2.),
-               6.)-3.)-1.,0.,1.);
+    vec3 rgb = clamp(abs(
+    mod(c.x * 6. + vec3(0.,4.,2.),6.)-3.)-1.,0.,1.);
 
     rgb = rgb * rgb * (3. - 2. * rgb);
     return c.z * mix(vec3(1.),rgb,c.y);
-
 }
 
-mat2 rot2(float a) {
+vec3 contrast(vec3 c) {
+return smoothstep(0.,1.,c);
+}
+
+float easeIn4(float t) {
+    return t * t;
+}
+
+float easeOut4(float t) {
+    return -1.0 * t * (t - 2.0);
+}
+
+float easeInOut4(float t) {
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t;
+    } else {
+        return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
+    }
+}
+
+float easeIn3(float t) {
+    return t * t * t;
+}
+
+float easeOut3(float t) {
+    return (t = t - 1.0) * t * t + 1.0;
+}
+
+float easeInOut3(float t) {
+
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t * t;
+    } else { 
+        return 0.5 * ((t -= 2.0) * t * t + 2.0);
+
+    }
+}
+
+mat2 rot(float a) {
 
     float c = cos(a);
     float s = sin(a);
@@ -151,15 +296,6 @@ mat3 camOrthographic(vec3 ro,vec3 ta,float r) {
      return mat3(u,v,w); 
 } 
 
-mat3 camEuler(float yaw,float pitch,float roll) {
-
-     vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
-     vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
-     vec3 u = normalize(cross(r,f));
-
-     return rotAxis(f,roll) * mat3(r,u,f);
-}
-
 vec3 repLim(vec3 p,float c,vec3 l) {
   
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
@@ -198,13 +334,11 @@ float opd(float d1,float d2) {
 }
 
 float smou(float d1,float d2,float k) {
-
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) - k * h * (1.0 - h);
 }
 
 float smod(float d1,float d2,float k) {
-
     float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
     return mix(d2,-d1,h) + k * h * (1.0 - h);
 }
@@ -264,12 +398,8 @@ float eqTriangle(vec2 p,float r) {
      p.x -= clamp(p.x,-2.,0.);
      return -length(p) * sign(p.y);    
 
-} 
-float rect(vec2 p,vec2 b) {
-    vec2 d = abs(p)-b;
-    return length(max(d,0.)) + min(max(d.x,d.y),0.);
 }
-
+ 
 float roundRect(vec2 p,vec2 b,vec4 r) {
     r.xy = (p.x > 0.) ? r.xy : r.xz;
     r.x  = (p.y > 0.) ? r.x  : r.y;
@@ -284,46 +414,15 @@ float rhombus(vec2 p,vec2 b) {
    return d * sign(q.x*b.y + q.y*b.x - b.x*b.y);  
 }
 
-float segment(vec2 p,vec2 a,vec2 b) {
-    vec2 pa = p - a, ba = b - a;
-    float h = clamp(dot(pa,ba)/dot(ba,ba),0.,1.);  
-    return length(pa - ba * h);
-}
-
 float sphere(vec3 p,float r) { 
      
     return length(p) - r;
-}
-
-float nsphere(vec3 p,float r) {
-
-    return abs(length(p)-r);
-}
-
-float ellipsoid(vec3 p,vec3 r) {
-
-    float k0 = length(p/r); 
-    float k1 = length(p/(r*r));
-    return k0*(k0-1.0)/k1;
 }
 
 float cone(vec3 p,vec2 c) {
 
     float q = length(p.xy);
     return dot(c,vec2(q,p.z));
-}
-
-float roundCone(vec3 p,float r1,float r2,float h) {
-
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
-    float b = (r1-r2)/h;
-    float a = sqrt(1.0 - b*b);
-    float k = dot(q,vec2(-b,a));
-
-    if( k < 0.0) return length(q) - r1;
-    if( k > a*h) return length(q - vec2(0.0,h)) - r2;
-
-    return dot(q,vec2(a,b)) - r1;
 }
 
 float solidAngle(vec3 p,vec2 c,float ra) {
@@ -356,7 +455,8 @@ float capsule(vec3 p,vec3 a,vec3 b,float r) {
 float prism(vec3 p,vec2 h) {
 
     vec3 q = abs(p);
-    return max(q.z - h.y,max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
+    return max(q.z - h.y,  
+    max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
 }
 
 float box(vec3 p,vec3 b) {
@@ -425,77 +525,31 @@ float octahedron(vec3 p,float s) {
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
 
-float trefoil(vec3 p,vec2 t,float n,float l,float e) {
-
-    vec2 q = vec2(length(p.xz)-t.x,p.y);     
-
-    float a = atan(p.x,p.z);
-    float c = cos(a*n);
-    float s = sin(a*n);
-
-    mat2 m = mat2(c,-s,s,c);    
-    q *= m;
-
-    q.y = abs(q.y)-l;
-
-    return (length(q) - t.y)*e;
-
-}
-
-float gyroid(vec3 p,float s,float b,float v,float d) {
-
-    p *= s;
-    float g = abs(dot(sin(p),cos(p.zxy))-b)/s-v;
-    return max(d,g*.5);
-
-} 
-
-float menger(vec3 p,int n,float s,float d) {
-
-    for(int i = 0; i < n; i++) {
-
-        vec3 a = mod(p * s,2.)-1.;
-        s *= 3.;
-
-        vec3 r = abs(1. - 3. * abs(a)); 
-       
-        float b0 = max(r.x,r.y);
-        float b1 = max(r.y,r.z);
-        float b2 = max(r.z,r.x);
-
-        float c = (min(b0,min(b1,b2)) - 1.)/s;         
-        d = max(d,c);
-     }
-
-     return d;
-}
-
 vec2 scene(vec3 p) {
 
     vec2 res = vec2(1.,0.);
 
     float d = 0.;     
+    float s = 0.1;
     float t = time;  
-    
-    vec3 q = p;
 
-    p.xz *= rot2(t);
-    p.zy *= rot2(t);
+    res = opu(res,vec2(
+              mix(box(p-vec3(4.,0.,4.),vec3(1.)),
+              sphere(p-vec3(4.,0.,4.),1.),-2.),35.));    
 
-    d = box(p,vec3(1.));
-    d = menger(p,5,1.,box(p,vec3(1.)));
-    d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-    d = menger(p,4,2.,octahedron(p,1.));
-    d = menger(p,4,1.,box(p,vec3(1.))); 
-    d = gyroid(p,5.,.35,.015,sphere(p,1.));
-    d = gyroid(p,6.,.5,.05,box(p,vec3(1.)));
-    d = mix(box(p,vec3(1.)),sphere(p,1.),-2.);     
-    d = trefoil(p,vec2(1.5,.25),3.,.25,.5); 
+    res = opu(res,vec2(
+              max(-torus(p-vec3(3.,0.,5.),vec2(1.5,.61)),
+              box(p-vec3(3.,0.,5.),vec3(1.))),15.)); 
 
-    //d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
-    res = opu(res,vec2(d,2.)); 
+    res = opu(res,vec2(
+              max(-cylinder(p,1.,0.5),
+              box(p,vec3(1.))),24.));
 
-    float pl = plane(q+vec3(0.,1.5,0.),vec4(0.,1.,0.,1.));
+    res = opu(res,vec2(
+              smou(prism(p-vec3(3.,0.,0.),vec2(1.,0.5)),
+              torus(p-vec3(2.5,0.,0.),vec2(4.,0.005)),0.5),11.));
+                
+    float pl = plane(p,vec4(0.,1.,0.,1.));
     res = opu(res,vec2(pl,1.));
   
   return res;
@@ -579,53 +633,22 @@ vec3 calcNormal(vec3 p) {
     
 }
 
-vec3 renderPhong(vec3 ro,vec3 rd,vec3 lp,vec3 dif,vec3 spe,vec3 k,float a) {
-
-     vec2 d = rayScene(ro,rd); 
-     vec3 p = ro + rd * d.x; 
-     vec3 n = calcNormal(p);
-
-     vec3 l = normalize(lp - p);
-     vec3 v = normalize(rd - p);
-
-     vec3 r = normalize(reflect(-l,n));
-     vec3 h = normalize(l + v);  
-
-     float nl = clamp(dot(l,n),0.0,1.0 );
-
-     float rv = dot(r,h);
-
-     if(nl < 0.0) { return vec3(0.0); }
-     if(rv < 0.0) { return k * (dif * nl); } 
-     
-     return k * (dif * nl + spe * pow(rv,a));
-
-}
-
-vec3 renderNormals(vec3 ro,vec3 rd) {
-
-   vec2 d = rayScene(ro,rd);
-   vec3 p = ro + rd * d.x;
-   vec3 n = calcNormal(p);   
-   
-   return n;
-}
-
-vec3 renderScene(vec3 ro,vec3 rd,vec3 lp,vec3 c) {
+vec3 renderScene(vec3 ro,vec3 rd) {
  
 vec2 d = rayScene(ro, rd);
 
-vec3 col = c * max(0.,rd.y);
+vec3 col = vec3(1.) * max(0.,rd.y);
 
 if(d.y >= 0.) {
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(lp);
+vec3 l = normalize(vec3(10.));
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
 col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
+if(d.y == 1.) { col = vec3(0.5); }
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
@@ -649,7 +672,8 @@ linear += fre * vec3(0.25,0.5,0.35);
 
 col = col * linear;
 col += spe * vec3(1.,0.97,1.); 
-col = mix(col,c,1.-exp(-0.00001 * d.x*d.x*d.x)); 
+
+col = mix(col,vec3(1.),1.-exp(-0.00001 * d.x*d.x*d.x)); 
 
 }
 
@@ -659,7 +683,7 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(1.,5.,10.);
+vec3 ro = vec3(12.,5.,2.);
 vec3 ta = vec3(0.0);
 
 for(int k = 0; k < aa; ++k) {
@@ -668,13 +692,12 @@ for(int k = 0; k < aa; ++k) {
     vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
 
     vec2 uv = (2. * (gl_FragCoord.xy + o) -
-    resolution.xy) / resolution.y; 
+              resolution.xy) / resolution.y; 
 
     mat3 cm = camOrthographic(ro,ta,0.);
-    vec3 rd = cm * normalize(vec3(uv.xy,2.));
+    vec3 rd = cm * normalize(vec3(uv.xy,2.));   
 
-    vec3 render = renderNormals(ro,rd);  
-    render = renderScene(ro,rd,vec3(10.),vec3(1.));    
+    vec3 render = renderScene(ro,rd);    
 
     color += render;
     }
@@ -682,9 +705,7 @@ for(int k = 0; k < aa; ++k) {
 color /= float(aa*aa);
 color = pow(color,vec3(.4545));
 
-vec3 rt_col = texture(tex,gl_FragCoord.xy / resolution.xy).xyz; 
-vec3 rm_col = (rt_col + color);
-FragColor = vec4(rm_col,1.0);
+FragColor = vec4(color,1.0);
 }
 
 }
