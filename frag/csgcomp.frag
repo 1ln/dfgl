@@ -534,25 +534,33 @@ vec2 scene(vec3 p) {
     float t = time;  
 
     res = opu(res,vec2(
-              mix(box(p-vec3(4.,0.,4.),vec3(1.)),
-              sphere(p-vec3(4.,0.,4.),1.),-2.),35.));    
+             box(p-vec3(1.,PHI,-0.25),vec3(1.-(PHI-1.))) 
+             ,25.));
 
     res = opu(res,vec2(
-              max(-torus(p-vec3(3.,0.,5.),vec2(1.5,.61)),
-              box(p-vec3(3.,0.,5.),vec3(1.))),15.)); 
+              smod(sphere(p-vec3(2.,0.,0.),0.75),
+              max(-cylinder(p-vec3(1.,2.,0.),1e10,0.25),  
+              max(-cylinder(p-vec3(-1.,0.,1.-PHI),1e10,0.25),
+              box(p,vec3(PHI,sqrt(PHI),1.)))),0.15)
+              ,24.));
+
+    res = opu(res,vec2(cylinder(p-vec3(1.,2.,0.),
+              1e10,0.21),75.));
+ 
+    res = opu(res,vec2(cylinder(p-vec3(-1.,0.,1.-PHI),
+              1e10,0.21),35.));
 
     res = opu(res,vec2(
-              max(-cylinder(p,1.,0.5),
-              box(p,vec3(1.))),24.));
-
-    res = opu(res,vec2(
-              smou(prism(p-vec3(3.,0.,0.),vec2(1.,0.5)),
-              torus(p-vec3(2.5,0.,0.),vec2(4.,0.005)),0.5),11.));
-                
-    float pl = plane(p,vec4(0.,1.,0.,1.));
-    res = opu(res,vec2(pl,1.));
+              smou(prism(p-vec3(PHI,sqrt(PHI),1.),vec2(1.,0.5)),
+              torus(p-vec3(1.+PHI,sqrt(PHI),1.),vec2(2.,0.005)),0.5)
+              ,11.));
   
-  return res;
+    res = opu(res,vec2(octahedron(p,1.),10.));
+
+
+
+
+    return res;
 
 }
 
@@ -647,7 +655,7 @@ vec3 l = normalize(vec3(10.));
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
-col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
+col = 0.2 + 0.2 * sin(2.*d.y + vec3(4.,1.,2.));
 if(d.y == 1.) { col = vec3(0.5); }
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
@@ -665,8 +673,8 @@ vec3 linear = vec3(0.);
 dif *= shadow(p,l);
 ref *= shadow(p,r);
 
-linear += dif * vec3(.5);
-linear += amb * vec3(0.01,0.05,0.05);
+linear += dif * vec3(.5,h11(100.),.5);
+linear += amb * vec3(0.005,0.05,0.05);
 linear += ref * vec3(4.  );
 linear += fre * vec3(0.25,0.5,0.35);
 
@@ -683,8 +691,9 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(12.,5.,2.);
-vec3 ta = vec3(0.0);
+
+vec3 ro = vec3(5.,3.,4.);
+ro.xz *= rot(time*0.1);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
