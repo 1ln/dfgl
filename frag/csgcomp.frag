@@ -529,8 +529,8 @@ vec2 scene(vec3 p) {
 
     vec2 res = vec2(1.,0.);
 
-    float d = 0.;     
-    float s = 0.1;
+    vec3 q = p;
+
     float t = time;  
 
     res = opu(res,vec2(
@@ -538,18 +538,25 @@ vec2 scene(vec3 p) {
              ,25.));
 
     res = opu(res,vec2(
-              smod(sphere(p-vec3(2.,0.,0.),0.75),
-              max(-cylinder(p-vec3(1.,2.,0.),1e10,0.25),  
+              max(
+              layer(layer(layer(layer(
+              sphere(p-vec3(2.,0.,0.),0.5),
+              0.25),0.125),0.06),0.003),p.x-2.)
+              ,55.));
+
+    res = opu(res,vec2(
+              max(-sphere(p-vec3(2.,0.,0.),1.),
+              max(-cylinder(p.yzx-vec3(-1.,2.,0.),1e10,0.25),  
               max(-cylinder(p-vec3(-1.,0.,1.-PHI),1e10,0.25),
-              box(p,vec3(PHI,sqrt(PHI),1.)))),0.15)
+              box(p,vec3(PHI,sqrt(PHI),1.)))))
               ,24.));
 
-    res = opu(res,vec2(cylinder(p-vec3(1.,2.,0.),
+    res = opu(res,vec2(cylinder(p.yzx - vec3(-1.,2.,0.),
               1e10,0.21),75.));
  
     res = opu(res,vec2(cylinder(p-vec3(-1.,0.,1.-PHI),
               1e10,0.21),35.));
-
+ 
     res = opu(res,vec2(
               smou(prism(p-vec3(PHI,sqrt(PHI),1.),vec2(1.,0.5)),
               torus(p-vec3(1.+PHI,sqrt(PHI),1.),vec2(2.,0.005)),0.5)
@@ -557,8 +564,11 @@ vec2 scene(vec3 p) {
   
     res = opu(res,vec2(octahedron(p,1.),10.));
 
-
-
+    q.xy = mod(p.yx,2.)-0.5*2.;
+    res = opu(res,vec2(
+          smod(cylinder(q.yxz,1e10,0.05),
+          box(p-vec3(PHI,1.,0.),vec3(PHI,1.,0.5)),0.5)
+          ,124.));  
 
     return res;
 
@@ -694,6 +704,8 @@ vec3 color = vec3(0.);
 
 vec3 ro = vec3(5.,3.,4.);
 ro.xz *= rot(time*0.1);
+
+vec3 ta = vec3(0.);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
