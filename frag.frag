@@ -8,42 +8,15 @@ uniform sampler2D tex;
 
 uniform vec2 resolution;
 uniform float time;
-
 uniform vec2 mouse;
-uniform float mouse_scroll;
-uniform int mouse_pressed;
 
-uniform int seed;
+#define STEPS 255
+#define EPS 0.00001
+#define NEAR 0.
+#define FAR 500
 
-uniform int key_a;
-uniform int key_w;
-uniform int key_s;
-uniform int key_d;
-uniform int key_up;
-uniform int key_down;
-uniform int key_right;
-uniform int key_left;
-uniform int key_space;
-
-const int steps = 250;
-float eps = 0.00001;
-float dmin = 0.;
-float dmax = 750.;
-const int aa = 2;
+#define AA 2
  
-const int shsteps = 45; 
-float shblur = 10.0;
-float shmax = 100.; 
-
-const int aosteps = 5;
-
-const int octaves = 5;
-float hurst = 0.5;
-
-const float PI   =  radians(180.0); 
-const float PI2  =  PI * 2.;
-const float PHI  =  (1.0 + sqrt(5.0)) / 2.0;
-
 mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
 mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
 
@@ -69,6 +42,71 @@ vec3 h33(vec3 p) {
    h = (h.x ^ h.y ^ h.z) * 
    uvec3(uint(int(seed)),2531151992U,2860486313U);
    return vec3(h) * (1.0/float(0xffffffffU));
+}
+
+vec2 rndPntCircle(float p) {
+    float a = radians(180) * h11(p);
+    return vec2(cos(a),sin(a)); 
+}
+
+float fib(float n) {
+    return pow(( 1. + sqrt(5.)) /2.,n) -
+           pow(( 1. - sqrt(5.)) /2.,n) / sqrt(5.); 
+}
+
+float envImp(float x,float k) {
+    float h = k * x;
+    return h * exp(1.0 - h);
+}
+
+float envSt(float x,float k,float n) {
+    return exp(-k * pow(x,n));
+}
+
+float cubicImp(float x,float c,float w) {
+    x = abs(x - c);
+    if( x > w) { return 0.0; }
+    x /= w;
+    return 1.0 - x * x  * (3.0 - 2.0 * x);
+
+}
+
+float sincPh(float x,float k) {
+    float a = radians(180) * (k * x - 1.0);
+    return sin(a)/a;
+}
+
+float easeIn4(float t) {
+    return t * t;
+}
+
+float easeOut4(float t) {
+    return -1.0 * t * (t - 2.0);
+}
+
+float easeInOut4(float t) {
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t;
+    } else {
+        return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
+    }
+}
+
+float easeIn3(float t) {
+    return t * t * t;
+}
+
+float easeOut3(float t) {
+    return (t = t - 1.0) * t * t + 1.0;
+}
+
+float easeInOut3(float t) {
+    if((t *= 2.0) < 1.0) {
+        return 0.5 * t * t * t;
+    } else { 
+        return 0.5 * ((t -= 2.0) * t * t + 2.0);
+
+    }
 }
 
 float cell(vec3 x,float iterations,int type) {
@@ -139,9 +177,9 @@ float n3(vec3 x) {
                        h11(n + 271.0),f.x),f.y),f.z);
 }
 
-float f2(vec2 x) {
+float f2(vec2 x,int octaves,float h) {
     float s = 0.;
-    float h = exp2(-hurst);     
+    float h = exp2(-h);     
     float f = 1.;
     float a = 0.5;
 
@@ -155,9 +193,9 @@ float f2(vec2 x) {
     return s;
 }
 
-float f3(vec3 x) {
+float f3(vec3 x,int octaves,float h) {
     float s = 0.;
-    float h = exp2(-hurst);
+    float h = exp2(-h);
     float f = 1.;
     float a = .5;
 
@@ -180,50 +218,8 @@ float dd(vec2 p) {
    return f2(p + 4. * r);
 }
 
-vec2 rndPntCircle(float p) {
-    float a = PI2 * h11(p);
-    return vec2(cos(a),sin(a)); 
-}
-
-float sin2(vec2 p,float s) {
-    return sin(p.x*s) * sin(p.y*s);
-}
-
-float sin3(vec3 p,float s) {
-    return sin(p.x * s) * sin(p.y * s) * sin(p.z * s);
-}
-
-float fib(float n) {
-    return pow(( 1. + sqrt(5.)) /2.,n) -
-           pow(( 1. - sqrt(5.)) /2.,n) / sqrt(5.); 
-}
-
-float envImp(float x,float k) {
-
-    float h = k * x;
-    return h * exp(1.0 - h);
-}
-
-float envSt(float x,float k,float n) {
-    return exp(-k * pow(x,n));
-}
-
-float cubicImp(float x,float c,float w) {
-
-    x = abs(x - c);
-    if( x > w) { return 0.0; }
-    x /= w;
-    return 1.0 - x * x  * (3.0 - 2.0 * x);
-
-}
-
-float sincPh(float x,float k) {
-    float a = PI * (k * x - 1.0);
-    return sin(a)/a;
-}
-
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    return a + b * cos( (PI*2.0) * (c * t + d));
+    return a + b * cos((radians(180)*2.0) * (c * t + d));
 }
 
 vec3 rgbHsv(vec3 c) {
@@ -236,40 +232,6 @@ vec3 rgbHsv(vec3 c) {
 
 vec3 contrast(vec3 c) {
 return smoothstep(0.,1.,c);
-}
-
-float easeIn4(float t) {
-    return t * t;
-}
-
-float easeOut4(float t) {
-    return -1.0 * t * (t - 2.0);
-}
-
-float easeInOut4(float t) {
-    if((t *= 2.0) < 1.0) {
-        return 0.5 * t * t;
-    } else {
-        return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
-    }
-}
-
-float easeIn3(float t) {
-    return t * t * t;
-}
-
-float easeOut3(float t) {
-    return (t = t - 1.0) * t * t + 1.0;
-}
-
-float easeInOut3(float t) {
-
-    if((t *= 2.0) < 1.0) {
-        return 0.5 * t * t * t;
-    } else { 
-        return 0.5 * ((t -= 2.0) * t * t + 2.0);
-
-    }
 }
 
 mat2 rot2(float a) {
@@ -357,18 +319,6 @@ vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
-float opu(float d1,float d2) {
-    return min(d1,d2);
-}
-
-float opi(float d1,float d2) {
-    return max(d1,d2);
-}
-
-float opd(float d1,float d2) {
-    return max(-d1,d2);
-}
-
 float smou(float d1,float d2,float k) {
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) - k * h * (1.0 - h);
@@ -449,10 +399,10 @@ float roundRect(vec2 p,vec2 b,vec4 r) {
 }
 
 float rhombus(vec2 p,vec2 b) {
-   vec2 q = abs(p);
-   float h = clamp(-2. * ndot(q,b)+ndot(b,b) / dot(b,b),-1.,1.);
-   float d = length(q - .5 * b * vec2(1.- h,1. + h));
-   return d * sign(q.x*b.y + q.y*b.x - b.x*b.y);  
+    vec2 q = abs(p);
+    float h = clamp(-2. * ndot(q,b)+ndot(b,b) / dot(b,b),-1.,1.);
+    float d = length(q - .5 * b * vec2(1.- h,1. + h));
+    return d * sign(q.x*b.y + q.y*b.x - b.x*b.y);  
 }
 
 float segment(vec2 p,vec2 a,vec2 b) {
@@ -537,10 +487,17 @@ float box(vec3 p,vec3 b) {
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float roundbox(vec3 p,vec3 b,float r) {
-
-    vec3 q = abs(p) - b;
-    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
+float boundingBox(vec3 p,vec3 b,float e) {
+    p = abs(p)-b;
+    vec3 q = abs(p+e)-e;
+ 
+    return min(min(
+        length(max(vec3(p.x,q.y,q.z),0.)) 
+        + min(max(p.x,max(q.y,q.z)),0.),
+        length(max(vec3(q.x,p.y,q.z),0.))+ 
+        min(max(q.x,max(p.y,q.z)),0.)),
+        length(max(vec3(q.x,q.y,p.z),0.))+
+        min(max(q.x,max(q.y,p.z)),0.));
 }
 
 float torus(vec3 p,vec2 t) {
@@ -683,15 +640,15 @@ vec2 scene(vec3 p) {
 vec2 rayScene(vec3 ro,vec3 rd) {
     
     float d = -1.0;
-    float s = dmin;
-    float e = dmax;  
+    float s = NEAR;
+    float e = FAR;  
 
-    for(int i = 0; i < steps; i++) {
+    for(int i = 0; i < STEPS; i++) {
 
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
    
-        if(abs(dist.x) < eps || e <  dist.x ) { break; }
+        if(abs(dist.x) < EPS || e <  dist.x ) { break; }
         s += dist.x;
         d = dist.y;
 
@@ -707,8 +664,8 @@ vec3 fog(vec3 col,vec3 fog_col,float fog_dist,float fog_de) {
     return mix(col,fog_col,fog_depth);
 }
 
-vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float fog_dist,float fog_de) {
-    float fog_depth  = 1. - exp(-fog_dist * fog_de);
+vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float de) {
+    float fog_depth  = 1. - exp(-0.000001 * de);
     float light_depth = max(dot(rd,l),0.);
     vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
     return mix(col,fog_col,light_depth);
@@ -719,7 +676,7 @@ float calcAO(vec3 p,vec3 n) {
     float o = 0.;
     float s = 1.;
 
-    for(int i = 0; i < aosteps; i++) {
+    for(int i = 0; i < 15; i++) {
  
         float h = .01 + .125 * float(i) / 4.; 
         float d = scene(p + h * n).x;  
@@ -737,17 +694,17 @@ float shadow(vec3 ro,vec3 rd) {
     float t = 0.005;
     float ph = 1e10;
     
-    for(int i = 0; i < shsteps; i++ ) {
+    for(int i = 0; i < 45; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
 
         float y = h * h / (2. * ph);
         float d = sqrt(h*h-y*y);         
-        res = min(res,shblur * d/max(0.,t-y));
+        res = min(res,25. * d/max(0.,t-y));
         ph = h;
         t += h;
     
-        if(res < eps || t > shmax) { break; }
+        if(res < eps || t > 100.) { break; }
 
         }
 
@@ -757,7 +714,7 @@ float shadow(vec3 ro,vec3 rd) {
 
 vec3 calcNormal(vec3 p) {
 
-    vec2 e = vec2(1.0,-1.0) * eps;
+    vec2 e = vec2(1.,-1.)*EPS;
 
     return normalize(vec3(
     vec3(e.x,e.y,e.y) * scene(p + vec3(e.x,e.y,e.y)).x +
@@ -862,12 +819,12 @@ return col;
 
 void main() {
  
-vec3 color = vec3(0.);
+vec4 color = vec3(0.);
 vec3 ro = vec3(0.0,0.0,5.0);
 vec3 ta = vec3(0.0);
 
-for(int k = 0; k < aa; ++k) {
-    for(int l = 0; l < aa; ++l) {
+for(int k = 0; k < AA; ++k) {
+    for(int l = 0; l < AA; ++l) {
 
     vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
 
