@@ -425,20 +425,6 @@ float cone(vec3 p,vec2 c) {
     return dot(c,vec2(q,p.z));
 }
 
-float solidAngle(vec3 p,vec2 c,float ra) {
-    
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
-    float l = length(q) - ra;
-    float m = length(q - c * clamp(dot(q,c),0.0,ra));
-    return max(l,m * sign(c.y * q.x - c.x * q.y));
-}
-
-float link(vec3 p,float le,float r1,float r2) {
-
-    vec3 q = vec3(p.x,max(abs(p.y) -le,0.0),p.z);
-    return length(vec2(length(q.xy)-r1,q.z)) - r2;
-}
-
 float plane(vec3 p,vec4 n) {
 
     return dot(p,n.xyz) + n.w;
@@ -452,35 +438,16 @@ float capsule(vec3 p,vec3 a,vec3 b,float r) {
     return length(pa - ba * h) - r;
 } 
 
-float prism(vec3 p,vec2 h) {
-
-    vec3 q = abs(p);
-    return max(q.z - h.y,  
-    max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
-}
-
 float box(vec3 p,vec3 b) {
 
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float roundbox(vec3 p,vec3 b,float r) {
-
-    vec3 q = abs(p) - b;
-    return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
-}
-
 float torus(vec3 p,vec2 t) {
 
     vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
     return length(q) - t.y; 
-}
-
-float capTorus(vec3 p,vec2 sc,float ra,float rb) {
-    p.x = abs(p.x);
-    float k = (sc.y * p.x > sc.x * p.y) ? dot(p.xy,sc) : length(p.xy);
-    return sqrt(dot(p,p) + ra*ra - 2.*k*ra) - rb;
 }
 
 float cylinder(vec3 p,float h,float r) {
@@ -491,7 +458,7 @@ float cylinder(vec3 p,float h,float r) {
     return d; 
 }
 
-float hexPrism(vec3 p,vec2 h) {
+float hex(vec3 p,vec2 h) {
  
     const vec3 k = vec3(-0.8660254,0.5,0.57735);
     p = abs(p); 
@@ -545,30 +512,31 @@ vec2 scene(vec3 p) {
               ,55.));
 
     res = opu(res,vec2(
-              max(-sphere(p-vec3(2.,0.,0.),1.),
-              max(-cylinder(p.yzx-vec3(-1.,2.,0.),1e10,0.25),  
+              max(-sphere(p-vec3(2.,0.,0.),1.), 
               max(-cylinder(p-vec3(-1.,0.,1.-PHI),1e10,0.25),
-              box(p,vec3(PHI,sqrt(PHI),1.)))))
+              box(p,vec3(PHI,sqrt(PHI),1.))))
               ,24.));
-
-    res = opu(res,vec2(cylinder(p.yzx - vec3(-1.,2.,0.),
-              1e10,0.21),75.));
  
     res = opu(res,vec2(cylinder(p-vec3(-1.,0.,1.-PHI),
               1e10,0.21),35.));
  
     res = opu(res,vec2(
-              smou(prism(p-vec3(PHI,sqrt(PHI),1.),vec2(1.,0.5)),
-              torus(p-vec3(1.+PHI,sqrt(PHI),1.),vec2(2.,0.005)),0.5)
+              torus(p.yxz-vec3(0.,2.,2.),vec2(1.,0.05))
               ,11.));
-  
-    res = opu(res,vec2(octahedron(p,1.),10.));
 
-    q.xy = mod(p.yx,2.)-0.5*2.;
     res = opu(res,vec2(
-          smod(cylinder(q.yxz,1e10,0.05),
-          box(p-vec3(PHI,1.,0.),vec3(PHI,1.,0.5)),0.5)
-          ,124.));  
+              cone(p-vec3(3.,0.,-4.),vec2(0.25,0.15))
+              ,5.));
+
+    res = opu(res,vec2(octahedron(p-vec3(3.,0.,2.),1.),10.)); 
+
+    q.xz = mod(q.xz,2.)-0.5*2.;
+    res = opu(res,vec2(
+           smod(cylinder(q.yxz,1e10,0.05),
+           box(p-vec3(-1.,0.,3.),vec3(2.,1.,0.05)),0.5)
+           ,124.));  
+
+    res = opu(res,vec2(plane(p,vec4(0.,1.,0.,1.)),1.));
 
     return res;
 
@@ -666,7 +634,19 @@ vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
 col = 0.2 + 0.2 * sin(2.*d.y + vec3(4.,1.,2.));
+
 if(d.y == 1.) { col = vec3(0.5); }
+
+if(d.y == 25.) { 
+    col = vec3(h33(p));
+} 
+
+if(d.y == 5.) {
+    float n;
+    n = cell(p,h11(125.)*45.,int(floor(h11(124.)*2.))); 
+    col += vec3(n);
+
+}
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
