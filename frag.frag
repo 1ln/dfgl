@@ -1,10 +1,14 @@
-#version 430 core     
+#version 430 core
 
-// dolson,2019
+//Dan Olson
+//2020
 
 out vec4 FragColor;
 
 uniform sampler2D tex;
+
+uniform sampler2D rtex;
+uniform sampler2D ntex;
 
 uniform vec2 resolution;
 uniform float time;
@@ -16,6 +20,8 @@ uniform vec2 mouse;
 #define FAR 500
 
 #define AA 2
+
+#define SEED 10402592
  
 mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
 mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
@@ -25,22 +31,24 @@ float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(seed));
+    uvec2 n = uint(int(p)) * uvec2(uint(int(SEED)),2531151992.0);
+    uint h = (n.x ^ n.y) * uint(int(SEED));
     return float(h) * (1./float(0xffffffffU));
 }
 
 float h21(vec2 p) {
-    uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(seed)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(seed));
+    uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(SEED)),2531151992.0);
+    uint h = (n.x ^ n.y) * uint(int(SEED));
     return float(h) * (1./float(0xffffffffU));
 }
 
 vec3 h33(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) *  
-   uvec3(uint(int(seed)),2531151992.0,2860486313U);
+   uvec3 h = uvec3(ivec3(p)) *  
+   uvec3(uint(int(SEED)),2531151992.0,2860486313U);
+
    h = (h.x ^ h.y ^ h.z) * 
-   uvec3(uint(int(seed)),2531151992U,2860486313U);
+   uvec3(uint(int(SEED)),2531151992U,2860486313U);
+
    return vec3(h) * (1.0/float(0xffffffffU));
 }
 
@@ -177,9 +185,9 @@ float n3(vec3 x) {
                        h11(n + 271.0),f.x),f.y),f.z);
 }
 
-float f2(vec2 x,int octaves,float h) {
+float f2(vec2 x,int octaves,float hurst) {
     float s = 0.;
-    float h = exp2(-h);     
+    float h = exp2(-hurst);     
     float f = 1.;
     float a = 0.5;
 
@@ -193,9 +201,9 @@ float f2(vec2 x,int octaves,float h) {
     return s;
 }
 
-float f3(vec3 x,int octaves,float h) {
+float f3(vec3 x,int octaves,float hurst) {
     float s = 0.;
-    float h = exp2(-h);
+    float h = exp2(-hurst);
     float f = 1.;
     float a = .5;
 
@@ -208,14 +216,14 @@ float f3(vec3 x,int octaves,float h) {
     return s;
 }
 
-float dd(vec2 p) {
-   vec2 q = vec2(f2(p+vec2(3.,0.5)),
-                 f2(p+vec2(1.,2.5)));
+float dd(vec2 p,int octaves,float hurst) {
+   vec2 q = vec2(f2(p+vec2(3.,0.5),octaves,hurst),
+                 f2(p+vec2(1.,2.5),octaves,hurst));
 
-   vec2 r = vec2(f2(p + 4. * q + vec2(7.5,4.35)),
-                 f2(p + 4. * q + vec2(5.6,2.2))); 
+   vec2 r = vec2(f2(p + 4. * q + vec2(7.5,4.35),octaves,hurst),
+                 f2(p + 4. * q + vec2(5.6,2.2),octaves,hurst)); 
 
-   return f2(p + 4. * r);
+   return f2(p + 4. * r,octaves,hurst);
 }
 
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
@@ -234,7 +242,7 @@ vec3 contrast(vec3 c) {
 return smoothstep(0.,1.,c);
 }
 
-mat2 rot2(float a) {
+mat2 rot(float a) {
 
     float c = cos(a);
     float s = sin(a);
@@ -284,14 +292,6 @@ mat3 camEuler(float yaw,float pitch,float roll) {
      vec3 u = normalize(cross(r,f));
 
      return rotAxis(f,roll) * mat3(r,u,f);
-}
-
-vec3 camOrbit(vec3 ro) {
-
-     vec2 m = mouse / resolution.xy;
-     ro.xz *= rot2(-m.x * PI);    
-     ro.yz *= rot2(-m.y * PI2);
-     return ro;
 }
 
 vec3 repLim(vec3 p,float c,vec3 l) {
@@ -704,7 +704,7 @@ float shadow(vec3 ro,vec3 rd) {
         ph = h;
         t += h;
     
-        if(res < eps || t > 100.) { break; }
+        if(res < EPS || t > 100.) { break; }
 
         }
 
@@ -818,15 +818,22 @@ return col;
 }
 
 void main() {
- 
-vec4 color = vec3(0.);
+
+vec2 uv = 2.* resolution.xy/resolution.y;  
+vec2 m = mouse / resolution.xy; 
+
+vec3 color = vec3(0.);
+
 vec3 ro = vec3(0.0,0.0,5.0);
 vec3 ta = vec3(0.0);
+  
+ro.zx *= rot(-m.x * radians(180));
+ro.yz *= rot(-m.y * (radians(180)*2.));
 
 for(int k = 0; k < AA; ++k) {
     for(int l = 0; l < AA; ++l) {
 
-    vec2 o = vec2(float(l),float(k)) / float(aa) - .5;
+    vec2 o = vec2(float(l),float(k)) / float(AA) - .5;
 
     vec2 uv = (2. * (gl_FragCoord.xy + o) -
               resolution.xy) / resolution.y; 
@@ -839,7 +846,7 @@ for(int k = 0; k < AA; ++k) {
     color += render;
     }
 
-color /= float(aa*aa);
+color /= float(AA*AA);
 color = pow(color,vec3(.4545));
 
 vec3 rt_col = texture(tex,gl_FragCoord.xy / resolution.xy).xyz; 
