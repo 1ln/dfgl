@@ -12,7 +12,18 @@ uniform sampler2D ntex;
 
 uniform vec2 resolution;
 uniform float time;
+
 uniform vec2 mouse;
+
+uniform int key_w;
+uniform int key_a;
+uniform int key_s;
+uniform int key_d;
+
+uniform int unit_box;
+uniform int plane;
+
+uniform int seed;
 
 #define STEPS 255
 #define EPS 0.00001
@@ -21,8 +32,6 @@ uniform vec2 mouse;
 
 #define AA 2
 
-#define SEED 10402592
- 
 mat2 dm2 = mat2(0.6,0.8,-0.6,0.8); 
 mat3 dm3 = mat3(0.6,0.,0.8,0.,1.,-0.8,0.,0.6,0.);
 
@@ -31,23 +40,23 @@ float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(uint(int(SEED)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(SEED));
+    uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
+    uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
 float h21(vec2 p) {
-    uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(SEED)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(SEED));
+    uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(seed)),2531151992.0);
+    uint h = (n.x ^ n.y) * uint(int(seed));
     return float(h) * (1./float(0xffffffffU));
 }
 
 vec3 h33(vec3 p) {
    uvec3 h = uvec3(ivec3(p)) *  
-   uvec3(uint(int(SEED)),2531151992.0,2860486313U);
+   uvec3(uint(int(seed)),2531151992.0,2860486313U);
 
    h = (h.x ^ h.y ^ h.z) * 
-   uvec3(uint(int(SEED)),2531151992U,2860486313U);
+   uvec3(uint(int(seed)),2531151992U,2860486313U);
 
    return vec3(h) * (1.0/float(0xffffffffU));
 }
@@ -724,19 +733,6 @@ vec3 calcNormal(vec3 p) {
 
     ));
     
-}
-
-vec3 rayCamDir(vec2 uv,vec3 camPosition,vec3 camTarget,float fPersp) {
-
-     vec3 camForward = normalize(camTarget - camPosition);
-     vec3 camRight = normalize(cross(vec3(0.0,1.0,0.0),camForward));
-     vec3 camUp = normalize(cross(camForward,camRight));
-
-
-     vec3 vDir = normalize(uv.x *             
-     camRight + uv.y * camUp + camForward * fPersp);  
-
-     return vDir;
 }
 
 vec3 renderPhong(vec3 ro,vec3 rd,vec3 lp,vec3 dif,vec3 spe,vec3 k,float a) {
