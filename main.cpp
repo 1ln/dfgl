@@ -5,7 +5,6 @@
 #include <glm/gtc/matrix_transform.hpp> 
 
 #include "Shader.h"
-#include "Camera.h"
 
 #include <iostream>
 #include <string>
@@ -48,9 +47,6 @@ bool key_space = false;
 
 int seed = 1251623;
 
-Camera cam(glm::vec3(0.0f,0.0f,5.0f),
-           glm::vec3(0.0f,0.0f,0.0f));
-
 int main(int argc,char** argv) {
  
     std::string frag = argv[1]; 
@@ -61,7 +57,8 @@ int main(int argc,char** argv) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(width,height,"dfgl",NULL,NULL);
+    GLFWwindow* window = glfwCreateWindow(width,height,
+    "dfgl",NULL,NULL);
 
     if(window == NULL) {
         std::cout << "Failed to initalize GLFW window" << std::endl;
@@ -98,7 +95,9 @@ int main(int argc,char** argv) {
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBufferData(GL_ARRAY_BUFFER,sizeof(verts),verts,GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,3*sizeof(float),(void*)0);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE 
+    ,3*sizeof(float),(void*)0);
+
     glEnableVertexAttribArray(0);
 
     unsigned int fb = 0;
@@ -261,10 +260,11 @@ void mouse_callback(GLFWwindow* window,double xpos,double ypos) {
 
     lastx = xpos;
     lasty = ypos;
-
-    mouse.x = lastx;
-    mouse.y = lasty; 
-
+ 
+    if(mouse_pressed) {
+        mouse.x = lastx;
+        mouse.y = lasty; 
+    }
 }
 
 void mouse_button_callback(GLFWwindow* window,int button,int action,int mods) {
