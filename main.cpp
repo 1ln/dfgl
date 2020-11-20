@@ -136,8 +136,6 @@ int main(int argc,char** argv) {
 
         shader.use();
 
-        cam.update();
-
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
 
