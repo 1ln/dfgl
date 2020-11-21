@@ -3,10 +3,14 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
+#include <glm/gtx/noise.hpp>
+
+#include <gli/gli.hpp>
 
 #include "Shader.h"
 
 #include <iostream>
+#include <vector>
 #include <string>
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h);
@@ -49,7 +53,7 @@ int seed = 1251623;
 
 int main(int argc,char** argv) {
  
-    std::string frag = argv[1]; 
+    std::string frag = argv[1];    
 
     glfwInit();
 
@@ -76,7 +80,7 @@ int main(int argc,char** argv) {
     glfwSetScrollCallback(window,scroll_callback);
     glfwSetMouseButtonCallback(window,mouse_button_callback);
 
-    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     Shader shader("vert.vert",frag.c_str());
 
@@ -120,6 +124,29 @@ int main(int argc,char** argv) {
     GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
     glDrawBuffers(1,draw_buffers);  
 
+    unsigned int ntex;
+    glGenTextures(1,&ntex);
+    glBindTexture(GL_TEXTURE_2D,ntex);
+
+    std::vector<GLfloat> image(3*width*height);
+
+    for(int j = 0; j < height; ++j) {
+        for(int i = 0; i < width; ++i) {
+    
+        size_t ind = j*width+i;
+        image[3*ind+0] = 255.0f * glm::simplex(glm::vec2(i,j+100));
+        image[3*ind+1] = 0.0f; 
+        image[3*ind+2] = 0.0f;
+
+        }
+    }
+        
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32,width,height,0,GL_RGB,
+    GL_FLOAT,&image[0]);
+
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {
@@ -147,13 +174,10 @@ int main(int argc,char** argv) {
         shader.setBool("key_s",key_s);
         shader.setBool("key_d",key_d);
         shader.setBool("key_a",key_a);
-        shader.setBool("key_up",key_up);
-        shader.setBool("key_down",key_down);
-        shader.setBool("key_right",key_right);
-        shader.setBool("key_left",key_left);
         shader.setBool("key_space",key_space);
-  
+
         shader.setVec2("mouse",1,mouse);
+    
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
         
@@ -183,6 +207,9 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
+    if(glfwGetKey(window,GLFW_KEY_F) == GLFW_PRESS)
+        gli::save(tex,frag.c_str()); 
+
     if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
         key_space = true;
     } else { 
@@ -211,30 +238,6 @@ void processInput(GLFWwindow *window) {
         key_d = true;
     } else {
         key_d = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS) { 
-        key_up = true;
-    } else {
-        key_up = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_LEFT) == GLFW_PRESS) {  
-        key_left = true;
-    } else {      
-        key_left = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_DOWN) == GLFW_PRESS) {
-        key_down = true;
-    } else {
-        key_down = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        key_right = true;
-    } else {
-        key_right = false;
     }
 
 }
