@@ -5,10 +5,8 @@
 
 out vec4 FragColor;
 
-uniform sampler2D tex;
-
-uniform sampler2D rtex;
-uniform sampler2D ntex;
+layout(binding=0) uniform sampler2D tex;
+layout(binding=1) uniform sampler2D ntex;
 
 uniform vec2 resolution;
 uniform float time;
@@ -19,9 +17,6 @@ uniform int key_w;
 uniform int key_a;
 uniform int key_s;
 uniform int key_d;
-
-uniform int unit_box;
-uniform int plane;
 
 uniform int seed;
 
