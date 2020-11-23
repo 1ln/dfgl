@@ -89,6 +89,10 @@ void Shader::setMat4(const std::string &name,int count,glm::mat4 const& m4) cons
    glUniform4fv(glGetUniformLocation(id,name.c_str()),count,&m4[0][0]);
 }
 
+void Shader::setTex(const std::string &name) const {
+   glUniform1i(glGetUniformLocation(id,name.c_str()));
+}
+
 void Shader::checkCompileErrors(unsigned int shader,std::string type) {
 
     int success;
