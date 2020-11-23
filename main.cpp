@@ -166,9 +166,16 @@ int main(int argc,char** argv) {
         shader.use();
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,ntex);
+        glBindTexture(GL_TEXTURE_2D,tex);
+        shader.setTex("tex",0);        
 
-        shader.setTex("ntex");        
+        glBindFramebuffer(GL_FRAMEBUFFER,0);
+        glViewport(0,0,width,height);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D,ntex);
+        shader.setTex("ntex",0);       
 
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
@@ -188,10 +195,6 @@ int main(int argc,char** argv) {
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
         
-        glBindFramebuffer(GL_FRAMEBUFFER,0); 
-        glViewport(0,0,width,height);
-        glClear(GL_COLOR_BUFFER_BIT); 
-
         glBindVertexArray(vao);
 
         glDrawArrays(GL_TRIANGLES,0,3);
