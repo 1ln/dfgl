@@ -3,9 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
-#include <glm/gtx/noise.hpp>
-
-#include <gli/gli.hpp>
+#include <glm/gtc/noise.hpp>
 
 #include "Shader.h"
 
@@ -117,6 +115,8 @@ int main(int argc,char** argv) {
 
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
     glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);   
 
     glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
                          tex,0);
@@ -141,11 +141,13 @@ int main(int argc,char** argv) {
         }
     }
         
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32,width,height,0,GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32F,width,height,0,GL_RGB,
     GL_FLOAT,&image[0]);
 
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
 
     shader.use();
 
@@ -162,6 +164,11 @@ int main(int argc,char** argv) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         shader.use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D,ntex);
+
+        shader.setTex("ntex");        
 
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
@@ -207,8 +214,7 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
-    if(glfwGetKey(window,GLFW_KEY_F) == GLFW_PRESS)
-        gli::save(tex,frag.c_str()); 
+    if(glfwGetKey(window,GLFW_KEY_F) == GLFW_PRESS) 
 
     if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
         key_space = true;
