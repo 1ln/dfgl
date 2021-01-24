@@ -8,8 +8,11 @@ Shader::Shader(const char* vertPath,const char* fragPath) {
     std::ifstream vShaderFile;
     std::ifstream fShaderFile;
 
-    vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    vShaderFile.exceptions (std::ifstream::failbit 
+    | std::ifstream::badbit);
+    
+    fShaderFile.exceptions (std::ifstream::failbit 
+    | std::ifstream::badbit);
 
     try {
 
@@ -77,20 +80,23 @@ void Shader::setFloat(const std::string &name,float value) const {
     glUniform1f(glGetUniformLocation(id,name.c_str()),value);
 }
 
-void Shader::setVec2(const std::string &name,int count,glm::vec2 const& v) const {
-    glUniform2fv(glGetUniformLocation(id,name.c_str()),count,&v[0]); 
+void Shader::setVec2(const std::string &name,
+                     int count,glm::vec2 const& v) 
+                     const {
+
+    glUniform2fv(
+    glGetUniformLocation(id,name.c_str()),count,&v[0]);
+
 }
 
-void Shader::setVec3(const std::string &name,int count,glm::vec3 const& v) const {
-    glUniform3fv(glGetUniformLocation(id,name.c_str()),count,&v[0]);
-}
+void Shader::setMat4(const std::string &name,
+                     int count, 
+                     glm::mat4 const& m4) 
+                     const {
 
-void Shader::setMat4(const std::string &name,int count,glm::mat4 const& m4) const {
-   glUniform4fv(glGetUniformLocation(id,name.c_str()),count,&m4[0][0]);
-}
+   glUniform4fv( 
+   glGetUniformLocation(id,name.c_str()),count,&m4[0][0]);
 
-void Shader::setTex(const std::string &name) const {
-   glUniform1i(glGetUniformLocation(id,name.c_str()));
 }
 
 void Shader::checkCompileErrors(unsigned int shader,std::string type) {
