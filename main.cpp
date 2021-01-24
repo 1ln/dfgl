@@ -3,8 +3,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
-#include <glm/gtc/noise.hpp>
-
 #include "Shader.h"
 
 #include <iostream>
@@ -32,22 +30,7 @@ glm::vec2 mouse;
 bool mouse_pressed = false; 
 float mouse_scroll = 0.0f;
 
-bool key_w = false;
-bool key_a = false;
-bool key_s = false;
-bool key_d = false;
-
-bool key_up = false;
-bool key_down = false;
-bool key_right = false;
-bool key_left = false;
-
-bool key_q = false;
-bool key_e = false; 
-
 bool key_space = false;
-
-int seed = 1251623;
 
 int main(int argc,char** argv) {
  
@@ -102,53 +85,6 @@ int main(int argc,char** argv) {
 
     glEnableVertexAttribArray(0);
 
-    unsigned int fb = 0;
-    glGenFramebuffers(1,&fb);
-    glBindFramebuffer(GL_FRAMEBUFFER,fb);
-
-    unsigned int tex;
-    glGenTextures(1,&tex);
-    glBindTexture(GL_TEXTURE_2D,tex);
-
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
-    GL_UNSIGNED_BYTE,NULL);
-
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_NEAREST); 
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);   
-
-    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
-                         tex,0);
-
-    GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 }; 
-    glDrawBuffers(1,draw_buffers);  
-
-    unsigned int ntex;
-    glGenTextures(1,&ntex);
-    glBindTexture(GL_TEXTURE_2D,ntex);
-
-    std::vector<GLfloat> image(3*width*height);
-
-    for(int j = 0; j < height; ++j) {
-        for(int i = 0; i < width; ++i) {
-    
-        size_t ind = j*width+i;
-        image[3*ind+0] = 255.0f * glm::simplex(glm::vec2(i,j+100));
-        image[3*ind+1] = 0.0f; 
-        image[3*ind+2] = 0.0f;
-
-        }
-    }
-        
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB32F,width,height,0,GL_RGB,
-    GL_FLOAT,&image[0]);
-
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-
     shader.use();
 
     while (!glfwWindowShouldClose(window)) {
@@ -159,39 +95,13 @@ int main(int argc,char** argv) {
 
         processInput(window);
 
-        glBindFramebuffer(GL_FRAMEBUFFER,fb);
-        glViewport(0,0,width,height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
         shader.use();
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,tex);
-        shader.setTex("tex",0);        
-
-        glBindFramebuffer(GL_FRAMEBUFFER,0);
-        glViewport(0,0,width,height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,ntex);
-        shader.setTex("ntex",0);       
-
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
 
         shader.setFloat("time",last_frame);   
-
-        shader.setInt("seed",seed);
-
-        shader.setBool("key_w",key_w);
-        shader.setBool("key_s",key_s);
-        shader.setBool("key_d",key_d);
-        shader.setBool("key_a",key_a);
         shader.setBool("key_space",key_space);
-
         shader.setVec2("mouse",1,mouse);
-    
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
         
@@ -217,38 +127,12 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
-    if(glfwGetKey(window,GLFW_KEY_F) == GLFW_PRESS) 
-
     if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
         key_space = true;
     } else { 
         key_space = false;
     }
   
-    if(glfwGetKey(window,GLFW_KEY_W) == GLFW_PRESS) {
-        key_w = true; 
-    } else {
-        key_w = false; 
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_A) == GLFW_PRESS) {
-        key_a = true;
-    } else {
-        key_a = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_S) == GLFW_PRESS) { 
-        key_s = true;
-    } else { 
-        key_s = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_D) == GLFW_PRESS) {
-        key_d = true;
-    } else {
-        key_d = false;
-    }
-
 }
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
