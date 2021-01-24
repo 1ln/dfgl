@@ -1,0 +1,10 @@
+For running fragment shaders
+
+No Makefile
+
+Compile with g++
+g++ main.cpp -o dfgl Shader.cpp -lGL -lglfw -lGLEW
+
+Run
+./dfgl 'name of file path'
+
