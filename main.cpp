@@ -63,7 +63,23 @@ int main(int argc,char** argv) {
 
     //glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
-    Shader shader("vert.vert",frag.c_str());
+    GLuint fb = 0;
+    glGenFramebuffers(1,&fb);
+    glBindFramebuffer(GL_FRAMEBUFFER,fb);
+
+    GLuint rtex;
+    glGenTextures(1,&fb);
+    glBindTexture(GL_TEXTURE_2D,rtex); 
+
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
+    GL_UNSIGNED_BYTE,0);    
+
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+
+    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,rtex,0);
+    GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1,DrawBuffers);    
 
     float verts[] = {
     -1.,3.,0.,
@@ -85,7 +101,11 @@ int main(int argc,char** argv) {
 
     glEnableVertexAttribArray(0);
 
+    Shader shader("vert.vert",frag.c_str());         
+
     shader.use();
+    shader.setTex("rtex",rtex);
+
 
     while (!glfwWindowShouldClose(window)) {
   
@@ -95,7 +115,14 @@ int main(int argc,char** argv) {
 
         processInput(window);
 
+        glBindFramebuffer(GL_FRAMEBUFFER,fb);        
+        glViewport(0,0,width,height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+
         shader.use();
+
         glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
 
