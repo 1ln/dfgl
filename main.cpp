@@ -31,10 +31,17 @@ bool mouse_pressed = false;
 float mouse_scroll = 0.0f;
 
 bool key_space = false;
+bool key_x = false;
+bool key_z = false;
+bool key_up = false;
+bool key_down = false;
+bool key_right = false;
+bool key_left = false;
 
 int main(int argc,char** argv) {
  
-    std::string frag = argv[1];    
+    std::string frag0 = argv[1];    
+    std::string frag1 = argv[2];  
 
     glfwInit();
 
@@ -81,6 +88,9 @@ int main(int argc,char** argv) {
     GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1,DrawBuffers);    
 
+
+    glBindFramebuffer(GL_FRAMEBUFFER,fb);
+      
     float verts[] = {
     -1.,3.,0.,
     -1.,-1.,0.,
@@ -101,37 +111,43 @@ int main(int argc,char** argv) {
 
     glEnableVertexAttribArray(0);
 
-    Shader shader("vert.vert",frag.c_str());         
+    Shader buffer("vert.glsl",frag0.c_str());
+    Shader shader("vert.glsl",frag1.c_str());         
+    
+    buffer.use();
 
     shader.use();
-    shader.setTex("rtex",rtex);
-
-
+    
     while (!glfwWindowShouldClose(window)) {
   
+
+
         float current_frame = glfwGetTime(); 
         dt = current_frame - last_frame;
         last_frame = current_frame;
 
         processInput(window);
 
-        glBindFramebuffer(GL_FRAMEBUFFER,fb);        
+        glm::vec2 resolution = glm::vec2(width,height);        
+
+        glBindFramebuffer(GL_FRAMEBUFFER,fb);
+        glViewport(0,0,width,height);
+        buffer.use();        
+        buffer.setVec2("resolution",1,resolution);
+        buffer.setFloat("time",last_frame);
+
+        glBindFramebuffer(GL_FRAMEBUFFER,0);        
         glViewport(0,0,width,height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
         shader.use();
-
-        glm::vec2 resolution = glm::vec2(width,height);
         shader.setVec2("resolution",1,resolution);
-
-        shader.setFloat("time",last_frame);   
-        shader.setBool("key_space",key_space);
+        shader.setFloat("time",last_frame);
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
-        
+        shader.setTex("rtex",rtex);
+
         glBindVertexArray(vao);
 
         glDrawArrays(GL_TRIANGLES,0,3);
