@@ -38,6 +38,8 @@ bool key_down = false;
 bool key_right = false;
 bool key_left = false;
 
+bool hide_cursor = false;
+
 int main(int argc,char** argv) {
  
     std::string frag0 = argv[1];    
@@ -68,15 +70,17 @@ int main(int argc,char** argv) {
     glfwSetScrollCallback(window,scroll_callback);
     glfwSetMouseButtonCallback(window,mouse_button_callback);
 
-    //glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+    if(hide_cursor) {
+    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+    } 
 
     GLuint fb = 0;
     glGenFramebuffers(1,&fb);
     glBindFramebuffer(GL_FRAMEBUFFER,fb);
 
-    GLuint rtex;
+    GLuint tex;
     glGenTextures(1,&fb);
-    glBindTexture(GL_TEXTURE_2D,rtex); 
+    glBindTexture(GL_TEXTURE_2D,tex); 
 
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
     GL_UNSIGNED_BYTE,0);    
@@ -84,10 +88,9 @@ int main(int argc,char** argv) {
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,rtex,0);
+    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,tex,0);
     GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1,DrawBuffers);    
-
 
     glBindFramebuffer(GL_FRAMEBUFFER,fb);
       
@@ -120,8 +123,6 @@ int main(int argc,char** argv) {
     
     while (!glfwWindowShouldClose(window)) {
   
-
-
         float current_frame = glfwGetTime(); 
         dt = current_frame - last_frame;
         last_frame = current_frame;
@@ -146,7 +147,7 @@ int main(int argc,char** argv) {
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
-        shader.setTex("rtex",rtex);
+        shader.setTex("tex",tex);
 
         glBindVertexArray(vao);
 
@@ -170,12 +171,23 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
+
+
+    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS) {
+        key_up = true;
+    } else {
+        key_up = false;
+    }
+
     if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
         key_space = true;
     } else { 
         key_space = false;
     }
   
+
+
+
 }
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
