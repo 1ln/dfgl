@@ -1,7 +1,6 @@
 #version 330 core     
 
 //Dan Olson
-//2020
 
 out vec4 FragColor;
 
@@ -9,15 +8,15 @@ uniform vec2 resolution;
 uniform float time;
 uniform int seed;
 
-const int steps = 250;
-float eps = 0.00001;
+const int steps = 50;
+float eps = 0.0001;
 float dmin = 0.;
-float dmax = 750.;
+float dmax = 25.;
 const int aa = 2;
  
-const int shsteps = 45; 
-float shblur = 10.0;
-float shmax = 100.; 
+const int shsteps = 25;
+float shblur = 250.;
+float shmax = 10.; 
 
 const int aosteps = 5;
 
@@ -49,38 +48,6 @@ float n2(vec2 x) {
 
     return mix(mix(h11(n+0.),h11(n+1.),f.x),
                mix(h11(n+57.),h11(n+58.),f.x),f.y);  
-}
-
-float f2(vec2 x) {
-
-    float s = 0.;
-    float h = exp2(-hurst);     
-    float f = 1.;
-    float a = 0.5;
-
-    for(int i = 1; i < octaves; i++) {
- 
-        s += a * n2(f * x);
-        f *= 2.;
-        a *= h;
-    }    
-
-    return s;
-}
-
-float dd(vec2 p) {
-
-   vec2 q = vec2(f2(p+vec2(3.,0.5)),
-                 f2(p+vec2(1.,2.5)));
-
-   vec2 r = vec2(f2(p + 4. * q + vec2(7.5,4.35)),
-                 f2(p + 4. * q + vec2(5.6,2.2))); 
-
-   return f2(p + 4. * r);
-}
-
-vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    return a + b * cos( (PI*2.0) * (c * t + d));
 }
 
 mat2 rot2(float a) {
@@ -145,15 +112,14 @@ vec2 scene(vec3 p) {
     
     vec3 q = p;
 
-    p.xz *= rot2(t);
-    p.zy *= rot2(t);
+    p.xz *= rot2(t*.1);
 
     d = menger(p,5,1.,box(p,vec3(1.)));
     
-    d = max(-plane(q*.5,vec4(1.,-1.,-1.,0.)),d);
+    d = max(-plane(p*.5,vec4(1.,-1.,-1.,0.)),d);
     res = opu(res,vec2(d,2.)); 
 
-    float pl = plane(q+vec3(0.,1.5,0.),vec4(0.,1.,0.,1.));
+    float pl = plane(q,vec4(0.,1.,0.,1.));
     res = opu(res,vec2(pl,1.));
   
     return res;
@@ -241,7 +207,7 @@ vec3 renderScene(vec3 ro,vec3 rd,vec3 lp,vec3 c) {
  
 vec2 d = rayScene(ro, rd);
 
-vec3 col = c * max(0.,rd.y);
+vec3 col = c;
 
 if(d.y >= 0.) {
 
@@ -251,7 +217,11 @@ vec3 l = normalize(lp);
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
-col = 0.2 + 0.2 * sin(2.*d.y + vec3(0.,1.,2.));
+if(d.y == 1.) {
+    col = vec3(.5); 
+} else {
+    col = vec3(.9,.35,.35);
+}
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
@@ -268,14 +238,14 @@ vec3 linear = vec3(0.);
 dif *= shadow(p,l);
 ref *= shadow(p,r);
 
-linear += dif * vec3(.5);
+linear += dif * vec3(1.5);
 linear += amb * vec3(0.01,0.05,0.05);
-linear += ref * vec3(4.  );
+linear += ref * vec3(.005);
 linear += fre * vec3(0.25,0.5,0.35);
 
 col = col * linear;
-col += spe * vec3(1.,0.97,1.); 
-col = mix(col,c,1.-exp(-0.00001 * d.x*d.x*d.x)); 
+col += spe;
+
 
 }
 
@@ -285,7 +255,7 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(1.,5.,10.);
+vec3 ro = vec3(2.,4.,2.);
 vec3 ta = vec3(0.0);
 
 for(int k = 0; k < aa; ++k) {
@@ -299,16 +269,14 @@ for(int k = 0; k < aa; ++k) {
     mat3 cm = camOrthographic(ro,ta,0.);
     vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
-    vec3 render = renderNormals(ro,rd);  
-    render = renderScene(ro,rd,vec3(10.),vec3(1.));    
+    vec3 render = renderScene(ro,rd,vec3(-6.,10.,5.),vec3(1.));    
 
+    render = pow(render,vec3(.4545));
     color += render;
     }
+}
 
 color /= float(aa*aa);
-color = pow(color,vec3(.4545));
-
 FragColor = vec4(color,1.0);
-}
 
 }

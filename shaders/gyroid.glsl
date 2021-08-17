@@ -156,11 +156,12 @@ vec2 scene(vec3 p) {
     vec2 res = vec2(1.,0.);
 
     float d = 0.;     
-    float t = time;  
+    float s = 0.;
     
     d = gyroid(p,12.,0.12,0.0045,-dot(sin(p),cos(p.zxy)));
+    s = sphere(p,8.);
 
-    res = opu(res,vec2(d,2.)); 
+    res = opu(res,vec2(smod(s,d,0.25),2.)); 
 
     return res;
 
@@ -247,18 +248,15 @@ vec3 renderScene(vec3 ro,vec3 rd) {
  
 vec2 d = rayScene(ro, rd);
 
-vec3 col = vec3(0.5) * max(0.,rd.y);
+vec3 col = vec3(1.) * max(0.,rd.y);
 
 if(d.y >= 0.) {
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(12.));
+vec3 l = normalize(vec3(0.));
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
-
-col = 0.2 + 0.2 * sin(2.*d.y + vec3(3.,1.,2.));
-col += f2(p.xz+f2(p.xy*rd.y)); 
 
 float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
 
@@ -277,7 +275,7 @@ ref *= shadow(p,r);
 
 linear += dif * vec3(0.5,0.24,0.34);
 linear += amb * vec3(0.01,0.05,0.05);
-linear += ref * vec3(0.1);
+linear += ref * vec3(0.1,2.,0.45);
 linear += fre * vec3(0.25,0.005,0.0035);
 
 col = col * linear;
@@ -292,7 +290,7 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(1.,5.,10.);
+vec3 ro = vec3(0.);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
