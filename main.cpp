@@ -93,7 +93,9 @@ int main(int argc,char** argv) {
     glDrawBuffers(1,DrawBuffers);    
 
     glBindFramebuffer(GL_FRAMEBUFFER,fb);
-      
+    
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;  
+
     float verts[] = {
     -1.,3.,0.,
     -1.,-1.,0.,
@@ -133,13 +135,15 @@ int main(int argc,char** argv) {
 
         glBindFramebuffer(GL_FRAMEBUFFER,fb);
         glViewport(0,0,width,height);
-        buffer.use();        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        buffer.use();
         buffer.setVec2("resolution",1,resolution);
         buffer.setFloat("time",last_frame);
 
         glBindFramebuffer(GL_FRAMEBUFFER,0);        
-        glViewport(0,0,width,height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindTexture(GL_TEXTURE_2D,tex);        
+        glBindTexture(GL_TEXTURE_2D,0);
 
         shader.use();
         shader.setVec2("resolution",1,resolution);
