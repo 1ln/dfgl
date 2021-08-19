@@ -1,6 +1,6 @@
 #version 330 core
 
-vec4 out FragColor;
+out vec4 FragColor;
 uniform vec2 resolution;
 uniform sampler2D tex;
 uniform float time;
@@ -30,7 +30,7 @@ mat3 camOrthographic(vec3 ro,vec3 ta,float r) {
 
 vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
-} 
+}
 
 float box(vec3 p,vec3 b) {
 
@@ -137,6 +137,5 @@ vec3 col = renderScene(ro,rd);
 
 col = pow(col,vec3(0.4545));
 color += col;
-
-gl_FragColor = vec4(color,1.0);
+FragColor = vec4(color,1.0);
 }
