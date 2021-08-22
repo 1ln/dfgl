@@ -3,7 +3,9 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp> 
+
 #include "Shader.h"
+#include "Camera.h"
 
 #include <iostream>
 #include <vector>
@@ -30,20 +32,17 @@ glm::vec2 mouse;
 bool mouse_pressed = false; 
 float mouse_scroll = 0.0f;
 
-bool key_space = false;
-bool key_x = false;
-bool key_z = false;
-bool key_up = false;
-bool key_down = false;
-bool key_right = false;
-bool key_left = false;
-
+bool key_f3 = false;
 bool hide_cursor = false;
+
+int seed = 0;
 
 int main(int argc,char** argv) {
  
-    std::string frag0 = argv[1];    
-    std::string frag1 = argv[2];  
+    std::string frag = argv[1];      
+    std::string seed_str = argv[2];
+    seed = std::stoi(seed_str);
+
 
     glfwInit();
 
@@ -92,10 +91,6 @@ int main(int argc,char** argv) {
     GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1,DrawBuffers);    
 
-    glBindFramebuffer(GL_FRAMEBUFFER,fb);
-    
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) return false;  
-
     float verts[] = {
     -1.,3.,0.,
     -1.,-1.,0.,
@@ -116,11 +111,8 @@ int main(int argc,char** argv) {
 
     glEnableVertexAttribArray(0);
 
-    Shader buffer("vert.glsl",frag0.c_str());
-    Shader shader("vert.glsl",frag1.c_str());         
+    Shader shader("vert.glsl",frag.c_str());         
     
-    buffer.use();
-
     shader.use();
     
     while (!glfwWindowShouldClose(window)) {
@@ -134,24 +126,14 @@ int main(int argc,char** argv) {
         glm::vec2 resolution = glm::vec2(width,height);        
 
         glBindFramebuffer(GL_FRAMEBUFFER,fb);
-        glViewport(0,0,width,height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        
-        buffer.use();
-        buffer.setVec2("resolution",1,resolution);
-        buffer.setFloat("time",last_frame);
-
-        glBindFramebuffer(GL_FRAMEBUFFER,0);        
-        glBindTexture(GL_TEXTURE_2D,tex);        
-        glBindTexture(GL_TEXTURE_2D,0);
-
         shader.use();
         shader.setVec2("resolution",1,resolution);
         shader.setFloat("time",last_frame);
+        shader.setInt("seed",seed);
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
-        shader.setTex("tex",tex);
+        glBindFramebuffer(GL_FRAMEBUFFER,0);  
 
         glBindVertexArray(vao);
 
@@ -175,23 +157,12 @@ void processInput(GLFWwindow *window) {
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
 
-
-
-    if(glfwGetKey(window,GLFW_KEY_UP) == GLFW_PRESS) {
-        key_up = true;
-    } else {
-        key_up = false;
-    }
-
-    if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) { 
-        key_space = true;
+    if(glfwGetKey(window,GLFW_KEY_F3)) { 
+        key_f3 = true;
     } else { 
-        key_space = false;
+        key_f3 = false;
     }
   
-
-
-
 }
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
