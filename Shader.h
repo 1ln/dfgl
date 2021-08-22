@@ -25,6 +25,10 @@ void setVec2(const std::string &name,
              int count,
              glm::vec2 const& v) const;
 
+void setVec3(const std::string &name,
+             int count,
+             glm::vec3 const& v) const;
+
 void setMat4(const std::string &name,
              int count,
              glm::mat4 const& m4) const;

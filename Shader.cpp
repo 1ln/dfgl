@@ -90,7 +90,13 @@ void Shader::setVec2(const std::string &name,
 
     glUniform2fv(
     glGetUniformLocation(id,name.c_str()),count,&v[0]);
+}
 
+void Shader::setVec3(const std::string &name,
+                     int count,glm::vec3 const& v)
+                     const {
+    glUniform3fv(
+    glGetUniformLocation(id,name.c_str()),count,&v[0]);
 }
 
 void Shader::setMat4(const std::string &name,
