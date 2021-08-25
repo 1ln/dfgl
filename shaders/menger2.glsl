@@ -1,23 +1,11 @@
-const vert = `
-#version 300 es
-
-void main() {
-
-gl_Position = vec4(position,1.);
-
-}
-`;
-
-const frag = `
-
-#version 300 es     
+#version 330 core     
 
 // dolson,2019
 
-out vec4 out_FragColor;
+out vec4 FragColor;
 
 uniform float time;
-uniform vec2 res;
+uniform vec2 resolution;
 uniform int seed;
 
 const float PI   =  radians(180.0); 
@@ -369,87 +357,13 @@ vec3 color = vec3(0.);
 vec3 cam_tar = vec3(0.);
 vec3 cam_pos = vec3(3.);
 
-vec2 uv = (2.*gl_FragCoord.xy-res.xy)/res.y; 
+vec2 uv = (2.*gl_FragCoord.xy-resolution)/resolution.y; 
 
 vec3 dir = rayCamDir(uv,cam_pos,cam_tar,2.); 
 
 color = render(cam_pos,dir);  
-
 color = pow(color,vec3(.4545));
-out_FragColor = vec4(color,1.0);
+
+FragColor = vec4(color,1.0);
 
 }
-`;
-
-let renderer,canvas,context;
-
-let uniforms;
-
-let scene,material,mesh;
-
-let plane,w,h; 
-
-let cam;
-let r = new Math.seedrandom();
-let s = Math.abs(r.int32());
-
-init();
-render();
-
-function init() {
-
-    canvas = $('#canvas')[0];
-    context = canvas.getContext('webgl2');
-    
-    w = window.innerWidth;
-    h = window.innerHeight;
-
-    canvas.width = w;
-    canvas.height = h;
-
-    scene = new THREE.Scene();
-    plane = new THREE.PlaneBufferGeometry(2,2);
-
-    renderer = new THREE.WebGLRenderer({
-    
-        canvas : canvas,
-        context : context
-
-    });
-
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(w,h);
-    
-    cam = new THREE.PerspectiveCamera(0.,w/h,0.,1.);
-
-    material = new THREE.ShaderMaterial({
-
-       uniforms : {
-    
-        
-           res        : new THREE.Uniform(new THREE.Vector2(w,h)),
-           time          : { value : 1. },
-           seed          : { value : s }
-
-       },
-
-       vertexShader   : vert,
-       fragmentShader : frag
-
-    });
-
-    mesh = new THREE.Mesh(plane,material);
-    scene.add(mesh);
-
-}
-
-    function render() {
- 
-    material.uniforms.res.value = new THREE.Vector2(w,h);
-    material.uniforms.time.value = performance.now();
-
-    renderer.render(scene,cam);
-    requestAnimationFrame(render);
-
-}
-

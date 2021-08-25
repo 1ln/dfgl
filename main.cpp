@@ -133,8 +133,7 @@ int main(int argc,char** argv) {
         shader.setVec2("resolution",1,resolution);
         shader.setFloat("time",last_frame);
         shader.setInt("seed",seed);
-        shader.setVec3("camPos",1,cam.pos); 
-        shader.setVec3("camTar",1,cam.tar);
+        shader.setVec3("camPos",1,cam.position);
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
         shader.setBool("mouse_pressed",mouse_pressed);
