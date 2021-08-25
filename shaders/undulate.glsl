@@ -1,27 +1,8 @@
-const vert = `
-#version 300 es
+#version 330 core     
 
-varying vec2 uVu;
+out vec4 FragColor;
 
-void main() {
-
-uVu = uv;
-gl_Position = vec4(position,1.);
-
-}
-`;
-
-const frag = `
-
-#version 300 es     
-
-// dolson,2019
-
-out vec4 out_FragColor;
-
-varying vec2 uVu;
-
-uniform vec2 res;
+uniform vec2 resolution;
 uniform int seed;
 uniform float time;
 
@@ -268,96 +249,12 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 cam_tar = vec3(0.);
-vec3 cam_pos = cameraPosition;
+vec3 cam_pos = vec3(0.,2.,5.);
 
-vec2 uv = (2.*gl_FragCoord.xy-res)/res.y;  
+vec2 uv = (2.*gl_FragCoord.xy-resolution)/resolution.y;  
 
 vec3 dir = rayCamDir(uv,cam_pos,cam_tar,2.); 
 color = render(cam_pos,dir);  
-
-out_FragColor = vec4(color,1.0);
-
-}
-`;
-
-let renderer,canvas,context;
-
-let uniforms;
-
-let scene,material,mesh;
-
-let plane,w,h; 
-
-let cam,controls,target;
-let sphere,sphere_mat;
-
-let r = new Math.seedrandom();
-let s = Math.abs(r.int32());
-
-init();
-render();
-
-function init() {
-
-    canvas = $('#canvas')[0];
-    context = canvas.getContext('webgl2');
-    
-    w = window.innerWidth;
-    h = window.innerHeight;
-
-    canvas.width = w;
-    canvas.height = h;
-
-    scene = new THREE.Scene();
-    plane = new THREE.PlaneBufferGeometry(2,2);
-
-    renderer = new THREE.WebGLRenderer({
-    
-        canvas : canvas,
-        context : context
-
-    });
-
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(w,h);
-    
-    cam = new THREE.PerspectiveCamera(0.,w/h,0.,1.);
-    cam.position.set(1.,5.,1.15);
-    
-    sphere = new THREE.SphereBufferGeometry();
-    sphere_mat = new THREE.Material();
-    target = new THREE.Mesh(sphere,sphere_mat);
-    target.position.set(0.,0.,0.);
-    target.add(cam);
-    
-    cam.lookAt(target);
-
-    material = new THREE.ShaderMaterial({
-
-       uniforms : {
-    
-           res        : new THREE.Uniform(new THREE.Vector2(w,h)),    
-           time          : { value : 1. },
-           seed          : { value : s }
-       },
-
-       vertexShader   : vert,
-       fragmentShader : frag
-
-    });
-
-    mesh = new THREE.Mesh(plane,material);
-    scene.add(mesh);
+FragColor = vec4(color,1.0);
 
 }
-
-    function render() {
-
-    material.uniforms.res.value = new THREE.Vector2(w,h);
-    material.uniforms.time.value = performance.now();
-
-    renderer.render(scene,cam);
-    requestAnimationFrame(render);
-
-}
-
