@@ -51,8 +51,8 @@ float julia(vec2 p,float b,float f) {
         if(dot(p,p) > b) {
             break;
         }
-    return k;
     }
+    return k;
 }
 
 vec2 diag(vec2 uv) {
@@ -194,7 +194,7 @@ float n = dd(p);
 
 float d = 1.;
 float sq = rect(p,vec2(.25));
-float cir = circle(p,1.);
+float cl = circle(p,1.);
 
 float jl = julia(p,100.,n);
 
