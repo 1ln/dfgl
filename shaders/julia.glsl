@@ -188,8 +188,7 @@ vec3 c = vec3(0.);
 
 vec2 uv = (gl_FragCoord.xy -.5* resolution.xy)/resolution.y;
 vec2 p = uv;
-//p *= 5.;
-p *= .5;
+p *= 5.;
 
 float n = dd(p); 
 
