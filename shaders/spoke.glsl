@@ -55,6 +55,10 @@ vec2 h12rad(float n) {
     return vec2(cos(a),sin(b));
 }
 
+float expStep(float x,float k) {
+    return exp((x*k)-k);
+}
+
 float spiral(vec2 p,float n,float h) {
      float ph = pow(length(p),1./n)*32.;
      p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
@@ -188,34 +192,6 @@ vec3 twist(vec3 p,float k) {
     return vec3(m * p.xz,p.y);
 }
 
-float cell(vec3 x,float n) {
- 
-    x *= n;
-    vec3 p = floor(x);
-    vec3 f = fract(x);
- 
-    float min_dist = 1.0;
-    
-    for(int i = -1; i <= 1; i++) {
-        for(int j = -1; j <= 1; j++) {
-            for(int k = -1; k <= 1; k++) { 
-
-                vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = h33( p + b );
-                
-                vec3 diff = (b + r - f);
-
-                float d = length(diff);
-                min_dist = min(min_dist,d);
-    
-            }
-        }
-    }
- 
-    return min_dist;  
-
-}
-
 float n3(vec3 x) {
 
     vec3 p = floor(x);
@@ -247,19 +223,6 @@ float f3(vec3 x) {
     }    
 
     return t;
-}
-
-float f4(vec3 p) {
-    float f = 1.;
-    mat3 m = mat3(vec2(.8,.6),h11(150.),
-                  vec2(-.6,.8),h11(125.),
-                  vec2(-.8,.6),h11(100.));
-
-    f += .5    * sin3(p,1.); p = m*p*2.01;
-    f += .25   * sin3(p,1.); p = m*p*2.04;
-    f += .125  * sin3(p,1.); p = m*p*2.1;
-    f += .0625 * sin3(p,1.);
-    return f / .94;
 }
 
 mat2 rot(float a) {
@@ -556,14 +519,7 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
-vec3 q,v,l;
-q = p; v = p; l = p;
-
-float sa,b,c,s;
-
-l.zy *= rot(time*.12);
-l.xy = radmod(l.xy,12);
-l.y -= 8.;
+vec3 q = p;
 
 p.xz *= rot(time*.1);
 p.xy = radmod(p.xy,8);
@@ -573,23 +529,13 @@ q.xz *= rot(time*.11);
 q.xy = radmod(q.xy,24);
 q.y -= 12.;
 
-v.xz *= rot(time*.05);
-v.yz *= rot(time*.01);
-v.xy = radmod(v.xy,4);
-v.y -= 8.;
+float c = cylinder(q,vec3(1.));
+float s = sphere(p,.1);
 
-sa = solidAngle(l,vec2(1.,.5),1.);
-b = box(p,vec3(.25));
-c = cylinder(q,vec3(1.));
-s = sphere(v,.1);
-
-res = opu(res,vec2(sa,5.)); 
-res = opu(res,vec2(b,2.));
 res = opu(res,vec2(c,12.));
 res = opu(res,vec2(s,6.));
 
 return res;
-
 
 }
 
@@ -730,20 +676,16 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
 
             p *= .25;
 
-            col += fmCol(dd(p),vec3(f3(p),h11(45.),h11(124.)),
+            col += fmCol(h11(164.),vec3(f3(p),h11(45.),h11(124.)),
                    vec3(h11(235.),f3(p),h11(46.)),
                    vec3(h11(245.),h11(75.),f3(p)),
                    vec3(1.));
 
-            col += mix(col,cell(p+f3(p*sin3(p,h11(100.)*45.
-            )),12.)*col,rd.y*rd.x*col.z)*.01;
-        
             ref = vec3(0.005);     
 
     
         }    
  
-
         ro = p+n*.001*2.5;
         rd = r;
 
@@ -764,7 +706,8 @@ for(int k = 0; k < AA; k++ ) {
    for(int l = 0; l < AA; l++) {
    
        vec2 o = vec2(float(k),float(l)) / float(AA) * .5;
-       vec2 uv = (2.* (gl_FragCoord.xy+o) - resolution.xy)/resolution.y;
+       vec2 uv = (2.* (gl_FragCoord.xy+o) 
+       - resolution.xy)/resolution.y;
 
        vec3 rd = rayCamDir(uv,ro,ta,1.); 
        vec3 ref = vec3(0.);
