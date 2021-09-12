@@ -10,8 +10,7 @@ uniform vec3 camPos;
 uniform int seed;
 
 #define EPS 0.0001
-#define GEOMETRY 5
-#define SWATCH 3
+#define PI2 radians(180.)*2.
 
 float h11(float p) {
     return fract(sin(p)*float(43758.5453+seed));
@@ -104,32 +103,6 @@ mat2 rot(float a) {
     return mat2(c,-s,s,c);
 }
 
-mat4 rotAxis(vec3 axis,float theta) {
-
-axis = normalize(axis);
-
-    float c = cos(theta);
-    float s = sin(theta);
-
-    float oc = 1.0 - c;
-
-    return mat4(
- 
-        oc * axis.x * axis.x + c, 
-        oc * axis.x * axis.y - axis.z * s,
-        oc * axis.z * axis.x + axis.y * s,0.,
-    
-        oc * axis.x * axis.y + axis.z * s,
-        oc * axis.y * axis.y + c, 
-        oc * axis.y * axis.z - axis.x * s,0.,
-
-        oc * axis.z * axis.x - axis.y * s,
-        oc * axis.y * axis.z + axis.x * s,
-        oc * axis.z * axis.z + c,0.,0.,0.,0.,1.);
-
-}
-
-
 vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
 
      vec3 f = normalize(ta - ro);
@@ -142,26 +115,10 @@ vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
      return d;
 }
 
-float solidAngle(vec3 p,vec2 c,float ra) {
-    
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
-    float l = length(q) - ra;
-    float m = length(q - c * clamp(dot(q,c),0.0,ra));
-    return max(l,m * sign(c.y * q.x - c.x * q.y));
-}
-
 float box(vec3 p,vec3 b) {
 
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
-}
-
-float tetrahedron(vec3 p,float h) {
-     vec3 q = abs(p);
-     float y = p.y;
-     float d1 = q.z-max(y,0.);
-     float d2 = max(q.x*.5+y*.5,0.)-min(h,h+y);
-     return length(max(vec2(d1,d2),.005)) + min(max(d1,d2),0.);
 }
 
 float dodecahedron(vec3 p,float r) {
@@ -193,46 +150,33 @@ float icosahedron(vec3 p,float r) {
     return d-r;
 }
 
-float octahedron(vec3 p,float s) {
-
-    p = abs(p);
-
-    float m = p.x + p.y + p.z - s;
-    vec3 q;
-
-    if(3.0 * p.x < m) {
-       q = vec3(p.x,p.y,p.z);  
-    } else if(3.0 * p.y < m) {
-       q = vec3(p.y,p.z,p.x); 
-    } else if(3.0 * p.z < m) { 
-       q = vec3(p.z,p.x,p.y);
-    } else { 
-       return m * 0.57735027;
-    }
-
-    float k = clamp(0.5 *(q.z-q.y+s),0.0,s);
-    return length(vec3(q.x,q.y-s+k,q.z - k)); 
-}
-
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
 
 vec3 q = p;
-vec3 c = vec3(2.);
 
-p.xz *= rot(time*.1);
+p.xz *= rot(-PI2*h11(100.));
+p.zy *= rot(PI2*h11(125.));
 
 float d = 1.;
-d = box(p-c,vec3(1.));
-d = octahedron(p-c,1.);
-d = icosahedron(p-c,1.);
-d = tetrahedron(p-c,1.);
-d = dodecahedron(p-c,1.);
+float b,b1,b2,b3,b4;
 
-res = opu(res,vec2(d,2.)); 
-res = opu(res,vec2(max(-q.y,solidAngle(q,vec2(.5,1.),1.)),1.));
+b = box(q-vec3(2.),vec3(1.));
+b1 = box(q-vec3(2.,2.,4.),vec3(.5));
+b2 = box(q-vec3(-2.,2.5,-4.),vec3(2.));
+b3 = box(q-vec3(4.,2.,-2.),vec3(1.25));
+b4 = box(q-vec3(-4.,2.,-3.),vec3(1.));
 
+d = dodecahedron(p-vec3(0.,1.,0.),1.);
+
+res = opu(res,vec2(b,2.)); 
+res = opu(res,vec2(b1,16.));
+res = opu(res,vec2(b2,58.));
+res = opu(res,vec2(b3,12.));
+res = opu(res,vec2(b4,71.));
+
+res = opu(res,vec2(max(-q.y,d),1.));
 
 return res;
 
@@ -323,18 +267,18 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     vec2 d = trace(ro, rd);
     vec3 p = ro + rd * d.x;
     vec3 n = calcNormal(p);
-    vec3 linear = vec3(.5);
+    vec3 linear = vec3(0.);
     vec3 r = reflect(rd,n); 
     float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
     vec3 col = vec3(.5);
 
-    vec3 l = normalize(vec3(10.,0.,10.));
-    l.xz *= rot(time*.0001);
+    vec3 l = normalize(vec3(1e10,0.,1e10));
+
     float rad = dot(rd,l);
     col += col * vec3(.5,.12,.25) * expStep(rad,100.);
-    col += col * vec3(.5,.1,.15) * expStep(rad,25.);
-    col += col * vec3(.1,.5,.05) * expStep(rad,2.);
+    col += col * vec3(.5,.1,.15) * expStep(rad,250.);
+    col += col * vec3(.1,.5,.05) * expStep(rad,25.);
     col += col * vec3(.15) * expStep(rad,35.);
 
     vec3 h = normalize(l - rd);  
@@ -352,17 +296,29 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         linear += fre * vec3(.025,.01,.03);
         linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
 
-    
         if(d.y == 2.) {
-        col = vec3(1.,0.,0.);
-        ref = vec3(0.12);   
+            col = vec3(1.,0.,0.);
+            ref = vec3(0.12);   
         }    
   
-        if(d.y == 1.) {
+        if(d.y == 16.) {
             col = vec3(.5);
             ref = vec3(.25);
         }
 
+        if(d.y == 12.) {
+            col = vec3(concentric(p.xy,24.));
+        }
+
+        if(d.y == 58.) {
+            col = vec3(julia(p.xy,-h11(95.),4.,h11(292.)); 
+        }
+
+        if(d.y == 71.) {
+            col = vec3(checkerboard(p,10.));
+            ref = vec3(.5);  
+        }
+        
         ro = p+n*.001*2.5;
         rd = r;
 
@@ -377,7 +333,7 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = camPos;
+vec3 ro = vec3(-2.,5.,3.);
 
        vec2 uv = (2.* (gl_FragCoord.xy) 
        - resolution.xy)/resolution.y;
