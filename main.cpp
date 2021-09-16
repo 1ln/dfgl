@@ -17,6 +17,7 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
 void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
 void processInput(GLFWwindow *window);
 
+
 const unsigned int width  = 800;
 const unsigned int height = 600;
 
@@ -24,7 +25,7 @@ float lastx = width / 2.0;
 float lasty = height / 2.0;
 
 bool init_mouse = true;
-
+ 
 float dt         = 0.0f;
 float last_frame = 0.0f;
 
@@ -32,7 +33,13 @@ glm::vec2 mouse;
 bool mouse_pressed = false; 
 float mouse_scroll = 0.0f;
 
-bool key_f3 = false;
+bool key_up = false;
+bool key_down = false;
+bool key_right = false; 
+bool key_left = false;
+bool key_x = false;
+bool key_z = false;
+
 bool hide_cursor = false;
 
 int seed = 0;
@@ -125,6 +132,7 @@ int main(int argc,char** argv) {
         last_frame = current_frame;
 
         processInput(window);
+        glfwSetKeyCallback(window,key_callback);
 
         glm::vec2 resolution = glm::vec2(width,height);        
 
@@ -136,7 +144,14 @@ int main(int argc,char** argv) {
         shader.setVec3("camPos",1,cam.position);
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
-        shader.setBool("mouse_pressed",mouse_pressed);
+        shader.setBool("mouse_pressed",mouse_pressed);        
+        shader.setBool("up",key_up);
+        shader.setBool("down",key_down);
+        shader.setBool("right",key_right);
+        shader.setBool("left",key_left);
+        shader.setBool("key_x",key_x);
+        shader.setBool("key_z",key_z);
+
         glBindFramebuffer(GL_FRAMEBUFFER,0);  
 
         glBindVertexArray(vao);
@@ -160,12 +175,6 @@ void processInput(GLFWwindow *window) {
 
     if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window,true);
-
-    if(glfwGetKey(window,GLFW_KEY_F3)) { 
-        key_f3 = true;
-    } else { 
-        key_f3 = false;
-    }
   
 }
 
@@ -208,4 +217,21 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods) {
 void scroll_callback(GLFWwindow* window,double xoff, double yoff) {
     mouse_scroll -= float(yoff);
 }
+
+void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods) {
+
+    if(key == GLFW_KEY_UP && action == GLFW_PRESS)
+        key_up = true;
+    if(key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+        key_down = true;
+    if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+        key_right = true;
+    if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+        key_left = true;
+    if(key == GLFW_KEY_X && action == GLFW_PRESS)
+        key_x = true;
+    if(key == GLFW_KEY_Z && action == GLFW_PRESS)
+        key_z = true;
+}
+
 
