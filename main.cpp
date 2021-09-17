@@ -15,8 +15,8 @@ void framebuffer_size_callback(GLFWwindow* window,int w,int h);
 void mouse_callback(GLFWwindow* window,double xpos,double ypos);
 void mouse_button_callback(GLFWwindow* window,int button,int action,int mods); 
 void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
+void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods);  
 void processInput(GLFWwindow *window);
-
 
 const unsigned int width  = 800;
 const unsigned int height = 600;
@@ -52,7 +52,6 @@ int main(int argc,char** argv) {
     std::string frag = argv[1];      
     std::string seed_str = argv[2];
     seed = std::stoi(seed_str);
-
 
     glfwInit();
 
@@ -222,16 +221,34 @@ void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods) {
 
     if(key == GLFW_KEY_UP && action == GLFW_PRESS)
         key_up = true;
+    if(key == GLFW_KEY_UP && action == GLFW_RELEASE)
+        key_up = false;
+
     if(key == GLFW_KEY_DOWN && action == GLFW_PRESS)
         key_down = true;
+    if(key == GLFW_KEY_DOWN && action == GLFW_RELEASE)
+        key_down = false;
+
     if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
         key_right = true;
+    if(key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
+        key_right = false;
+
     if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
         key_left = true;
+    if(key == GLFW_KEY_LEFT && action == GLFW_RELEASE)
+        key_left = false;
+
     if(key == GLFW_KEY_X && action == GLFW_PRESS)
         key_x = true;
+    if(key == GLFW_KEY_X && action == GLFW_RELEASE)
+        key_x = false;
+       
     if(key == GLFW_KEY_Z && action == GLFW_PRESS)
         key_z = true;
+    if(key == GLFW_KEY_Z && action == GLFW_RELEASE)
+        key_z = false;
+
 }
 
 
