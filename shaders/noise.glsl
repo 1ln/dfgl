@@ -73,6 +73,15 @@ void main() {
     vec2 uv = (gl_FragCoord.xy-.5*resolution)/resolution.y;  
 
     vec2 q = uv;
+    
+    if(up == 1) {
+        q.y += time * .1; 
+    }
+
+    if(down == 1) {
+        q.y -= time * .1;
+    }
+
     float d = length(q)-.0025;
 
     uv.y += time * .05;    
