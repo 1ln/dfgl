@@ -1,6 +1,6 @@
 #version 330 core
 
-// dolson,2019
+//olson
 
 out vec4 FragColor;
 
@@ -264,10 +264,14 @@ vec2 scene(vec3 p) {
         )))),2.));
 
     float scl = .05;
-    vec3 q = p+vec3(1.,-.1,0.);
-    q = rl(q/scl,1.5,vec3(5.,0.,0.))*scl;        
+
+    vec3 q = p+vec3(1.,.1,0.);
+    q = rl(q/scl,1.5,vec3(5.,0.,0.))*scl;
+
+    q.y += smoothstep(.25,.5,sin(q.z*.25)+.05)*.25;
+
     res = opu(res,vec2(
-        max(p.z-.5,box(q/scl,vec3(.25,.25,1e10))*scl),95.));
+        max(p.z-2.5,box(q/scl,vec3(.25,.25,1e10))*scl),95.));
 
     res = opu(res,vec2(
     
@@ -373,7 +377,7 @@ if(d.y >= 0.) {
     vec3 h = normalize(l - rd);
     vec3 r = reflect(rd,n);
 
-    col = 1.+.25*sin(d.y+vec3(.5));
+    col = .25+.125*sin(2.*d.y+vec3(.5,2.,1.));
 
     float nl = n3(p);
 
@@ -387,8 +391,6 @@ if(d.y >= 0.) {
 
         nl += mix(cell(p+f3(p,6,.5),12.,int(floor(h11(124.)*2.))),
         0,step(h11(95.),h11(235.)));
- 
-        col = vec3(nl);
 
     }
 
@@ -400,31 +402,36 @@ if(d.y >= 0.) {
         nl += mix(f3(p+es(n3(p),h11(116.),.5),8,h11(25.)),
         0,step(h11(112.),h11(44.)));
 
-        col += vec3(nl); 
-
     }
 
     float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
+
     float dif = clamp(dot(n,l),0.0,1.0);
+
     float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
         * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
+
     float fre = pow(clamp(1. + dot(n,rd),0.0,1.0),2.0);
+
     float ref = smoothstep(-.2,.2,r.y);
     float ao = calcAO(p,n);
 
-    vec3 linear = vec3(.5);
+    vec3 linear = vec3(0.);
 
     dif *= shadow(p,l);
     ref *= shadow(p,r);
 
-    linear += dif * vec3(1.25,0.5,0.11)*ao;
+    dif *= ref;
+    dif *= spe;
+
+    linear += dif * vec3(1.25,0.5,0.11);
     linear += amb * vec3(0.005,0.05,0.05);
-    linear += ref * vec3(0.05,0.001,0.005);
-    linear += fre * vec3(0.25,0.5,0.35);
+    linear += ref * vec3(0.05,0.001,0.005)*ao;
+    linear += fre * vec3(0.25,0.5,0.35)*ao;
+    linear += spe * vec3(0.05,0.24,.5)*ao;
 
-    col = col * linear;
-    col += spe * vec3(0.01,0.097,0.001); 
-
+    col += vec3(nl);
+    col = col * linear * 2.; 
     col = mix(col,vec3(1.),1.-exp(-0.00001 * d.x*d.x*d.x)); 
 
 }
