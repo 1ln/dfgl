@@ -259,7 +259,6 @@ vec2 scene(vec3 p) {
 
         max(-extr(p,roundRect(p.xy+vec2(-1.,.25),
         vec2(.5,.05),vec4(.05)),1e10),
-
         p.z-.61
         )))),2.));
 
@@ -381,8 +380,6 @@ if(d.y >= 0.) {
 
     float nl = n3(p);
 
-    if(d.y == 5.) {
-
         nl += mix(f3(p,8,sin(col.y)),
         0,step(h11(23.),h11(37.)));
 
@@ -391,17 +388,17 @@ if(d.y >= 0.) {
 
         nl += mix(cell(p+f3(p,6,.5),12.,int(floor(h11(124.)*2.))),
         0,step(h11(95.),h11(235.)));
+    
 
+    if(d.y == 2.) {
+         if(p.z > .61) {
+         col = vec3(h33(p*525.).z);
+         }
     }
 
     if(d.y == 12.) {
-        
-        nl += mix(f3(p,8,ei(nl,.5)),
-        0,step(h11(231.),h11(105.)));     
-    
-        nl += mix(f3(p+es(n3(p),h11(116.),.5),8,h11(25.)),
-        0,step(h11(112.),h11(44.)));
-
+        nl = f3(p+f3(p.xzy,8,h11(195.)),8,sin(col.y*col.x)+h11(24.5));
+        col = vec3(nl)*vec3(.5);    
     }
 
     float amb = clamp(0.5 + 0.5 * n.y,0.,1.);
@@ -430,7 +427,6 @@ if(d.y >= 0.) {
     linear += fre * vec3(0.25,0.5,0.35)*ao;
     linear += spe * vec3(0.05,0.24,.5)*ao;
 
-    col += vec3(nl);
     col = col * linear * 2.; 
     col = mix(col,vec3(1.),1.-exp(-0.00001 * d.x*d.x*d.x)); 
 
