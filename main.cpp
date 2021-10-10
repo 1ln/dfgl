@@ -251,4 +251,19 @@ void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods) {
 
 }
 
+void saveImage(char* filepath,GLFWwindow* w) {
 
+    glfwGetFramebufferSize(w,&width,&height);
+    GLsizei n = 3;
+    GLsizei stride = n * width;
+    stride += (stride % 4) ? (4 - stride % 4) : 0;
+    GLSizei buffersize = stride * height;
+    std::vector<char> buffer(buffersize);
+    glPixelStorei(GL_PACK_ALIGNMENT,4);
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,buffer.data());
+
+
+
+
+}
