@@ -17,6 +17,7 @@ void mouse_button_callback(GLFWwindow* window,int button,int action,int mods);
 void scroll_callback(GLFWwindow* window,double xoff,double yoff); 
 void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods);  
 void processInput(GLFWwindow *window);
+void saveImage(char* filepath,GLFWwindow* window);
 
 const unsigned int width  = 800;
 const unsigned int height = 600;
@@ -251,17 +252,20 @@ void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods) {
 
 }
 
-void saveImage(char* filepath,GLFWwindow* w) {
+void saveImage(char* filepath,GLFWwindow* window) {
 
-    glfwGetFramebufferSize(w,&width,&height);
+    int w,h;
+    glfwGetFramebufferSize(window,&w,&h);
     GLsizei n = 3;
-    GLsizei stride = n * width;
+    GLsizei stride = n * w;
     stride += (stride % 4) ? (4 - stride % 4) : 0;
-    GLSizei buffersize = stride * height;
+    GLSizei buffersize = stride * h;
     std::vector<char> buffer(buffersize);
     glPixelStorei(GL_PACK_ALIGNMENT,4);
     glReadBuffer(GL_FRONT);
-    glReadPixels(0,0,width,height,GL_RGB,GL_UNSIGNED_BYTE,buffer.data());
+    glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE,buffer.data());
+    stbi_flip_vertically_on_write(true);
+    stbi_write_png(filepath,w,h,n,buffer.data(),stride);
 
 
 
