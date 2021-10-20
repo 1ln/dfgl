@@ -7,20 +7,14 @@ out vec4 FragColor;
 
 uniform vec2 resolution;
 uniform float time;
-uniform int seed; 
 
 mat2 m = mat2(0.8,0.6,-0.6,0.8);
-
- 
-
 float h(float p) {
-
-return fract(sin(p)*43578.5453);
-
+    return fract(sin(p)*43578.5453);
 }
 
 float n(vec2 p) {
-return sin(p.x)*sin(p.y);
+    return sin(p.x)*sin(p.y);
 }
 
 float f6(vec2 p) {
@@ -38,25 +32,23 @@ float f6(vec2 p) {
 }
 
 void main() {
- 
-    vec3 c;
-    vec2 uv = gl_FragCoord.xy / resolution.xy; 
-         uv = (gl_FragCoord.xy-.5*resolution)/resolution.y;  
 
-    float scl = 10.;
+    vec3 c;
+    vec2 uv = gl_FragCoord.xy / resolution.xy;   
+
+    float scl = 12.;
     uv *= scl;
     
     vec2 loc = floor(uv);
-    vec2 fr  = fract(uv);
     
     c = vec3(h(loc.x+h(loc.y)));
-    
-    float x,y;
-    x = floor(h(loc.x)*(scl-1.)); y = floor(h(loc.y)*(scl-1.));
-
-    c = mix(c,vec3(1.,0.,0.),
-    step(abs(loc.x-x),0.)*step(abs(loc.y-y),0.));
-
+ 
+    if(uv.x > 3. && uv.x < 9.) {
+    if(uv.y > 3. && uv.y < 9.) {
+        uv *= (scl/2.);
+        loc = floor(uv);
+        c = vec3(h(loc.x+h(loc.y)));
+    }}
     FragColor = vec4(c,1.);
 
 }

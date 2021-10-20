@@ -5,10 +5,8 @@
 out vec4 FragColor;
 
 uniform vec2 resolution;
-uniform vec3 camPos;
-uniform float time;
-uniform int seed;
 
+const int seed = 15254;
 const int steps = 250;
 float eps = 0.00001;
 float dmin = 0.;
@@ -186,6 +184,7 @@ float extr(vec3 p,float d,float h) {
     vec2 w = vec2(d,abs(p.z) - h);
     return min(max(w.x,w.y),0.) + length(max(w,0.)); 
 } 
+
  
 float roundRect(vec2 p,vec2 b,vec4 r) {
     r.xy = (p.x > 0.) ? r.xy : r.zw;
@@ -227,13 +226,6 @@ float boxFrame(vec3 p,vec3 b,float e) {
 vec2 scene(vec3 p) {
 
     vec2 res = vec2(1.,0.);
-
-    res = opu(res,vec2(
-    max(-dodecahedron(p-vec3(1.),.5),box(p-vec3(1.)
-    ,vec3(1.))),112.));
-
-    res = opu(res,vec2(
-    dodecahedron(p-vec3(1.),.5));
 
     res = opu(res,vec2(
         box(p+vec3(0.,.05,0.),vec3(.05)),25.));   
@@ -280,11 +272,18 @@ vec2 scene(vec3 p) {
 
     res = opu(res,vec2(
         max(p.z-2.5,box(q/scl,vec3(.25,.25,1e10))*scl),95.));
+    
+    vec3 e = p;
 
+    res = opu(res,vec2(
+    box(e-vec3(-1.,.25,0.),vec3(.25)),111.));
+ 
+ 
+    
     res = opu(res,vec2(
     
         max(-box(p,vec3(.33)),
-        max(-box(p+vec3(1.,-.5,0.),vec3(1.,.5,1e10)),
+        max(-box(p+vec3(.9,-.5,0.),vec3(1.,.5,1e10)),     
         extr(p,roundRect(p.xy,vec2(1.61,.05),vec4(.025)),.5)
         )),1.));
 
@@ -445,7 +444,7 @@ void main() {
  
 vec3 color = vec3(0.);
 
-vec3 ro = camPos + vec3(5.,5.,0.);
+vec3 ro = vec3(5.);
 vec3 ta = vec3(0.);
 
 for(int k = 0; k < aa; ++k) {
