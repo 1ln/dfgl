@@ -4,15 +4,8 @@ out vec4 FragColor;
 
 uniform vec2 resolution;
 uniform float time;
-uniform int seed; 
 
-uniform int up;
-uniform int down;
-uniform int right;
-uniform int left;
-
-uniform int key_x;
-uniform int key_z;
+const int seed = 552394;
 
 #define F f*f*(f*5.-4.)
 
@@ -74,17 +67,9 @@ void main() {
 
     vec2 q = uv;
     
-    if(up == 1) {
-        q.y += time * .1; 
-    }
-
-    if(down == 1) {
-        q.y -= time * .1;
-    }
-
     float d = length(q)-.0025;
 
-    uv.y += time * .05;    
+    uv.y += 2600. * .05;    
      
     float scl = 10.;
     vec2 loc = floor(uv);
