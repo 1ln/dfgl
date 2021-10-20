@@ -5,6 +5,7 @@
 out vec4 FragColor;
 
 uniform vec2 resolution;
+uniform vec3 camPos;
 uniform float time;
 uniform int seed;
 
@@ -228,6 +229,13 @@ vec2 scene(vec3 p) {
     vec2 res = vec2(1.,0.);
 
     res = opu(res,vec2(
+    max(-dodecahedron(p-vec3(1.),.5),box(p-vec3(1.)
+    ,vec3(1.))),112.));
+
+    res = opu(res,vec2(
+    dodecahedron(p-vec3(1.),.5));
+
+    res = opu(res,vec2(
         box(p+vec3(0.,.05,0.),vec3(.05)),25.));   
 
     res = opu(res,vec2(
@@ -268,6 +276,7 @@ vec2 scene(vec3 p) {
     q = rl(q/scl,1.5,vec3(5.,0.,0.))*scl;
 
     q.y += smoothstep(.25,.5,sin(q.z*.25)+.05)*.25;
+    q.y += smoothstep(.5,-2.,sin(q.z*.5)+.5)*-2.;
 
     res = opu(res,vec2(
         max(p.z-2.5,box(q/scl,vec3(.25,.25,1e10))*scl),95.));
@@ -376,7 +385,7 @@ if(d.y >= 0.) {
     vec3 h = normalize(l - rd);
     vec3 r = reflect(rd,n);
 
-    col = .25+.125*sin(2.*d.y+vec3(.5,2.,1.));
+    col = .25+.125*sin(2.*d.y+vec3(.5,.1,.41));
 
     float nl = n3(p);
 
@@ -418,9 +427,6 @@ if(d.y >= 0.) {
     dif *= shadow(p,l);
     ref *= shadow(p,r);
 
-    dif *= ref;
-    dif *= spe;
-
     linear += dif * vec3(1.25,0.5,0.11);
     linear += amb * vec3(0.005,0.05,0.05);
     linear += ref * vec3(0.05,0.001,0.005)*ao;
@@ -439,7 +445,7 @@ void main() {
  
 vec3 color = vec3(0.);
 
-vec3 ro = vec3(5.);
+vec3 ro = camPos + vec3(5.,5.,0.);
 vec3 ta = vec3(0.);
 
 for(int k = 0; k < aa; ++k) {
