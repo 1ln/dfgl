@@ -259,14 +259,11 @@ void saveImage(char* filepath,GLFWwindow* window) {
     GLsizei n = 3;
     GLsizei stride = n * w;
     stride += (stride % 4) ? (4 - stride % 4) : 0;
-    GLSizei buffersize = stride * h;
+    GLsizei buffersize = stride * h;
     std::vector<char> buffer(buffersize);
     glPixelStorei(GL_PACK_ALIGNMENT,4);
     glReadBuffer(GL_FRONT);
     glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE,buffer.data());
-    stbi_flip_vertically_on_write(true);
-    stbi_write_png(filepath,w,h,n,buffer.data(),stride);
-
 
 
 
