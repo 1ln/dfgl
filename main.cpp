@@ -43,17 +43,12 @@ bool key_z = false;
 
 bool hide_cursor = false;
 
-int seed = 0;
-
 Camera cam(glm::vec3(0.0,0.0,5.0),
            glm::vec3(0.0,0.0,0.0)); 
 
 int main(int argc,char** argv) {
  
-    std::string frag = argv[1];      
-    std::string seed_str = argv[2];
-    seed = std::stoi(seed_str);
-
+    std::string frag = argv[1];
     glfwInit();
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
@@ -122,7 +117,7 @@ int main(int argc,char** argv) {
     glEnableVertexAttribArray(0);
 
     Shader shader("vert.glsl",frag.c_str());         
-    
+   
     shader.use();
     
     while (!glfwWindowShouldClose(window)) {
@@ -140,7 +135,6 @@ int main(int argc,char** argv) {
         shader.use();
         shader.setVec2("resolution",1,resolution);
         shader.setFloat("time",last_frame);
-        shader.setInt("seed",seed);
         shader.setVec3("camPos",1,cam.position);
         shader.setVec2("mouse",1,mouse);
         shader.setFloat("mouse_scroll",mouse_scroll);
