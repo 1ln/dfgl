@@ -82,9 +82,9 @@ int main(int argc,char** argv) {
     glGenFramebuffers(1,&fb);
     glBindFramebuffer(GL_FRAMEBUFFER,fb);
 
-    GLuint tex;
+    GLuint texture;
     glGenTextures(1,&fb);
-    glBindTexture(GL_TEXTURE_2D,tex); 
+    glBindTexture(GL_TEXTURE_2D,texture); 
 
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGB,width,height,0,GL_RGB,
     GL_UNSIGNED_BYTE,0);    
@@ -92,7 +92,9 @@ int main(int argc,char** argv) {
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
 
-    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,tex,0);
+    glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
+    texture,0);
+
     GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1,DrawBuffers);    
 
@@ -117,8 +119,13 @@ int main(int argc,char** argv) {
     glEnableVertexAttribArray(0);
 
     Shader shader("vert.glsl",frag.c_str());         
-   
+    Shader render("render_vert.glsl","render.glsl");   
+ 
     shader.use();
+    shader.setInt("tex",0);
+
+    render.use();
+    render.setInt("tex1",0);
     
     while (!glfwWindowShouldClose(window)) {
   
@@ -132,7 +139,19 @@ int main(int argc,char** argv) {
         glm::vec2 resolution = glm::vec2(width,height);        
 
         glBindFramebuffer(GL_FRAMEBUFFER,fb);
+        glEnable(GL_DEPTH_TEST);
+        glClearColor(0.1f,0.1f,1.0f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         shader.use();
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(45.),
+        w/h,0.1f,100.0f);
+
+        shader.setMat4("view",1,view);
+        shader.setMat4("projection",1,projection);
+        shader.setMat4("model", model);
         shader.setVec2("resolution",1,resolution);
         shader.setFloat("time",last_frame);
         shader.setVec3("camPos",1,cam.position);
@@ -146,11 +165,19 @@ int main(int argc,char** argv) {
         shader.setBool("key_x",key_x);
         shader.setBool("key_z",key_z);
 
-        glBindFramebuffer(GL_FRAMEBUFFER,0);  
-
         glBindVertexArray(vao);
-
         glDrawArrays(GL_TRIANGLES,0,3);
+        glBindVertexArray(0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER,0);  
+        glDisable(GL_DEPTH_TEST);
+        glClearColor(1.0f,1.0f,1.0f,1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+      
+        render.use();
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES,0,3);
+        glBindTexture(GL_TEXTURE_2D,texture);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
