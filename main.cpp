@@ -119,13 +119,13 @@ int main(int argc,char** argv) {
     glEnableVertexAttribArray(0);
 
     Shader shader("vert.glsl",frag.c_str());         
-    Shader render("render_vert.glsl","render.glsl");   
+    //Shader render("render_vert.glsl","render.glsl");   
  
-    shader.use();
-    shader.setInt("tex",0);
+    //shader.use();
+    //shader.setInt("tex",0);
 
-    render.use();
-    render.setInt("tex1",0);
+    //render.use();
+    //render.setInt("tex1",0);
     
     while (!glfwWindowShouldClose(window)) {
   
@@ -145,13 +145,13 @@ int main(int argc,char** argv) {
 
         shader.use();
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(45.),
-        w/h,0.1f,100.0f);
+        glm::mat4 view = cam.getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f),
+        (float)width/(float)height,0.1f,100.0f);
 
         shader.setMat4("view",1,view);
         shader.setMat4("projection",1,projection);
-        shader.setMat4("model", model);
+        shader.setMat4("model",1,model);
         shader.setVec2("resolution",1,resolution);
         shader.setFloat("time",last_frame);
         shader.setVec3("camPos",1,cam.position);
@@ -165,19 +165,19 @@ int main(int argc,char** argv) {
         shader.setBool("key_x",key_x);
         shader.setBool("key_z",key_z);
 
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES,0,3);
-        glBindVertexArray(0);
+        //glBindVertexArray(vao);
+        //glDrawArrays(GL_TRIANGLES,0,3);
+        //glBindVertexArray(0);
 
         glBindFramebuffer(GL_FRAMEBUFFER,0);  
         glDisable(GL_DEPTH_TEST);
         glClearColor(1.0f,1.0f,1.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
       
-        render.use();
+        //render.use();
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES,0,3);
-        glBindTexture(GL_TEXTURE_2D,texture);
+        //glBindTexture(GL_TEXTURE_2D,texture);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
