@@ -745,11 +745,14 @@ return col;
 }
 
 void main() { 
+
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.1);
 vec3 ro = vec3(2.);
 ro.xz *= rot(t*.005);
+
+#if MODE 1
 
 vec2 uv = (2.* (gl_FragCoord.xy)
 - resolution.xy)/resolution.y;
@@ -763,6 +766,7 @@ vec3 dec = vec3(1.);
         dec *= ref;
         col += dec * render(ro,rd,ref);
     }
+
     col = pow(col,vec3(.4545));
     color += col;
     fragColor = vec4(color,1.0);
@@ -770,42 +774,43 @@ vec3 dec = vec3(1.);
 
 }
 
+#else
+
 vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
 
 float fov = 2.;
 float vfov = 1.;
 
-vec3 color = vec3(1.);
-float dist = eps; 
-float d = near;
+vec2 d = vec2(EPS,0.);
 
 float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
-vec3 rd = rayCamDir(uv,ro,ta,fov);
+vec3 rd = raydir(uv,ro,ta,fov);
 
 vec4 col_alpha = vec4(0.,0.,0.,1.);
  
-for(int i = 0; i < steps; i++ ) {
-    float rad = d * radius;
-    dist = scene(ro + d * rd).x;
+for(int i = 0; i < STEPS; i++ ) {
+    float rad = NEAR * radius;
+    d = scene(ro + d * rd);
  
-    if(dist < rad) {
-        float alpha = smoothstep(rad,-rad,dist);
-        vec3 col = render(ro,rd,d);
+
+
+    if(d.x < rad) {
+        float alpha = smoothstep(rad,-rad,d.x);
+        vec3 col = render(ro,rd,ref,d);
         col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
         col_alpha.a *= (1. - alpha);
 
-        if(col_alpha.a < eps) break;
+        if(col_alpha.a < EPS) break;
     
     }
 
-    d += max(abs(dist * .75 ), .001);
+    d += max(abs(d.x * .75 ), .001);
     if(d > far) break;
 }
 
 color = mix(col_alpha.rgb,color,col_alpha.a);
-
-FragColor = vec4(pow(color,vec3(.4545)),1.0);
+fragColor = vec4(pow(color,vec3(.4545)),1.0);
  
 }
 
-}
+#endif
