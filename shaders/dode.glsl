@@ -768,6 +768,44 @@ vec3 dec = vec3(1.);
     fragColor = vec4(color,1.0);
 
 
+}
+
+vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
+
+float fov = 2.;
+float vfov = 1.;
+
+vec3 color = vec3(1.);
+float dist = eps; 
+float d = near;
+
+float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
+vec3 rd = rayCamDir(uv,ro,ta,fov);
+
+vec4 col_alpha = vec4(0.,0.,0.,1.);
  
+for(int i = 0; i < steps; i++ ) {
+    float rad = d * radius;
+    dist = scene(ro + d * rd).x;
+ 
+    if(dist < rad) {
+        float alpha = smoothstep(rad,-rad,dist);
+        vec3 col = render(ro,rd,d);
+        col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
+        col_alpha.a *= (1. - alpha);
+
+        if(col_alpha.a < eps) break;
+    
+    }
+
+    d += max(abs(dist * .75 ), .001);
+    if(d > far) break;
+}
+
+color = mix(col_alpha.rgb,color,col_alpha.a);
+
+FragColor = vec4(pow(color,vec3(.4545)),1.0);
+ 
+}
 
 }
