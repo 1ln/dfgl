@@ -1,40 +1,22 @@
 #version 330     
-
-// dolson
-out vec4 FragColor; 
-
+out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-#define AA 2
+//Dodeke
+//2021
+//do
+
+vec2 R = resolution;
+float t = time;
+
+#define AA 1
 #define EPS 0.0001 
 
-float dot2(vec2 v) { return dot(v,v); }
-float dot2(vec3 v) { return dot(v,v); }
-float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
+const int seed = 1290;
 
-const int seed = 12;
-#ifdef SINE_HASH
-
-float h11(float p) {
-    return fract(sin(p)*float(43758.5453+seed));
-}
-
-float h21(vec2 p) {
-    return fract(sin(dot(p,vec2(12.9898,78.233)*float(43758.5453+seed))));
-}
-
-vec2 h22(vec2 p) {
-    return fract(vec2(sin(p.x*353.64+p.y*135.1),cos(p.x*333.76+p.y*57.33)));
-}
-
-vec3 h33(vec3 p) {
-    p = vec3(dot(p,vec3(100.45,10.22,267.6)),
-             dot(p,vec3(35.16,5.55,161.72)),
-             dot(p,vec3(111.64,46.9,16.1)));
-    return fract(sin(p)*float(43758.5453+seed));
-}
-#else
+const float pi = radians(180.);
+const float phi =  (1.+sqrt(5.))/2.;
 
 float h11(float p) {
     uvec2 n = uint(int(p)) * uvec2(1391674541U,seed);
@@ -62,27 +44,17 @@ vec3 h33(vec3 p) {
 
 }
 
-#endif 
-
 vec2 h12rad(float n) {
     float a = fract(sin(n*5673.)*48.)*radians(180.);
     float b = fract(sin(a+n)*6446.)*float(seed);
     return vec2(cos(a),sin(b));
 }
 
-float gspiral(vec2 p,float s) {
+float spiral(vec2 p,float s) {
     float d = length(p);
     float a = atan(p.x,p.y);
     float l = log(d)/.618 +a;
     return sin(l*s);
-}
-
-float spiral(vec2 p,float n,float h) {
-     float ph = pow(length(p),1./n)*32.;
-     p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
-     return h-length(p) / 
-     sin((atan(p.x,-p.y)+radians(180.)/
-     (radians(180.)*2.))*radians(180.)); 
 }
 
 float checkerboard(vec3 p,float h) {
@@ -189,18 +161,6 @@ vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos((radians(180.)*2.0) * (c * t + d));
 }
 
-vec3 rgbHsv(vec3 c) {
-    vec3 rgb = clamp(abs(
-    mod(c.x * 6. + vec3(0.,4.,2.),6.)-3.)-1.,0.,1.);
-
-    rgb = rgb * rgb * (3. - 2. * rgb);
-    return c.z * mix(vec3(1.),rgb,c.y);
-}
-
-vec3 contrast(vec3 c) {
-return smoothstep(0.,1.,c);
-}
-
 vec3 repLim(vec3 p,float c,vec3 l) {
   
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
@@ -259,8 +219,7 @@ vec2 sfold(vec2 p) {
     return p-(g-sqrt(p*p+.01))*v;
 }
 
-
-vec2 radmod(vec2 p,float r) {
+vec2 rmod(vec2 p,float r) {
     float n = radians(360.)/r;
     float a = atan(p.x,p.y)+n*.5;
     a = floor(a/n)*n;
@@ -289,12 +248,6 @@ vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float de) {
     float light_depth = max(dot(rd,l),0.);
     vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
     return mix(col,fog_col,light_depth);
-}
-
-vec3 refraction(vec3 a,vec3 n,float e) {
-    if(dot(a,n) < 0.) { e = 1./e; }
-    else { n = -n; }
-    return refract(a,n,e);
 }
 
 float cell(vec2 x,float n) {
@@ -407,34 +360,8 @@ mat2 rot(float a) {
     
     return mat2(c,-s,s,c);
 }
-
-mat4 rotAxis(vec3 axis,float theta) {
-
-axis = normalize(axis);
-
-    float c = cos(theta);
-    float s = sin(theta);
-
-    float oc = 1.0 - c;
-
-    return mat4(
  
-        oc * axis.x * axis.x + c, 
-        oc * axis.x * axis.y - axis.z * s,
-        oc * axis.z * axis.x + axis.y * s,0.,
-    
-        oc * axis.x * axis.y + axis.z * s,
-        oc * axis.y * axis.y + c, 
-        oc * axis.y * axis.z - axis.x * s,0.,
-
-        oc * axis.z * axis.x - axis.y * s,
-        oc * axis.y * axis.z + axis.x * s,
-        oc * axis.z * axis.z + c,0.,0.,0.,0.,1.);
-
-}
-
-
-vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
+vec3 raydir(vec2 uv,vec3 ro,vec3 ta,float fov) {
 
      vec3 f = normalize(ta - ro);
      vec3 r = normalize(cross(vec3(0.0,1.0,0.0),f));
@@ -446,58 +373,21 @@ vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
      return d;
 }
 
-float circle(vec2 p,float r) {
-    return length(p) - r;
+float petal(vec2 p,float r1,float r2,float h) {
+    p.x = abs(p.x);
+    float b = (r1-r2)/h;
+    float a = sqrt(1.-b*b);
+    float k = dot(p,vec2(-b,a));
+    if(k < 0.) return length(p)-r1;
+    if(k > a*h) return length(p-vec2(0.,h))-r2;
+    return dot(p,vec2(a,b))-r1;
 }
 
-float ring(vec2 p,float r,float w) {
-    return abs(length(p) - r) - w;
-}
-
-float eqTriangle(vec2 p,float r) { 
-
-     const float k = sqrt(3.);
-   
-     p.x = abs(p.x) - 1.;
-     p.y = p.y + 1./k;
-
-     if(p.x + k * p.y > 0.) {
-         p = vec2(p.x - k * p.y,-k * p.x - p.y)/2.;
-     }
-
-     p.x -= clamp(p.x,-2.,0.);
-     return -length(p) * sign(p.y);    
-
-}
- 
-float rect(vec2 p,vec2 b) {
-    vec2 d = abs(p)-b;
-    return length(max(d,0.)) + min(max(d.x,d.y),0.);
-}
-
-float roundRect(vec2 p,vec2 b,vec4 r) {
-    r.xy = (p.x > 0.) ? r.xy : r.zw;
-    r.x  = (p.y > 0.) ? r.x  : r.y;
-    vec2 q = abs(p) - b + r.x;
-    return min(max(q.x,q.y),0.) + length(max(q,0.)) - r.x;
-}
-
-float rhombus(vec2 p,vec2 b) {
-    vec2 q = abs(p);
-    float h = clamp(-2. * ndot(q,b)+ndot(b,b) / dot(b,b),-1.,1.);
-    float d = length(q - .5 * b * vec2(1.- h,1. + h));
-    return d * sign(q.x*b.y + q.y*b.x - b.x*b.y);  
-}
-
-float segment(vec2 p,vec2 a,vec2 b) {
-    vec2 pa = p - a, ba = b - a;
-    float h = clamp(dot(pa,ba)/dot(ba,ba),0.,1.);  
-    return length(pa - ba * h);
-}
-
-float sphere(vec3 p,float r) { 
-     
-    return length(p) - r;
+float arc(vec2 p,vec2 sca,vec2 scb,float ra,float rb) {
+    p *= mat2(sca.x,sca.y,-sca.y,sca.x);
+    p.x = abs(p.x);
+    float k = (scb.y*p.x>scb.x*p.y) ? dot(p,scb) : length(p);
+    return sqrt(dot(p,p)+ra*ra-2.*ra*k)-rb;
 }
 
 float ellipsoid(vec3 p,vec3 r) {
@@ -540,11 +430,6 @@ float solidAngle(vec3 p,vec2 c,float ra) {
     return max(l,m * sign(c.y * q.x - c.x * q.y));
 }
 
-float plane(vec3 p,vec4 n) {
-
-    return dot(p,n.xyz) + n.w;
-}
-
 float capsule(vec3 p,vec3 a,vec3 b,float r) {
 
     vec3 pa = p - a;
@@ -552,13 +437,6 @@ float capsule(vec3 p,vec3 a,vec3 b,float r) {
     float h = clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
     return length(pa - ba * h) - r;
 } 
-
-float prism(vec3 p,vec2 h) {
-
-    vec3 q = abs(p);
-    return max(q.z - h.y,  
-    max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
-}
 
 float box(vec3 p,vec3 b) {
 
@@ -609,20 +487,19 @@ float hex(vec3 p,vec2 h) {
     return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
 
-float dode(vec3 p,float r) {
-vec4 v = vec4(0.,1.,-1.,0.5 + sqrt(1.25));
-v /= length(v.zw);
+float dode(vec3 p,vec3 a,vec3 b) {
+   vec4 v = vec4(0.,1.,-1.,0.5 + sqrt(1.25));
+   v /= length(v.zw);
 
-float d;
-d = abs(dot(p,v.xyw))-r;
-d = max(d,abs(dot(p,v.ywx))-r);
-d = max(d,abs(dot(p,v.wxy))-r);
-d = max(d,abs(dot(p,v.xzw))-r);
-d = max(d,abs(dot(p,v.zwx))-r);
-d = max(d,abs(dot(p,v.wxz))-r);
-return d;
+   float d;
+   d = abs(dot(p,v.xyw))-a.x;
+   d = max(d,abs(dot(p,v.ywx))-a.y);
+   d = max(d,abs(dot(p,v.wxy))-a.z);
+   d = max(d,abs(dot(p,v.xzw))-b.x);
+   d = max(d,abs(dot(p,v.zwx))-b.y);
+   d = max(d,abs(dot(p,v.wxz))-b.z);
+   return d;
 }
-
  
 float ico(vec3 p,float r) {
     float d;
@@ -642,30 +519,54 @@ float ico(vec3 p,float r) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-vec3 q;
-const float phi = 1.61;
+vec3 q,y,l,k;
  
-float pl = plane(p,vec4(0.,1.,0.,1.));
+vec3 e = vec3(1./phi,1.,.67);
 
-float d = dode(p,1.),
-      xf = boxfr(p,vec3(phi,1.,0.),.01),
-      zf = boxfr(p+vec3(0.,1.,0.),vec3(1.,0.,phi),.01),
-      rg = extr(p,ring(p.xz,1.,.05),1.);
+k = p;
+k.xz *= rot(t*.61);
 
-res = opu(res,vec2(d,2.));
+float d = dode(k,vec3(e.z),vec3(e.z));
+d = max(d,-dode(k,e.yxx,vec3(e.x)));
+d = max(d,-dode(k,e.xyx,vec3(e.x)));
+d = max(d,-dode(k,e.xxy,vec3(e.x)));
+d = max(d,-dode(k,vec3(e.x),e.yxx));
+d = max(d,-dode(k,vec3(e.x),e.xyx));
+d = max(d,-dode(k,vec3(e.x),e.xxy));
 
-res = opu(res,vec2(pl,12.));
+res = opu(res,vec2(d,5.));
 
-res = opu(res,vec2(xf,61.));
-res = opu(res,vec2(zf,61.));
+l = p;
+l.yz *= rot(t*.5);
+res = opu(res,vec2(ico(l,1./phi),12.));
 
-res = opu(res,vec2(extr(p,rect(p.xz,vec2(1.,phi)),.1),9.));
+float an1 = pi * (.5+.5*cos(.5));
+float an2 = pi * (.5+.5*cos(1.));
+float rb  = .1 * (.5+.5*cos(5.));
 
+res = opu(res,vec2(
+    extr(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)),
+                 vec2(sin(an2),cos(an2)),1.25,rb),
+                 .1),21.));
 
+y = p.xzy;
+y.xy = rmod(y.xy,8.);
+y.y -= 6.;
 
+res = opu(res,vec2(
+    max(-cylinder(p,4.,2.),box(y,vec3(1.,1e10,1.))),8.));
 
+q = p.xzy;
+q.xy = rmod(q.xy,24.);
+q.y -= 2.;
 
+res = opu(res,vec2(
 
+    max(-extr(q,petal(q.xy,.24,.12,.5),.1),
+    max(-extr(p.xzy-vec3(0.,0.,.05),abs(length(p.xz)-2.5)-.5,.05),
+    extr(p.xzy,abs(length(p.xz)-5.)-4.,.05)  
+    ))
+    ,1.));
 
 return res;
 
@@ -774,12 +675,15 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     vec3 n = calcNormal(p);
     vec3 r = reflect(rd,n);    
 
-    vec3 linear = vec3(.5);
- 
+    vec3 linear = vec3(0.);
+
     float amb = sqrt(clamp(.5+.5*n.y,0.,1.));
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
+    float re = smoothstep(-2.,2.,r.y);
 
     vec3 col = vec3(.5);
+    vec3 bg_col = vec3(1.);
+    col = bg_col * max(1.,rd.y);
 
     vec3 l = normalize(vec3(10.));
     vec3 h = normalize(l - rd);  
@@ -791,21 +695,24 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     if(d.y >= 0.) {
 
         dif *= shadow(p,l);
-        ref *= shadow(p,r);
+        re  *= shadow(p,r);
 
         linear += dif * vec3(.5);
-        linear += amb * vec3(0.1);
-        linear += fre * vec3(.025,.01,.03);
-        linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
+        linear += amb * vec3(0.0001);
+        linear += fre * vec3(.005,.002,.001);
+        linear += spe * vec3(0.001,0.001,.005)*re;
+
+        float de;
 
         if(d.y == 2.) {
         
-        col = vec3(.5);
-        ref = vec3(.25);
+            col = vec3(.5);
+            ref = vec3(.25);
+
 
         }
 
-        if(d.y == 5.) {
+        if(d.y == 12.) {
 
             p *= .25;
 
@@ -816,26 +723,23 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
 
             col += mix(col,cell(p+f3(p*sin3(p,h11(100.)*45.
             )),12.)*col,rd.y*rd.x*col.z)*.01;     
-
     
         }    
 
-        if(d.y == 12.) {
+        if(d.y == 5.) {
 
             col = vec3(.1,.5,.25);
             ref = vec3(.05);
+
         }
         
-        if(d.y == 61.) {
-            col = vec3(1.);
-        }
-
         ro = p+n*.001*2.5;
         rd = r;
 
-
         col = col * linear;
-    }
+        col = mix(col,bg_col,1.-exp(-.00001*d.x*d.x));         
+
+   }
 
 return col;
 }
@@ -845,11 +749,12 @@ vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.1);
 vec3 ro = vec3(2.);
+ro.xz *= rot(t*.005);
 
 vec2 uv = (2.* (gl_FragCoord.xy)
 - resolution.xy)/resolution.y;
 
-vec3 rd = rayCamDir(uv,ro,ta,1.);
+vec3 rd = raydir(uv,ro,ta,1.);
 vec3 ref = vec3(0.);
 vec3 col = render(ro,rd,ref);       
 vec3 dec = vec3(1.);
@@ -860,7 +765,8 @@ vec3 dec = vec3(1.);
     }
     col = pow(col,vec3(.4545));
     color += col;
-    FragColor = vec4(color,1.0);
+    fragColor = vec4(color,1.0);
+
 
  
 
