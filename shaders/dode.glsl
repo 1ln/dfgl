@@ -3,7 +3,7 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-//Dodeke
+//108
 //2021
 //do
 
@@ -11,7 +11,10 @@ vec2 R = resolution;
 float t = time;
 
 #define AA 1
-#define EPS 0.0001 
+#define STEPS 128
+#define EPS 0.0001
+#define NEAR 0.
+#define FAR 200.
 
 const int seed = 1290;
 
@@ -101,7 +104,6 @@ float sin3(vec3 p,float h) {
 float expStep(float x,float k) {
     return exp((x*k)-k);
 }
-
 
 float envImp(float x,float k) {
     float h = k * x;
@@ -668,10 +670,11 @@ vec3 calcNormal(vec3 p) {
     
 }
 
-vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
+vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec2 d) {
 
-    vec2 d = trace(ro, rd);
-    vec3 p = ro + rd * d.x;
+    ro += rd * (d.x*.97);
+    vec3 p = ro;    
+    
     vec3 n = calcNormal(p);
     vec3 r = reflect(rd,n);    
 
@@ -698,11 +701,10 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         re  *= shadow(p,r);
 
         linear += dif * vec3(.5);
+
         linear += amb * vec3(0.0001);
         linear += fre * vec3(.005,.002,.001);
         linear += spe * vec3(0.001,0.001,.005)*re;
-
-        float de;
 
         if(d.y == 2.) {
         
@@ -752,47 +754,32 @@ vec3 ta = vec3(0.1);
 vec3 ro = vec3(2.);
 ro.xz *= rot(t*.005);
 
-#if MODE 1
-
 vec2 uv = (2.* (gl_FragCoord.xy)
-- resolution.xy)/resolution.y;
+- R.xy)/R.y;
 
-vec3 rd = raydir(uv,ro,ta,1.);
-vec3 ref = vec3(0.);
-vec3 col = render(ro,rd,ref);       
+vec3 ref = vec3(0.);       
 vec3 dec = vec3(1.);
   
-    for(int i = 0; i < 2; i++) {
-        dec *= ref;
-        col += dec * render(ro,rd,ref);
-    }
-
-    col = pow(col,vec3(.4545));
-    color += col;
-    fragColor = vec4(color,1.0);
-
-
-}
-
-#else
-
-vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
-
 float fov = 2.;
 float vfov = 1.;
 
-vec2 d = vec2(EPS,0.);
+vec2  d = vec2(EPS,0.);
+float e = NEAR;
 
-float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
+float radius = 2. * tan(vfov/2.) / R.y * 1.5;
 vec3 rd = raydir(uv,ro,ta,fov);
 
+vec3 col;
 vec4 col_alpha = vec4(0.,0.,0.,1.);
- 
+
 for(int i = 0; i < STEPS; i++ ) {
     float rad = NEAR * radius;
-    d = scene(ro + d * rd);
- 
-
+    d = scene(ro + d.x * rd);
+    
+    for(int i = 0; i < 2; i++) {
+        dec *= ref;     
+        col += dec * render(ro,rd,ref,d); 
+    }
 
     if(d.x < rad) {
         float alpha = smoothstep(rad,-rad,d.x);
@@ -802,15 +789,14 @@ for(int i = 0; i < STEPS; i++ ) {
 
         if(col_alpha.a < EPS) break;
     
+
     }
 
-    d += max(abs(d.x * .75 ), .001);
-    if(d > far) break;
+    e += max(abs(d.x * .75 ), .001);
+    if(e > FAR) break;
 }
 
 color = mix(col_alpha.rgb,color,col_alpha.a);
 fragColor = vec4(pow(color,vec3(.4545)),1.0);
  
 }
-
-#endif
