@@ -3,7 +3,7 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-//Dodeke
+//108
 //2021
 //do
 
@@ -702,8 +702,6 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         linear += fre * vec3(.005,.002,.001);
         linear += spe * vec3(0.001,0.001,.005)*re;
 
-        float de;
-
         if(d.y == 2.) {
         
             col = vec3(.5);
@@ -752,8 +750,6 @@ vec3 ta = vec3(0.1);
 vec3 ro = vec3(2.);
 ro.xz *= rot(t*.005);
 
-#if MODE 1
-
 vec2 uv = (2.* (gl_FragCoord.xy)
 - resolution.xy)/resolution.y;
 
@@ -773,44 +769,3 @@ vec3 dec = vec3(1.);
 
 
 }
-
-#else
-
-vec2 uv = (2. * gl_FragCoord.xy - resolution) / resolution.y;
-
-float fov = 2.;
-float vfov = 1.;
-
-vec2 d = vec2(EPS,0.);
-
-float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
-vec3 rd = raydir(uv,ro,ta,fov);
-
-vec4 col_alpha = vec4(0.,0.,0.,1.);
- 
-for(int i = 0; i < STEPS; i++ ) {
-    float rad = NEAR * radius;
-    d = scene(ro + d * rd);
- 
-
-
-    if(d.x < rad) {
-        float alpha = smoothstep(rad,-rad,d.x);
-        vec3 col = render(ro,rd,ref,d);
-        col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
-        col_alpha.a *= (1. - alpha);
-
-        if(col_alpha.a < EPS) break;
-    
-    }
-
-    d += max(abs(d.x * .75 ), .001);
-    if(d > far) break;
-}
-
-color = mix(col_alpha.rgb,color,col_alpha.a);
-fragColor = vec4(pow(color,vec3(.4545)),1.0);
- 
-}
-
-#endif
