@@ -670,11 +670,10 @@ vec3 calcNormal(vec3 p) {
     
 }
 
-vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec2 d) {
+vec3 render(vec3 ro,vec3 rd,vec2 d) {
 
-    ro += rd * (d.x*.97);
-    vec3 p = ro;    
-    
+    vec3 p = ro + rd * d.x;
+
     vec3 n = calcNormal(p);
     vec3 r = reflect(rd,n);    
 
@@ -707,10 +706,8 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec2 d) {
         linear += spe * vec3(0.001,0.001,.005)*re;
 
         if(d.y == 2.) {
-        
+    
             col = vec3(.5);
-            ref = vec3(.25);
-
 
         }
 
@@ -731,13 +728,9 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec2 d) {
         if(d.y == 5.) {
 
             col = vec3(.1,.5,.25);
-            ref = vec3(.05);
 
         }
         
-        ro = p+n*.001*2.5;
-        rd = r;
-
         col = col * linear;
         col = mix(col,bg_col,1.-exp(-.00001*d.x*d.x));         
 
@@ -757,14 +750,11 @@ ro.xz *= rot(t*.005);
 vec2 uv = (2.* (gl_FragCoord.xy)
 - R.xy)/R.y;
 
-vec3 ref = vec3(0.);       
-vec3 dec = vec3(1.);
-  
 float fov = 2.;
 float vfov = 1.;
 
 vec2  d = vec2(EPS,0.);
-float e = NEAR;
+float dist = NEAR;
 
 float radius = 2. * tan(vfov/2.) / R.y * 1.5;
 vec3 rd = raydir(uv,ro,ta,fov);
@@ -774,16 +764,14 @@ vec4 col_alpha = vec4(0.,0.,0.,1.);
 
 for(int i = 0; i < STEPS; i++ ) {
     float rad = NEAR * radius;
-    d = scene(ro + d.x * rd);
-    
-    for(int i = 0; i < 2; i++) {
-        dec *= ref;     
-        col += dec * render(ro,rd,ref,d); 
-    }
+    d = scene(ro + dist * rd);
 
     if(d.x < rad) {
         float alpha = smoothstep(rad,-rad,d.x);
-        vec3 col = render(ro,rd,ref,d);
+        vec3 col = render(ro,rd,d);
+
+
+
         col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
         col_alpha.a *= (1. - alpha);
 
@@ -792,8 +780,8 @@ for(int i = 0; i < STEPS; i++ ) {
 
     }
 
-    e += max(abs(d.x * .75 ), .001);
-    if(e > FAR) break;
+    dist += max(abs(d.x * .75 ), .001);
+    if(dist > FAR) break;
 }
 
 color = mix(col_alpha.rgb,color,col_alpha.a);
