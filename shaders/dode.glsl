@@ -763,7 +763,7 @@ vec3 col;
 vec4 col_alpha = vec4(0.,0.,0.,1.);
 
 for(int i = 0; i < STEPS; i++ ) {
-    float rad = NEAR * radius;
+    float rad = dist * radius;
     d = scene(ro + dist * rd);
 
     if(d.x < rad) {
