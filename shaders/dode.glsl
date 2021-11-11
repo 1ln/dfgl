@@ -750,41 +750,18 @@ ro.xz *= rot(t*.005);
 vec2 uv = (2.* (gl_FragCoord.xy)
 - R.xy)/R.y;
 
-float fov = 2.;
-float vfov = 1.;
-
-vec2  d = vec2(EPS,0.);
-float dist = NEAR;
-
-float radius = 2. * tan(vfov/2.) / R.y * 1.5;
-vec3 rd = raydir(uv,ro,ta,fov);
-
-vec3 col;
-vec4 col_alpha = vec4(0.,0.,0.,1.);
-
-for(int i = 0; i < STEPS; i++ ) {
-    float rad = dist * radius;
-    d = scene(ro + dist * rd);
-
-    if(d.x < rad) {
-        float alpha = smoothstep(rad,-rad,d.x);
-        vec3 col = render(ro,rd,d);
-
-
-
-        col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
-        col_alpha.a *= (1. - alpha);
-
-        if(col_alpha.a < EPS) break;
-    
-
+vec3 rd = raydir(uv,ro,ta,1.);
+vec3 ref = vec3(0.);
+vec3 col = render(ro,rd,ref);       
+vec3 dec = vec3(1.);
+  
+    for(int i = 0; i < 2; i++) {
+        dec *= ref;
+        col += dec * render(ro,rd,ref);
     }
 
-    dist += max(abs(d.x * .75 ), .001);
-    if(dist > FAR) break;
-}
+    col = pow(col,vec3(.4545));
+    color += col;
+    fragColor = vec4(color,1.0);
 
-color = mix(col_alpha.rgb,color,col_alpha.a);
-fragColor = vec4(pow(color,vec3(.4545)),1.0);
- 
 }
