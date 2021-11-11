@@ -521,8 +521,8 @@ float ico(vec3 p,float r) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-vec3 q,y,l,k;
- 
+vec3 q,y,l,k,n;
+
 vec3 e = vec3(1./phi,1.,.67);
 
 k = p;
@@ -562,13 +562,22 @@ q = p.xzy;
 q.xy = rmod(q.xy,24.);
 q.y -= 2.;
 
+n = p.xzy;
+n.xy = rmod(n.xy,108.);
+n.y -= 2.;
+
+
 res = opu(res,vec2(
 
+    
     max(-extr(q,petal(q.xy,.24,.12,.5),.1),
     max(-extr(p.xzy-vec3(0.,0.,.05),abs(length(p.xz)-2.5)-.5,.05),
     extr(p.xzy,abs(length(p.xz)-5.)-4.,.05)  
     ))
     ,1.));
+
+
+
 
 return res;
 
@@ -595,24 +604,6 @@ vec2 trace(vec3 ro,vec3 rd) {
         if(e < s) { d = -1.0; }
         return vec2(s,d);
 
-}
-
-float reflection(vec3 ro,vec3 rd ) {
-
-    float depth = 0.;
-    float dmax = 100.;
-    float d = -1.0;
-
-    for(int i = 0; i < 125; i++ ) {
-        float h = scene(ro + rd * depth).x;
-
-        if(h < EPS) { return depth; }
-        
-        depth += h;
-    }
-
-    if(dmax <= depth ) { return dmax; }
-    return dmax;
 }
 
 float shadow(vec3 ro,vec3 rd ) {
@@ -670,7 +661,9 @@ vec3 calcNormal(vec3 p) {
     
 }
 
-vec3 render(vec3 ro,vec3 rd,vec2 d) {
+vec3 render(vec3 ro,vec3 rd) {
+
+    vec2 d = trace(ro,rd); 
 
     vec3 p = ro + rd * d.x;
 
@@ -707,7 +700,7 @@ vec3 render(vec3 ro,vec3 rd,vec2 d) {
 
         if(d.y == 2.) {
     
-            col = vec3(.5);
+            col = vec3(.5,1.,.2);
 
         }
 
@@ -744,7 +737,7 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.1);
-vec3 ro = vec3(2.);
+vec3 ro = vec3(1.,3.,2.);
 ro.xz *= rot(t*.005);
 
 vec2 uv = (2.* (gl_FragCoord.xy)
@@ -752,16 +745,9 @@ vec2 uv = (2.* (gl_FragCoord.xy)
 
 vec3 rd = raydir(uv,ro,ta,1.);
 vec3 ref = vec3(0.);
-vec3 col = render(ro,rd,ref);       
-vec3 dec = vec3(1.);
-  
-    for(int i = 0; i < 2; i++) {
-        dec *= ref;
-        col += dec * render(ro,rd,ref);
-    }
-
-    col = pow(col,vec3(.4545));
-    color += col;
-    fragColor = vec4(color,1.0);
+vec3 col = render(ro,rd);       
+col = pow(col,vec3(.4545));
+color += col;
+fragColor = vec4(color,1.0);
 
 }
