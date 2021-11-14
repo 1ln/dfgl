@@ -11,10 +11,7 @@ vec2 R = resolution;
 float t = time;
 
 #define AA 1
-#define STEPS 128
 #define EPS 0.0001
-#define NEAR 0.
-#define FAR 200.
 
 const int seed = 1290;
 
@@ -394,7 +391,7 @@ float shadow(vec3 ro,vec3 rd ) {
 
         float y = h * h / (2. * ph);
         float d = sqrt(h*h-y*y);         
-        res = min(res,100. * d/max(0.,t-y));
+        res = min(res,125. * d/max(0.,t-y));
         ph = h;
         t += h;
     
@@ -480,7 +477,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
         if(d.y == 2.) {
         col = vec3(3.);
-        }
+        }        
 
         if(d.y == 0.) {
         col = vec3(0.,0.001,0.);
@@ -508,11 +505,10 @@ vec3 render(vec3 ro,vec3 rd) {
             col = vec3(.1,.5,.25);
         }
         
-        col = col * linear;
-        col = mix(col,bg_col,1.-exp(-.00001*d.x*d.x));         
+          col = col * linear;
+          col = mix(col,bg_col,1.-exp(-.00001*d.x*d.x));         
 
    }
-
 return col;
 }
 
@@ -524,18 +520,23 @@ vec3 ta = vec3(0.1);
 vec3 ro = vec3(1.,3.,2.);
 ro.xz *= rot(t*.005);
 
+for(int k = 0; k < AA; ++k) {
+    for(int l = 0; l < AA; ++l) { 
 
-
-
-
-vec2 uv = (2.* (gl_FragCoord.xy)
-- R.xy)/R.y;
+vec2 o = vec2(float(l),float(k))/ float(AA) -.5;
+vec2 uv = (2.* (gl_FragCoord.xy+o) - R.xy)/R.y;
 
 vec3 rd = raydir(uv,ro,ta,1.);
 vec3 ref = vec3(0.);
 vec3 col = render(ro,rd);       
+
 col = pow(col,vec3(.4545));
 color += col;
+   
+    }
+}
+
+color /= float(AA*AA);
 fragColor = vec4(color,1.0);
 
 }
