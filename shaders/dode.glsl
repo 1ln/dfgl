@@ -319,7 +319,7 @@ an1 = pi * (-.5+.5*cos(.502));
 res = opu(res,vec2(
     extr(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)),
     vec2(sin(an2),cos(an2)),1.5,rb),
-    .16),0.));
+    .16),1.));
 
 y = p.xzy;
 y.xy = rmod(y.xy,8.);
@@ -347,7 +347,7 @@ res = opu(res,vec2(
     max(-extr(p.xzy-vec3(0.,0.,.05),abs(length(p.xz)-2.5)-.5,.05),
     extr(p.xzy,abs(length(p.xz)-3.)-2.,.05) 
     ))
-    ,1.));
+    ,64.));
 
 
 
@@ -361,9 +361,9 @@ vec2 trace(vec3 ro,vec3 rd) {
     
     float d = -1.0;
     float s = 0.;
-    float e = 225.;  
+    float e = 225.; 
 
-    for(int i = 0; i < 124; i++) {
+    for(int i = 0; i < 324; i++) {
 
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
@@ -385,13 +385,13 @@ float shadow(vec3 ro,vec3 rd ) {
     float t = 0.005;
     float ph = 1e10;
     
-    for(int i = 0; i < 125; i++ ) {
+    for(int i = 0; i < 25; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
 
         float y = h * h / (2. * ph);
         float d = sqrt(h*h-y*y);         
-        res = min(res,125. * d/max(0.,t-y));
+        res = min(res,325. * d/max(0.,t-y));
         ph = h;
         t += h;
     
@@ -454,6 +454,7 @@ vec3 render(vec3 ro,vec3 rd) {
     col = bg_col * max(1.,rd.y);
 
     vec3 l = normalize(vec3(10.));
+
     vec3 h = normalize(l - rd);  
 
     float dif = clamp(dot(n,l),0.0,1.0);
@@ -471,6 +472,10 @@ vec3 render(vec3 ro,vec3 rd) {
         linear += fre * vec3(.005,.002,.001);
         linear += spe * vec3(0.001,0.001,.005)*re;
 
+        if(d.y == 64.) {
+        col = vec3(.5);        
+        }
+
         if(d.y == 108.) {
         col = vec3(1./phi);
         }
@@ -479,7 +484,7 @@ vec3 render(vec3 ro,vec3 rd) {
         col = vec3(3.);
         }        
 
-        if(d.y == 0.) {
+        if(d.y == 1.) {
         col = vec3(0.,0.001,0.);
         }
         
@@ -499,6 +504,8 @@ vec3 render(vec3 ro,vec3 rd) {
             col += mix(col,cell(p+f3(p*sin3(p,h11(100.)*45.
             )),12.)*col,rd.y*rd.x*col.z)*.01;     
     
+            
+
         }    
 
         if(d.y == 5.) {
@@ -506,7 +513,7 @@ vec3 render(vec3 ro,vec3 rd) {
         }
         
           col = col * linear;
-          col = mix(col,bg_col,1.-exp(-.00001*d.x*d.x));         
+          col = mix(col,bg_col,1.-exp(-.0001*d.x*d.x*d.x));         
 
    }
 return col;
