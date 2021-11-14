@@ -2,13 +2,15 @@
 out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
+#define fragCoord gl_FragCoord
 
 //108
 //2021
 //do
 
-vec2 R = resolution;
-float t = time;
+//#define main() mainImage(out vec4 fragColor,in vec2 fragCoord)
+#define R resolution
+#define t time
 
 #define AA 2
 #define EPS 0.0001
@@ -422,7 +424,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
         linear += dif * vec3(.5);
 
-        linear += amb * vec3(0.0001);
+        linear += amb * vec3(0.001);
         linear += fre * vec3(.005,.002,.001);
         linear += spe * vec3(0.001,0.001,.005)*re;
 
@@ -490,17 +492,16 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.1);
-vec3 ro = vec3(2.,5.,4.);
+vec3 ro = vec3(-2.,4.,2.);
 ro.xz *= rot(t*.005);
 
 for(int k = 0; k < AA; ++k) {
     for(int l = 0; l < AA; ++l) { 
 
 vec2 o = vec2(float(l),float(k))/ float(AA) -.5;
-vec2 uv = (2.* (gl_FragCoord.xy+o) - R.xy)/R.y;
+vec2 uv = (2.* (fragCoord.xy+o) - R.xy)/R.y;
 
 vec3 rd = raydir(uv,ro,ta,2.);
-vec3 ref = vec3(0.);
 vec3 col = render(ro,rd);       
 
 col = pow(col,vec3(.4545));
