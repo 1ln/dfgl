@@ -15,9 +15,9 @@ uniform float time;
 #define AA 2
 
 #define EPS 0.0001
-#define STEPS 125
-#define NEAR 2.
-#define FAR 250.
+#define STEPS 245
+#define NEAR 0.
+#define FAR 25.
 
 const int seed = 1290;
 
@@ -168,18 +168,18 @@ float dode(vec3 p,vec3 a,vec3 b) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-vec3 q;
+vec3 q = p;
 
 float r = 1./phi;
+float f = .005,h = .005;
 
-float d = spiral(p.xz,1.)-r,g; 
+float d = spiral(p.xz,1.)+r,g; 
 res = opu(res,vec2(
-    extr(p.xzy,d*.05,.005),0.));
+    extr(p.xzy,d*f,h),0.));
 
-q = p;
-g = spiral(-q.xy,1.)-r;
+g = spiral(-q.xy,1.)+r;
 res = opu(res,vec2(
-    extr(q,g*.05,.005),1.));
+    extr(q,g*f,h),1.));
 
 
 
