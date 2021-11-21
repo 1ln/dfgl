@@ -17,7 +17,7 @@ uniform float time;
 #define EPS 0.0001
 #define STEPS 245
 #define NEAR 0.
-#define FAR 25.
+#define FAR 3.
 
 const int seed = 1290;
 
@@ -151,20 +151,6 @@ vec3 raydir(vec2 uv,vec3 ro,vec3 ta,float fov) {
      return d;
 }
 
-float dode(vec3 p,vec3 a,vec3 b) {
-   vec4 v = vec4(0.,1.,-1.,0.5 + sqrt(1.25));
-   v /= length(v.zw);
-
-   float d;
-   d = abs(dot(p,v.xyw))-a.x;
-   d = max(d,abs(dot(p,v.ywx))-a.y);
-   d = max(d,abs(dot(p,v.wxy))-a.z);
-   d = max(d,abs(dot(p,v.xzw))-b.x);
-   d = max(d,abs(dot(p,v.zwx))-b.y);
-   d = max(d,abs(dot(p,v.wxz))-b.z);
-   return d;
-}
- 
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
@@ -263,7 +249,7 @@ vec3 render(vec3 ro,vec3 rd) {
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
     float ref = smoothstep(-2.,2.,r.y);
 
-    vec3 col = vec3(.5);
+    vec3 col = vec3(.5); col = vec3(1.);
     vec3 bg_col = vec3(1.);
     col = bg_col * max(1.,rd.y);
 
@@ -291,14 +277,16 @@ vec3 render(vec3 ro,vec3 rd) {
             col += fmCol(dd(p),vec3(f3(p),h11(45.),h11(124.)),
                    vec3(h11(235.),f3(p),h11(46.)),
                    vec3(h11(245.),h11(75.),f3(p)),
-                   vec3(1.,spiral(p.xz,.5),.5));
-        } else {     
+                   vec3(1.,.5,.5));
+        } else { 
             col = vec3(1.,0.,0.);
         }
         
           col = col * linear;
           col = mix(col,bg_col,1.-exp(-.0001*d.x*d.x*d.x)); 
-   }
+
+}
+
 return col;
 }
 
