@@ -122,8 +122,8 @@ float f3 (vec3 p) {
 }
 
 float dd(vec3 p) {
-    vec3 q = vec3(f3(p+vec3(0.,1.,2.)),
-                  f3(p+vec3(4.,2.,3.)),
+    vec3 q = vec3(f3(p+vec3(2.1,1.,2.)),
+                  f3(p+vec3(4.,1.,3.)),
                   f3(p+vec3(2.,5.,6.)));
     vec3 r = vec3(f3(p + 4. * q + vec3(4.5,2.4,5.5)),
                   f3(p + 4. * q + vec3(2.25,5.,2.)),
@@ -159,17 +159,13 @@ vec3 q = p;
 float r = 1./phi;
 float f = .005,h = .005;
 
-float d = spiral(p.xz,1.)+r,g; 
+float d = spiral(p.xz+vec2(-.0061,.0061),1.)+r,g; 
 res = opu(res,vec2(
     extr(p.xzy,d*f,h),0.));
 
 g = spiral(-q.xy,1.)+r;
 res = opu(res,vec2(
     extr(q,g*f,h),1.));
-
-
-
-
 
 return res;
 
@@ -249,7 +245,7 @@ vec3 render(vec3 ro,vec3 rd) {
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
     float ref = smoothstep(-2.,2.,r.y);
 
-    vec3 col = vec3(.5); col = vec3(1.);
+    vec3 col = vec3(.5);
     vec3 bg_col = vec3(1.);
     col = bg_col * max(1.,rd.y);
 
@@ -265,25 +261,35 @@ vec3 render(vec3 ro,vec3 rd) {
         dif *= shadow(p,l);
         ref  *= shadow(p,r);
 
-        linear += dif * vec3(.5);
-        linear += amb * vec3(0.001);
-        linear += fre * vec3(.005,.02,.001);
-        linear += spe * vec3(0.01,0.001,.005)*ref;
+        linear += dif * vec3(1.);
+        linear += amb * vec3(0.01);
+        linear += fre * vec3(.01,.02,.01);
+        linear += spe * vec3(0.01,0.01,.05)*ref;
 
         if(d.y == 1.) {
 
             p *= 3.25;
+            col += fmCol(spiral(p.xy+
+            dd(p.xzy+spiral(-p.xy,1.)),2.),
 
-            col += fmCol(dd(p),vec3(f3(p),h11(45.),h11(124.)),
-                   vec3(h11(235.),f3(p),h11(46.)),
-                   vec3(h11(245.),h11(75.),f3(p)),
-                   vec3(1.,.5,.5));
+                   //coefficient
+                   vec3(1.,.16,.1),
+            
+                   //amplitude
+                   vec3(2.,1.,.1),
+
+                   //frequency
+                   vec3(.5,1.,1.),
+            
+                   //phase
+                   vec3(pi,-pi,pi));
         } else { 
             col = vec3(1.,0.,0.);
         }
         
           col = col * linear;
-          col = mix(col,bg_col,1.-exp(-.0001*d.x*d.x*d.x)); 
+          col = mix(col,bg_col+vec3(2.)
+          ,1.-exp(-.5*d.x*d.x*d.x)); 
 
 }
 
@@ -295,7 +301,7 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(.5);
+vec3 ro = vec3(.25);
 ro.xz *= rot(t*.05);
 
 for(int k = 0; k < AA; ++k) {
