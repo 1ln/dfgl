@@ -19,7 +19,6 @@ uniform float time;
 #define NEAR 0.
 #define FAR 3.
 
-
 const int seed = 121393;
 
 const float pi = radians(180.);
@@ -63,21 +62,6 @@ float extr(vec3 p,float d,float h) {
     return min(max(w.x,w.y),0.) + length(max(w,0.)); 
 } 
 
-float n2(vec2 x) {
-    vec2 p = floor(x);
-    vec2 f = fract(x);
-    f =  f*f*(3.-2.*f);
-    float n = p.x + p.y * 57.;
-    
-    return( 
-        mix(
-        mix(h11(n+0.),h11(n+1.),f.x),
-        mix(h11(n+57.),h11(n+58.),f.x),
-        f.y)
-        );
-       
-}
-
 float n3(vec3 x) {
     vec3 p = floor(x);
     vec3 f = fract(x);
@@ -90,25 +74,6 @@ float n3(vec3 x) {
            mix(h11(n + 270.0),h11(n + 271.0),f.x),f.y),f.z);
 }
 
-float f2(vec2 x) {
-
-    float t = 0.0;
-
-    float g = exp2(-.626); 
-
-    float a = 0.5;
-    float f = 1.0;
-
-    for(int i = 0; i < 5; i++) {
-    t += a * n2(f * x); 
-    f *= 2.0; 
-    a *=  g;  
-    
-    }    
-
-    return t;
-}
-
 float f3 (vec3 p) {
     float f = 1.;
     mat3 m = mat3(vec2(.8,.6),h11(150.),
@@ -119,7 +84,7 @@ float f3 (vec3 p) {
     f += .25   * n3(p); p = m*p*2.04;
     f += .125  * n3(p); p = m*p*2.1;
     f += .0625 * n3(p);
-    return f / .94;
+    return f / .91;
 }
 
 float dd(vec3 p) {
@@ -272,7 +237,7 @@ vec3 render(vec3 ro,vec3 rd) {
             p *= 5.25;
             col += fmCol(spiral(p.xy+
             dd(p.xzy+spiral(-p.xy,1.)),2.),
-
+                
                    //coefficient
                    vec3(6.,.1,.5),
           
@@ -286,7 +251,7 @@ vec3 render(vec3 ro,vec3 rd) {
                    vec3(pi,-pi,pi));
         } else { 
             col = vec3(1.,0.,0.);
-            col += 2.+spiral(p.xz,1.);
+            col += 1.5+spiral(p.xz,1.);
         }
         
           col = col * linear;
@@ -303,7 +268,7 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(.25); 
+vec3 ro = vec3(.12,.45,.25);
 ro.xz *= rot(t*.05);
 
 for(int k = 0; k < AA; ++k) {
