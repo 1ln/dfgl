@@ -5,7 +5,6 @@ out vec4 FragColor;
 
 uniform vec2 resolution;
 uniform float time;
-uniform vec3 camPos;
 
 uniform int seed;
 
@@ -23,25 +22,6 @@ float h21(vec2 p) {
 float checkerboard(vec3 p,float h) {
     vec3 q = floor(p*h);
     return mod(q.x+q.z,2.);
-}
-
-float concentric(vec2 p,float h) {
-    return cos(length(p))-h;
-}
-
-vec2 julia(vec2 p,float n,float b,float f) {
-    float k = 0.;
-    for(int i = 0; i < 64; i++) {
-    p = vec2(p.x*p.x-p.y*p.y,(p.x*p.y))-f;
-    if(dot(p,p) > b) {
-        break;
-    }
-    return p;
-    }
-}
-
-vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    return a + b * cos((radians(180.)*2.0) * (c * t + d));
 }
 
 float expStep(float x,float k) {
@@ -62,41 +42,7 @@ vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
-float n3(vec3 x) {
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);
-    float n = p.x + p.y * 157.0 + 113.0 * p.z;
-
-    return mix(mix(mix(h11(n + 0.0),h11(n + 1.0),f.x),
-           mix(h11(n + 157.0),h11(n + 158.0),f.x),f.y),
-           mix(mix(h11(n + 113.0),h11(n + 114.0),f.x),
-           mix(h11(n + 270.0),h11(n + 271.0),f.x),f.y),f.z);
-}
-
-float f3(vec3 x) {
-
-    float t = 0.0;
-
-    float g = exp2(-.626); 
-
-    float a = 0.5;
-    float f = 1.0;
-
-    for(int i = 0; i < 5; i++) {
-    t += a * n3(f * x); 
-    f *= 2.0; 
-    a *=  g;  
-    
-    }    
-
-    return t;
-}
-
 mat2 rot(float a) {
-
     float c = cos(a);
     float s = sin(a);
     
@@ -116,38 +62,15 @@ vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
 }
 
 float box(vec3 p,vec3 b) {
-
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float dodecahedron(vec3 p,float r) {
-vec4 v = vec4(0.,1.,-1.,0.5 + sqrt(1.25));
-v /= length(v.zw);
-
-float d;
-d = abs(dot(p,v.xyw))-r;
-d = max(d,abs(dot(p,v.ywx))-r);
-d = max(d,abs(dot(p,v.wxy))-r);
-d = max(d,abs(dot(p,v.xzw))-r);
-d = max(d,abs(dot(p,v.zwx))-r);
-d = max(d,abs(dot(p,v.wxz))-r);
-return d;
-}
-
-float icosahedron(vec3 p,float r) {
-    float d;
-    d = abs(dot(p,vec3(.577)));
-    d = max(d,abs(dot(p,vec3(-.577,.577,.577))));
-    d = max(d,abs(dot(p,vec3(.577,-.577,.577))));
-    d = max(d,abs(dot(p,vec3(.577,.577,-.577))));
-    d = max(d,abs(dot(p,vec3(0.,.357,.934))));
-    d = max(d,abs(dot(p,vec3(0.,-.357,.934))));
-    d = max(d,abs(dot(p,vec3(.934,0.,.357))));
-    d = max(d,abs(dot(p,vec3(-.934,0.,.357))));
-    d = max(d,abs(dot(p,vec3(.357,.934,0.))));
-    d = max(d,abs(dot(p,vec3(-.357,.934,0.))));
-    return d-r;
+float sa(vec3 p,vec2 c,float ra) {
+    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
+    float l = length(q) - ra;
+    float m = length(q - c * clamp(dot(q,c),0.,ra));
+    return max(l,m * sign(q.x * c.y - q.y * c.x));
 }
 
 vec2 scene(vec3 p) { 
@@ -165,18 +88,14 @@ float b,b1,b2,b3,b4;
 b = box(q-vec3(2.),vec3(1.));
 b1 = box(q-vec3(2.,2.,4.),vec3(.5));
 b2 = box(q-vec3(-2.,2.5,-4.),vec3(2.));
-b3 = box(q-vec3(4.,2.,-2.),vec3(1.25));
-b4 = box(q-vec3(-4.,2.,-3.),vec3(1.));
-
-d = dodecahedron(p-vec3(0.,1.,0.),1.);
 
 res = opu(res,vec2(b,2.)); 
 res = opu(res,vec2(b1,16.));
 res = opu(res,vec2(b2,58.));
-res = opu(res,vec2(b3,12.));
-res = opu(res,vec2(b4,71.));
 
 res = opu(res,vec2(max(-q.y,d),1.));
+
+
 
 return res;
 
@@ -263,7 +182,6 @@ vec3 calcNormal(vec3 p) {
 
 vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
 
-
     vec2 d = trace(ro, rd);
     vec3 p = ro + rd * d.x;
     vec3 n = calcNormal(p);
@@ -296,27 +214,29 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         linear += fre * vec3(.025,.01,.03);
         linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
 
+        if(d.y == 5.) {
+            col = vec3(.5);
+            ref = vec3(.1);
+        }
+
         if(d.y == 2.) {
             col = vec3(1.,0.,0.);
-            ref = vec3(0.12);   
+            ref = vec3(0.1);   
         }    
   
-        if(d.y == 16.) {
-            col = vec3(.5);
-            ref = vec3(.25);
+        if(d.y == 3.) {
+            col = vec3(0.,1.,0.);
+            ref = vec3(.1);
         }
 
-        if(d.y == 12.) {
-            col = vec3(concentric(p.xy,24.));
+        if(d.y == 4.) {
+            col = vec3(0.,0.,1.);
+            ref = vec3(.1);
         }
 
-        if(d.y == 58.) {
-            col = vec3(julia(p.xy,-h11(95.),4.,h11(292.)); 
-        }
-
-        if(d.y == 71.) {
+        if(d.y == 1.) {
             col = vec3(checkerboard(p,10.));
-            ref = vec3(.5);  
+            ref = vec3(.5); 
         }
         
         ro = p+n*.001*2.5;
