@@ -67,7 +67,7 @@ float box(vec3 p,vec3 b) {
 }
 
 float sa(vec3 p,vec2 c,float ra) {
-    vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
+    vec2 q = vec2(length(p.xy),p.z);
     float l = length(q) - ra;
     float m = length(q - c * clamp(dot(q,c),0.,ra));
     return max(l,m * sign(q.x * c.y - q.y * c.x));
@@ -77,25 +77,28 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
+p.xz *= rot(-1.25);
 vec3 q = p;
+q.xz *= rot(-PI2*h11(100.));
+q.zy *= rot(PI2*h11(125.));
 
-p.xz *= rot(-PI2*h11(100.));
-p.zy *= rot(PI2*h11(125.));
-
-float d = 1.;
-float b,b1,b2,b3,b4;
-
-b = box(q-vec3(2.),vec3(1.));
-b1 = box(q-vec3(2.,2.,4.),vec3(.5));
-b2 = box(q-vec3(-2.,2.5,-4.),vec3(2.));
+float b,b1,b2;
+b = box(q-vec3(-3.,1.5,-2.),vec3(.5));
+b1 = box(q-vec3(-4.,2.,-5.),vec3(2.));
+b2 = box(q-vec3(-5.,1.,-5.),vec3(1.));
 
 res = opu(res,vec2(b,2.)); 
-res = opu(res,vec2(b1,16.));
-res = opu(res,vec2(b2,58.));
+res = opu(res,vec2(b1,3.));
+res = opu(res,vec2(b2,4.));
 
-res = opu(res,vec2(max(-q.y,d),1.));
+vec3 n = p;
+n.zy *= rot(-2.5);
+n.y += .25;
 
+float sc = sa(n,vec2(.6,.8),1.);
+res = opu(res,vec2(sc,5.));
 
+res = opu(res,vec2(p.y-.25,1.));
 
 return res;
 
@@ -216,7 +219,9 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
 
         if(d.y == 5.) {
             col = vec3(.5);
-            ref = vec3(.1);
+            ref = vec3(.5);
+            //rd = r;                 
+
         }
 
         if(d.y == 2.) {
@@ -235,11 +240,10 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         }
 
         if(d.y == 1.) {
-            col = vec3(checkerboard(p,10.));
+            col = vec3(checkerboard(p,1.));
             ref = vec3(.5); 
         }
         
-        ro = p+n*.001*2.5;
         rd = r;
 
         col = col * linear;
@@ -253,12 +257,12 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(-2.,5.,3.);
+vec3 ro = vec3(2.);
 
        vec2 uv = (2.* (gl_FragCoord.xy) 
        - resolution.xy)/resolution.y;
 
-       vec3 rd = rayCamDir(uv,ro,ta,1.); 
+       vec3 rd = rayCamDir(uv,ro,ta,2.); 
        vec3 ref = vec3(0.);
        vec3 col = render(ro,rd,ref);       
        vec3 dec = vec3(1.);
