@@ -10,6 +10,7 @@ uniform float time;
 
 const int seed = 19222;
 
+#define AA 2
 #define EPS 0.0001
 #define PI2 radians(180.)*2.
 
@@ -212,22 +213,6 @@ float octahedron(vec3 p,float s) {
     return length(vec3(q.x,q.y-s+k,q.z - k)); 
 }
 
-float calcAO(vec3 p,vec3 n) {
-
-    float o = 0.;
-    float s = 1.;
-
-    for(int i = 0; i < 15; i++) {
- 
-        float h = .01 + .125 * float(i) / 4.; 
-        float d = scene(p + h * n).x;  
-        o += (h-d) * s;
-        s *= .9;
-        if(o > .33) break;
-    
-     }
-     return clamp(1. - 3. * o ,0.0,1.0) * (.5+.5*n.y);   
-}
 float box(vec3 p,vec3 b) {
     vec3 d = abs(p) - b;
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
@@ -421,45 +406,20 @@ vec3 color = vec3(0.);
 vec3 ta = vec3(0.5);
 vec3 ro = vec3(-2.,2.,-1.3);
 
-       vec2 uv = (2.* (gl_FragCoord.xy) 
-       - resolution.xy)/resolution.y;
-
-       vec3 rd = rayCamDir(uv,ro,ta,2.); 
-       vec3 ref = vec3(0.);
-       vec3 col = render(ro,rd,ref);       
-       vec3 c = vec3(.5); 
-       col += c * render(ro,rd,ref);
-       col = pow(col,vec3(.4545));
-       color += col;
-       FragColor = vec4(color,1.0);
- 
-
-}
-
-void main() { 
-vec3 color = vec3(0.);
-
-vec3 ta = vec3(0.);
-vec3 ro = camPos;
-
 for(int k = 0; k < AA; k++ ) {
    for(int l = 0; l < AA; l++) {
    
        vec2 o = vec2(float(k),float(l)) / float(AA) * .5;
-       vec2 uv = (2.* (gl_FragCoord.xy+o) - resolution.xy)/resolution.y;
+       vec2 uv = (2.* (gl_FragCoord.xy+o) -
+       resolution.xy)/resolution.y;
 
-       vec3 rd = rayCamDir(uv,ro,ta,1.); 
+       vec3 rd = rayCamDir(uv,ro,ta,2.); 
        vec3 ref = vec3(0.);
        vec3 col = render(ro,rd,ref);       
-       vec3 dec = vec3(1.);
-
-       for(int i = 0; i < 2; i++) {
-           dec *= ref;
-           col += dec * render(ro,rd,ref);
-       }
-
-    col = pow(col,vec3(.4545));
-    color += col;
+       vec3 c = vec3(1.);
+       col += c * render(ro,rd,ref);
+       col = pow(col,vec3(.4545));
+       color += col;
    }
 }
    
