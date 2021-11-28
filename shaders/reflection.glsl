@@ -1,12 +1,14 @@
 #version 330     
-
-// dolson
 out vec4 FragColor; 
-
 uniform vec2 resolution;
 uniform float time;
+#define fragCoord gl_FragCoord
 
-uniform int seed;
+//solid angle reflections
+//2021
+//do
+
+const int seed = 19222;
 
 #define EPS 0.0001
 #define PI2 radians(180.)*2.
@@ -76,29 +78,24 @@ float sa(vec3 p,vec2 c,float ra) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-
-p.xz *= rot(-1.25);
 vec3 q = p;
-q.xz *= rot(-PI2*h11(100.));
-q.zy *= rot(PI2*h11(125.));
 
 float b,b1,b2;
-b = box(q-vec3(-3.,1.5,-2.),vec3(.5));
+b = box(q-vec3(-3.,1.,-5.5),vec3(1.));
 b1 = box(q-vec3(-4.,2.,-5.),vec3(2.));
-b2 = box(q-vec3(-5.,1.,-5.),vec3(1.));
+b2 = box(q-vec3(-5.,.5,5.),vec3(.5));
 
-res = opu(res,vec2(b,2.)); 
+res = opu(res,vec2(b,2.));
 res = opu(res,vec2(b1,3.));
 res = opu(res,vec2(b2,4.));
 
 vec3 n = p;
 n.zy *= rot(-2.5);
-n.y += .25;
 
 float sc = sa(n,vec2(.6,.8),1.);
 res = opu(res,vec2(sc,5.));
 
-res = opu(res,vec2(p.y-.25,1.));
+res = opu(res,vec2(p.y,1.));
 
 return res;
 
@@ -161,7 +158,7 @@ float shadow(vec3 ro,vec3 rd ) {
         ph = h;
         t += h;
     
-        if(res < EPS || t > 12.) { break; }
+        if(res < EPS || t > 2.) { break; }
 
         }
 
@@ -192,13 +189,14 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     vec3 r = reflect(rd,n); 
     float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
-    vec3 col = vec3(.5);
+    vec3 bcol = vec3(1.);
+    vec3 col = bcol * max(1.,rd.y);
 
-    vec3 l = normalize(vec3(1e10,0.,1e10));
+    vec3 l = normalize(vec3(25.,3.,-35.));
 
     float rad = dot(rd,l);
-    col += col * vec3(.5,.12,.25) * expStep(rad,100.);
-    col += col * vec3(.5,.1,.15) * expStep(rad,250.);
+    col += col * vec3(.5,.7,.5) * expStep(rad,100.);
+    col += col * vec3(.5,.1,.15) * expStep(rad,125.);
     col += col * vec3(.1,.5,.05) * expStep(rad,25.);
     col += col * vec3(.15) * expStep(rad,35.);
 
@@ -210,18 +208,16 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     if(d.y >= 0.) {
 
         dif *= shadow(p,l);
-        ref *= shadow(p,r);
 
         linear += dif * vec3(1.);
         linear += amb * vec3(0.5);
         linear += fre * vec3(.025,.01,.03);
-        linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
+        linear += spe * vec3(0.04,0.05,.05);
 
         if(d.y == 5.) {
             col = vec3(.5);
             ref = vec3(.5);
             //rd = r;                 
-
         }
 
         if(d.y == 2.) {
@@ -240,15 +236,16 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
         }
 
         if(d.y == 1.) {
-            col = vec3(checkerboard(p,1.));
-            ref = vec3(.5); 
+            col = vec3(checkerboard(p,1.))*vec3(1.,.5,.25);
+            ref = vec3(.5);
         }
         
         rd = r;
 
         col = col * linear;
-        col = mix(col,vec3(.5),1.-exp(-.0001*d.x*d.x*d.x));
-    }
+        col = mix(col,bcol,1.-exp(-.001*d.x*d.x*d.x));
+
+}
 
 return col;
 }
@@ -256,8 +253,8 @@ return col;
 void main() { 
 vec3 color = vec3(0.);
 
-vec3 ta = vec3(0.);
-vec3 ro = vec3(2.);
+vec3 ta = vec3(0.5);
+vec3 ro = vec3(-2.,2.,-1.3);
 
        vec2 uv = (2.* (gl_FragCoord.xy) 
        - resolution.xy)/resolution.y;
@@ -265,16 +262,11 @@ vec3 ro = vec3(2.);
        vec3 rd = rayCamDir(uv,ro,ta,2.); 
        vec3 ref = vec3(0.);
        vec3 col = render(ro,rd,ref);       
-       vec3 dec = vec3(1.);
-
-       for(int i = 0; i < 2; i++) {
-           dec *= ref;
-           col += dec * render(ro,rd,ref);
-       }
-
-    col = pow(col,vec3(.4545));
-    color += col;
-    FragColor = vec4(color,1.0);
+       vec3 c = vec3(.5); 
+       col += c * render(ro,rd,ref);
+       col = pow(col,vec3(.4545));
+       color += col;
+       FragColor = vec4(color,1.0);
  
 
 }
