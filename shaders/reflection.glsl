@@ -2,7 +2,10 @@
 out vec4 FragColor; 
 uniform vec2 resolution;
 uniform float time;
+
 #define fragCoord gl_FragCoord
+#define R resolution
+#define t time
 
 //solid angle reflections
 //2021
@@ -115,18 +118,6 @@ float sphere(vec3 p,float r) {
     return length(p) - r;
 }
 
-float cone(vec3 p,vec2 c,float h) {
-    vec2 q = h*vec2(c.x/c.y,-1.);
-    vec2 w = vec2(length(p.xz),p.y);
-    vec2 a = w -q * clamp(dot(w,q)/dot(q,q),0.,1.);
-    vec2 b = w -q * vec2(clamp(w.x/q.x,0.,1.),1.);
-    float k = sign(q.y);
-    float d = min(dot(a,a),dot(b,b));
-    float s = max(k*(w.x*q.y-w.y*q.x),k*(w.y-q.y));
-    return sqrt(d)*sign(s);
-
-}
-
 float capsule(vec3 p,vec3 a,vec3 b,float r) {
 
     vec3 pa = p - a;
@@ -230,15 +221,19 @@ vec2 scene(vec3 p) {
 vec2 res = vec2(1.0,0.0);
 vec3 q = p;
 
-float b,b1,b2;
+float b;
 b = box(q-vec3(-3.,1.,-5.5),vec3(1.));
-b1 = box(q-vec3(-4.,2.,-5.),vec3(2.));
-b2 = box(q-vec3(-5.,.5,5.),vec3(.5));
-
 res = opu(res,vec2(b,2.));
-res = opu(res,vec2(b1,3.));
-res = opu(res,vec2(b2,4.));
 
+res = opu(res,vec2(sphere(q-vec3(-2.,1.,3.),1.),3.));
+res = opu(res,vec2(capsule(q-vec3(-3.),vec3(2.),vec3(3.),1.),1.));
+res = opu(res,vec2(torus(q-vec3(-2.,.5,-1.1),vec2(2.,1.)),12.));
+res = opu(res,vec2(tetrahedron(q-vec3(-2.25,1.,-1.),1.),5.));
+res = opu(res,vec2(octahedron(q-vec3(-3.,1.,-1.1),1.),100.));
+res = opu(res,vec2(cylinder(q-vec3(-2.,1.,-2.),1.,.5),64.));
+res = opu(res,vec2(prism(q-vec3(-3.,1.,-4.),vec2(2.,1.)),124.));
+
+p.xz *= rot(-.5+easeOut3(sin(.5*t)*.25)+1.25);
 vec3 n = p;
 n.zy *= rot(-2.5);
 
@@ -403,7 +398,7 @@ return col;
 void main() { 
 vec3 color = vec3(0.);
 
-vec3 ta = vec3(0.5);
+vec3 ta = vec3(0.);
 vec3 ro = vec3(-2.,2.,-1.3);
 
 for(int k = 0; k < AA; k++ ) {
@@ -416,7 +411,7 @@ for(int k = 0; k < AA; k++ ) {
        vec3 rd = rayCamDir(uv,ro,ta,2.); 
        vec3 ref = vec3(0.);
        vec3 col = render(ro,rd,ref);       
-       vec3 c = vec3(1.);
+       vec3 c = vec3(.5);
        col += c * render(ro,rd,ref);
        col = pow(col,vec3(.4545));
        color += col;
