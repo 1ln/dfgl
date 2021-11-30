@@ -7,22 +7,17 @@ uniform float time;
 #define R resolution
 #define t time
 
-//solid angle reflections
+//convexity
 //2021
 //do
 
 const int seed = 19222;
 
 #define AA 2
-#define EPS 0.0001
-#define PI2 radians(180.)*2.
+#define EPS 0.001
 
 float h11(float p) {
     return fract(sin(p)*float(43758.5453+seed));
-}
-
-float h21(vec2 p) {
-    return fract(sin(dot(p,vec2(12.9898,78.233)*float(43758.5453+seed))));
 }
 
 float checkerboard(vec3 p,float h) {
@@ -32,16 +27,6 @@ float checkerboard(vec3 p,float h) {
 
 float expStep(float x,float k) {
     return exp((x*k)-k);
-}
-
-vec2 boxBound(vec3 ro,vec3 rd,vec3 rad) {
-    vec3 m =  1./rd;
-    vec3 n = m * ro;
-    vec3 k = abs(m) * rad;
-    vec3 t1 = -n - k;
-    vec3 t2 = -n + k;
-    return vec2(max(max(t1.x,t1.y),t1.z),
-                min(min(t2.x,t2.y),t2.z));
 }
 
 vec2 opu(vec2 d1,vec2 d2) {
@@ -67,51 +52,8 @@ vec3 rayCamDir(vec2 uv,vec3 ro,vec3 ta,float fov) {
      return d;
 }
 
-
-vec2 julia(vec2 p,float n,float b,float f) {
-    float k = 0.;
-    for(int i = 0; i < 64; i++) {
-    p = vec2(p.x*p.x-p.y*p.y,(p.x*p.y))-f;
-    if(dot(p,p) > b) {
-        break;
-    }
-    return p;
-    }
-}
-
-vec2 diag(vec2 uv) {
-   vec2 r = vec2(0.);
-   r.x = 1.1547 * uv.x;
-   r.y = uv.y + .5 * r.x;
-   return r;
-}
-
-vec3 simplexGrid(vec2 uv) {
-
-    vec3 q = vec3(0.);
-    vec2 p = fract(diag(uv));
-    
-    if(p.x > p.y) {
-        q.xy = 1. - vec2(p.x,p.y-p.x);
-        q.z = p.y;
-    } else {
-        q.yz = 1. - vec2(p.x-p.y,p.y);
-        q.x = p.x;
-    }
-    return q;
-
-}
-
 float easeOut3(float t) {
     return (t = t - 1.0) * t * t + 1.0;
-}
-
-
-vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float de) {
-    float fog_depth  = 1. - exp(-0.000001 * de);
-    float light_depth = max(dot(rd,l),0.);
-    vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
-    return mix(col,fog_col,light_depth);
 }
 
 float sphere(vec3 p,float r) { 
@@ -119,7 +61,6 @@ float sphere(vec3 p,float r) {
 }
 
 float capsule(vec3 p,vec3 a,vec3 b,float r) {
-
     vec3 pa = p - a;
     vec3 ba = b - a;
     float h = clamp(dot(pa,ba)/dot(ba,ba),0.0,1.0);
@@ -127,50 +68,19 @@ float capsule(vec3 p,vec3 a,vec3 b,float r) {
 } 
 
 float prism(vec3 p,vec2 h) {
-
     vec3 q = abs(p);
     return max(q.z - h.y,  
     max(q.x * 0.866025 + p.y * 0.5,-p.y) - h.x * 0.5); 
 }
 
 float torus(vec3 p,vec2 t) {
-
     vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
     return length(q) - t.y; 
 }
 
-
 float cylinder(vec3 p,float h,float r) {
     vec2 d = abs(vec2(length(p.xz),p.y)) - vec2(h,r);
     return min(max(d.x,d.y),0.) + length(max(d,0.));
-}
-
-float hexPrism(vec3 p,vec2 h) {
- 
-    const vec3 k = vec3(-0.8660254,0.5,0.57735);
-    p = abs(p); 
-    p.xy -= 2.0 * min(dot(k.xy,p.xy),0.0) * k.xy;
- 
-    vec2 d = vec2(length(p.xy 
-           - vec2(clamp(p.x,-k.z * h.x,k.z * h.x),h.x))
-           * sign(p.y-h.x),p.z-h.y);
-
-    return min(max(d.x,d.y),0.0) + length(max(d,0.0));
-}
-
-float pyramid(vec3 p,float h) {
-    float m2 = h*h + .25;
-    p.xz = abs(p.xz);
-    p.xz = (p.z>p.x) ? p.zx : p.xz;
-    p.xz -= .5;
- 
-    vec3 q = vec3(p.z,h*p.y-.5*p.x,h*p.x+.5*p.y);
-    float s = max(-q.x,0.);
-    float t = clamp((q.y-.5*p.z)/(m2+.25),0.,1.);
-    float a = m2*(q.x+s)*(q.x+s)+q.y*q.y;
-    float b = m2*(q.x+.5*t)*(q.x+.5*t) +(q.y-m2*t)*(q.y-m2*t);
-    float d2 = min(q.y,-q.x*m2-q.y*.5) > 0. ? 0. : min(a,b);
-    return sqrt((d2+q.z*q.z)/m2) * sign(max(q.z,-p.y));
 }
 
 float tetrahedron(vec3 p,float h) {
@@ -181,10 +91,7 @@ float tetrahedron(vec3 p,float h) {
      return length(max(vec2(d1,d2),.005)) + min(max(d1,d2),0.);
 }
 
-
-
 float octahedron(vec3 p,float s) {
-
     p = abs(p);
 
     float m = p.x + p.y + p.z - s;
@@ -222,16 +129,20 @@ vec2 res = vec2(1.0,0.0);
 vec3 q = p;
 
 float b;
-b = box(q-vec3(-3.,1.,-5.5),vec3(1.));
+b = box(q-vec3(3.,1.,-6.),vec3(1.));
 res = opu(res,vec2(b,2.));
 
-res = opu(res,vec2(sphere(q-vec3(-2.,1.,3.),1.),3.));
-res = opu(res,vec2(capsule(q-vec3(-3.),vec3(2.),vec3(3.),1.),1.));
-res = opu(res,vec2(torus(q-vec3(-2.,.5,-1.1),vec2(2.,1.)),12.));
-res = opu(res,vec2(tetrahedron(q-vec3(-2.25,1.,-1.),1.),5.));
-res = opu(res,vec2(octahedron(q-vec3(-3.,1.,-1.1),1.),100.));
-res = opu(res,vec2(cylinder(q-vec3(-2.,1.,-2.),1.,.5),64.));
-res = opu(res,vec2(prism(q-vec3(-3.,1.,-4.),vec2(2.,1.)),124.));
+res = opu(res,vec2(sphere(q-vec3(-6.,2.,3.),2.),39.453));
+
+res = opu(res,vec2(
+capsule(q-vec3(-7.,.5,.9)
+,vec3(-2.,3.,-1.),vec3(0.),.5),225.9));
+
+res = opu(res,vec2(torus(q.yzx-vec3(1.5,-3.5,-5.5),vec2(1.,.5)),12.6));
+res = opu(res,vec2(tetrahedron(q-vec3(-3.,.1,-5.),.75),75.67));
+res = opu(res,vec2(octahedron(q-vec3(-.75,1.,-5.1),1.),100.1));
+res = opu(res,vec2(cylinder(q-vec3(-5.,1.,-1.),.5,.25),64.364));
+res = opu(res,vec2(prism(q-vec3(-5.5,1.,-2.),vec2(1.,.25)),124.5));
 
 p.xz *= rot(-.5+easeOut3(sin(.5*t)*.25)+1.25);
 vec3 n = p;
@@ -251,14 +162,14 @@ vec2 trace(vec3 ro,vec3 rd) {
     
     float d = -1.0;
     float s = 0.;
-    float e = 25.;  
+    float e = 16.;  
 
-    for(int i = 0; i < 255; i++) {
+    for(int i = 0; i < 75; i++) {
 
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
    
-        if(abs(dist.x) < EPS || e <  dist.x ) { break; }
+        if(dist.x < EPS || e <  dist.x ) { break; }
         s += dist.x;
         d = dist.y;
 
@@ -272,13 +183,13 @@ vec2 trace(vec3 ro,vec3 rd) {
 float reflection(vec3 ro,vec3 rd ) {
 
     float depth = 0.;
-    float dmax = 100.;
+    float dmax = 10.;
     float d = -1.0;
 
-    for(int i = 0; i < 125; i++ ) {
+    for(int i = 0; i < 25; i++ ) {
         float h = scene(ro + rd * depth).x;
 
-        if(h < EPS) { return depth; }
+        if(h < .01) { return depth; }
         
         depth += h;
     }
@@ -303,7 +214,7 @@ float shadow(vec3 ro,vec3 rd ) {
         ph = h;
         t += h;
     
-        if(res < EPS || t > 2.) { break; }
+        if(res < .01 || t > 12.) { break; }
 
         }
 
@@ -334,7 +245,7 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     vec3 r = reflect(rd,n); 
     float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
     float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);
-    vec3 bcol = vec3(1.);
+    vec3 bcol = vec3(1.3);
     vec3 col = bcol * max(1.,rd.y);
 
     vec3 l = normalize(vec3(25.,3.,-35.));
@@ -351,12 +262,14 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
     * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
     if(d.y >= 0.) {
+        
+        col = .5+.5*sin(2.*d.y+vec3(6.*h11(5.),2.,3.));
 
         dif *= shadow(p,l);
 
-        linear += dif * vec3(1.);
+        linear += dif * vec3(1.9);
         linear += amb * vec3(0.5);
-        linear += fre * vec3(.025,.01,.03);
+        linear += fre * vec3(.25,.1,.03);
         linear += spe * vec3(0.04,0.05,.05);
 
         if(d.y == 5.) {
@@ -365,26 +278,11 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref) {
             //rd = r;                 
         }
 
-        if(d.y == 2.) {
-            col = vec3(1.,0.,0.);
-            ref = vec3(0.1);   
-        }    
-  
-        if(d.y == 3.) {
-            col = vec3(0.,1.,0.);
-            ref = vec3(.1);
-        }
-
-        if(d.y == 4.) {
-            col = vec3(0.,0.,1.);
-            ref = vec3(.1);
-        }
-
         if(d.y == 1.) {
             col = vec3(checkerboard(p,1.))*vec3(1.,.5,.25);
             ref = vec3(.5);
         }
-        
+
         rd = r;
 
         col = col * linear;
