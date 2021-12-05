@@ -107,7 +107,7 @@ vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
 float dist = 0.;
 
-    for(int i = 0; i < 350; i++) {
+    for(int i = 0; i < 250; i++) {
 
          vec3 p = ro + rd * dist;
          float d = scene(p);
