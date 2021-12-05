@@ -5,10 +5,6 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-//cone material
-//2021
-//do
-
 const int steps = 250;
 const float eps = 0.0001;
 const float far = 500.;
