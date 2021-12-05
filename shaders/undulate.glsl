@@ -1,12 +1,16 @@
 #version 330 core     
 
-out vec4 FragColor;
+out vec4 fragColor;
 
 uniform vec2 resolution;
-uniform int seed;
 uniform float time;
 
+//undulate
+//2021
+//do
+
 const float PI   =  radians(180.0); 
+const int seed = 3434;
 
 float hash(float p) {
     uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
@@ -97,24 +101,24 @@ vec2 scene(vec3 p) {
     vec2 res = vec2(1.,0.);
 
     float d = 0.;     
-    float s = 0.0009;
+    float s = 1.25;
 
     float t = time;  
     
     vec3 q = p;
     vec3 l = p;
 
-    p.xz *= rot2(easeOut3(t*s)*0.00015);
-    q.zy *= rot2(easeInOut4(t*s)*0.005);
+    p.xz *= rot2(easeOut3(t*s*.06)*0.0015);
+    q.yx *= rot2(.5*cos(easeInOut4(t*s)*0.005));
 
     d = mix(sphere(p,0.25),box(q,vec3(1.)),
     sin(s*t)*0.5+0.5); 
 
     d += n3(p+n3(p)*0.25+t*s)*0.25; 
 
-    res = opu(res,vec2(d,2.)); 
+    res = opu(res,vec2(d,2.));
+    float pl = plane(l+vec3(0.,1.5,0.),vec4(0.,1.,1.,1.));
 
-    float pl = plane(l+vec3(0.,1.5,0.),vec4(1.,1.,0.,1.));
     res = opu(res,vec2(pl,1.));
   
   return res;
@@ -125,9 +129,9 @@ vec2 rayScene(vec3 ro,vec3 rd) {
     
     float d = -1.0;
     float s = 1.;
-    float e = 25.;  
+    float e = 12.;  
 
-    for(int i = 0; i < 255; i++) {
+    for(int i = 0; i < 155; i++) {
 
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
@@ -159,7 +163,7 @@ float shadow(vec3 ro,vec3 rd ) {
         ph = h;
         t += h;
     
-        if(res < 0.0001 ||t > 35.) { break; }
+        if(res < 0.01 ||t > 5.) { break; }
 
         }
 
@@ -255,6 +259,6 @@ vec2 uv = (2.*gl_FragCoord.xy-resolution)/resolution.y;
 
 vec3 dir = rayCamDir(uv,cam_pos,cam_tar,2.); 
 color = render(cam_pos,dir);  
-FragColor = vec4(color,1.0);
+fragColor = vec4(color,1.0);
 
 }
