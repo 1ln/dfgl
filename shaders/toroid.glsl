@@ -1,18 +1,13 @@
 #version 330 core     
 
-//Dan Olson
-//2021
-
-out vec4 FragColor;
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float time;
 
-float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(uint(int(254446)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(254446));
-    return float(h) * (1./float(0xffffffffU));
-}
+//torus inverted
+//2021
+//do
 
 mat2 rot(float a) {
 
@@ -42,7 +37,9 @@ vec3 p;
 float dist = 0.;
 float d = 0.;
 
-    for(int i = 0; i < 350; i++) {
+    //standard raymarcher
+
+    for(int i = 0; i < 250; i++) {
 
          p = ro + rd * dist;
 
@@ -67,8 +64,6 @@ if(d < 0.001) {
     color += smoothstep(-2.25,2.25,n+e);
 }
 
-
-
-FragColor = vec4(pow(color,vec3(0.4545)),1.0);
+fragColor = vec4(pow(color,vec3(0.4545)),1.0);
 
 }
