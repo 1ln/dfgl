@@ -5,6 +5,10 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
+//sphere fractal
+//2021
+//do
+
 mat2 rot2(float a) {
 
     float c = cos(a);
