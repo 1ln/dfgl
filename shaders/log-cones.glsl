@@ -1,21 +1,20 @@
 #version 330 core
 
-//dan olson
-
-out vec4 FragColor;
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float time;
-uniform int seed;
 
+const int seed = 10301;
 const int steps = 250;
 const float eps = 0.0001;
 const float far = 500.;
 const float near = .1;
 
 float hash(float p) {
-
-    uvec2 n = uint(int(p)) * uvec2(1391674541U,2531151992.0 * float(seed));
+   
+    uvec2 n = uint(int(p))
+    * uvec2(1391674541U,2531151992.0 * float(seed));
     uint h = (n.x ^ n.y) * 1391674541U;
     return float(h) * (1.0/float(0xffffffffU));
 
@@ -87,8 +86,6 @@ h = vec2(log(r),atan(h.y,h.x));
 h *= scale;
 h = mod(h,2.) - 1.;
 float mul = r/scale;
-
-p.y += ns(p * .5) + .5;
 
 float d = 0.;
 d = roundCone(vec3(h,p.y/mul),1.,.5,2.) * mul; 
@@ -194,6 +191,6 @@ for(int i = 0; i < steps; i++ ) {
 
 color = mix(col_alpha.rgb,color,col_alpha.a);
 
-FragColor = vec4(pow(color,vec3(.4545)),1.0);
+fragColor = vec4(pow(color,vec3(.4545)),1.0);
  
 }
