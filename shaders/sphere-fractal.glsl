@@ -1,17 +1,9 @@
 #version 330 core     
 
-//Dan Olson
-
-out vec4 FragColor;
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float time;
-
-float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(uint(int(254446)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(254446));
-    return float(h) * (1./float(0xffffffffU));
-}
 
 mat2 rot2(float a) {
 
@@ -50,9 +42,9 @@ float scene(vec3 p) {
 
     for(int i = 0; i < 3; i++) {
 
-        p.xz *= rot2(radians(180)/2. * time * 0.01);
-        p.zy *= rot2(radians(180));
-        p.xy *= rot2(radians(180)*2. - 1.);
+        p.xz *= rot2(radians(180.)/2. * time * 0.01);
+        p.zy *= rot2(radians(180.));
+        p.xy *= rot2(radians(180.)*2. - 1.);
 
         p = abs(p) - r * 0.5;
         r /= 3.;
@@ -80,30 +72,6 @@ float calcAO(vec3 p,vec3 n) {
     
      }
      return clamp(1. - 3. * o ,0.0,1.0) * (.5+.5*n.y);   
-}
-
-float shadow(vec3 ro,vec3 rd) {
-
-    float res = 1.0;
-    float t = 0.005;
-    float ph = 1e10;
-    
-    for(int i = 0; i < 125; i++ ) {
-        
-        float h = scene(ro + rd * t );
-
-        float y = h * h / (2. * ph);
-        float d = sqrt(h*h-y*y);         
-        res = min(res,35. * d/max(0.,t-y));
-        ph = h;
-        t += h;
-    
-        if(res < 0.0001 || t > 100.) { break; }
-
-        }
-
-        return clamp(res,0.0,1.0);
-
 }
 
 vec3 calcNormal(vec3 p) {
@@ -155,7 +123,9 @@ float dist = 0.;
 
              linear += dif * vec3(float(i)/100.,0.,0.); 
              linear += amb * vec3(0.5);
-             color = linear;
+             float ao = calcAO(p*1.1,n);
+             color += linear*ao;
+
              break;
            
          }
@@ -164,6 +134,6 @@ float dist = 0.;
          smoothstep(-1.,1.,rd.x),smoothstep(-1.,1.,rd.y));
     }
 
-FragColor = vec4(pow(color,vec3(0.4545)),1.0);
+fragColor = vec4(pow(color,vec3(0.4545)),1.0);
 
 }
