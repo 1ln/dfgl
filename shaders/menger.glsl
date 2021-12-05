@@ -1,19 +1,19 @@
 #version 330 core     
 
-//Dan Olson
-
-out vec4 FragColor;
+out vec4 fragColor;
 
 uniform vec2 resolution;
 uniform float time;
-uniform int seed;
+
+//menger 
+//2021
+//do
 
 const int steps = 50;
 float eps = 0.0001;
 float dmin = 0.;
 float dmax = 25.;
 const int aa = 2;
- 
 const int shsteps = 25;
 float shblur = 250.;
 float shmax = 10.; 
@@ -25,31 +25,7 @@ float hurst = 0.5;
 
 const float PI   =  radians(180.0); 
 const float PI2  =  PI * 2.;
-
-float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(uint(int(seed)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(seed));
-    return float(h) * (1./float(0xffffffffU));
-}
-
-float h21(vec2 p) {
-    uvec2 n = uvec2(ivec2(p)) * uvec2(uint(int(seed)),2531151992.0);
-    uint h = (n.x ^ n.y) * uint(int(seed));
-    return float(h) * (1./float(0xffffffffU));
-}
-
-float n2(vec2 x) { 
-
-    vec2 p = floor(x);
-    vec2 f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);  
-    float n = p.x + p.y * 57.;  
-
-    return mix(mix(h11(n+0.),h11(n+1.),f.x),
-               mix(h11(n+57.),h11(n+58.),f.x),f.y);  
-}
-
+ 
 mat2 rot2(float a) {
 
     float c = cos(a);
@@ -277,6 +253,6 @@ for(int k = 0; k < aa; ++k) {
 }
 
 color /= float(aa*aa);
-FragColor = vec4(color,1.0);
+fragColor = vec4(color,1.0);
 
 }
