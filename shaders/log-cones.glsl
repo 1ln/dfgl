@@ -5,54 +5,10 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-const int seed = 10301;
 const int steps = 250;
 const float eps = 0.0001;
 const float far = 500.;
 const float near = .1;
-
-float hash(float p) {
-   
-    uvec2 n = uint(int(p))
-    * uvec2(1391674541U,2531151992.0 * float(seed));
-    uint h = (n.x ^ n.y) * 1391674541U;
-    return float(h) * (1.0/float(0xffffffffU));
-
-}
-
-float ns(vec3 x) {
-
-    vec3 p = floor(x);
-    vec3 f = fract(x);
-
-    f = f * f * (3.0 - 2.0 * f);
-    float n = p.x + p.y * 157.0 + 113.0 * p.z;
-
-    return mix(mix(mix(hash(  n +   0.0) , hash(   n +   1.0)  ,f.x),
-    mix(hash(  n + 157.0) , hash(   n + 158.0)   ,f.x),f.y),
-    mix(mix(hash(  n + 113.0) , hash(   n + 114.0)   ,f.x),
-    mix(hash(  n + 270.0) , hash(   n + 271.0)   ,f.x),f.y),f.z);
-}
-
-float f(vec3 x,int octaves,float h) {
-
-    float t = 0.0;
-
-    float g = exp2(-h); 
-
-    float a = 0.5;
-    float f = 1.0;
-
-    for(int i = 0; i < octaves; i++) {
- 
-    t += a * ns(f * x); 
-    f *= 2.0; 
-    a *=  g;  
-    
-    }    
-
-    return t;
-}
 
 vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
@@ -77,6 +33,8 @@ float roundCone(vec3 p,float r1,float r2,float h) {
 
 vec2 scene(vec3 p) { 
 
+vec3 q = p;
+
 vec2 res = vec2(1.0,0.0);
 float scale = float(45.) / radians(180.);
 
@@ -88,9 +46,9 @@ h = mod(h,2.) - 1.;
 float mul = r/scale;
 
 float d = 0.;
-d = roundCone(vec3(h,p.y/mul),1.,.5,2.) * mul; 
-
-res = vec2(d,1.);
+d = max(roundCone(vec3(h,p.y/mul),1.,.5,2.),-sphere(q,2.1))* mul;
+res = opu(res,vec2(d,1.));
+res = opu(res,vec2(length(q)-1.,2.));
 
 return res;
 
@@ -139,13 +97,13 @@ float amb = sqrt(clamp(0.5 + 0.5 * n.y,0.0,1.0));
 float dif = clamp(dot(n,l),0.0,1.0);
 float spe = pow(clamp(dot(n,h),0.0,1.0),16.) * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
-vec3 linear = vec3(1.);
+vec3 linear = vec3(.5);
 
 linear += dif * vec3(.15);
 linear += amb * vec3(.03);
 
 col = col * linear;
-col += 5. * spe * vec3(.5);
+col += 25. * spe * vec3(.5);
 col = mix(col,bgcol,1.-exp(.005*dist*dist));
 
 return col;
@@ -165,6 +123,7 @@ float vfov = 1.;
 vec3 color = vec3(1.);
 float dist = eps; 
 float d = near;
+float m;
 
 float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
 vec3 rd = rayCamDir(uv,ro,ta,fov);
@@ -173,13 +132,20 @@ vec4 col_alpha = vec4(0.,0.,0.,1.);
  
 for(int i = 0; i < steps; i++ ) {
     float rad = d * radius;
-    dist = scene(ro + d * rd).x;
- 
+    m    = scene(ro + d * rd).y;
+    dist = scene(ro + d * rd).x; 
+
     if(dist < rad) {
         float alpha = smoothstep(rad,-rad,dist);
         vec3 col = render(ro,rd,d);
+
+        if(m == 2.) {
+            col += vec3(0.,.25,0.);
+        } 
+
         col_alpha.rgb += col_alpha.a * (alpha * col.rgb);
         col_alpha.a *= (1. - alpha);
+
 
         if(col_alpha.a < eps) break;
     
