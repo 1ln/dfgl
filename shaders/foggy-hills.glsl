@@ -1,15 +1,15 @@
-#version 430 core
+#version 330 core
 
-// dolson
-out vec4 FragColor;
-
+out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
-uniform int seed;
 
-#define EPS 0.0001
-#define EXPONENTIAL
-#define BLEND_K 2.
+//Foggy Hills
+//2021
+//do
+
+const int seed = 12434;
+#define EPS .0001
 
 float hash(float p) {
     return fract(sin(p) * 4358.5453);
@@ -83,12 +83,6 @@ float f2(vec3 p) {
     return h;
 }
 
-float envImp(float x,float k) {
-
-    float h = k * x;
-    return h * exp(1.0 - h);
-}
-
 vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     
     return a + b * cos( (radians(180)*2.0) * (c * t + d));
@@ -100,46 +94,6 @@ mat2 rot(float a) {
     float s = sin(a);
     
     return mat2(c,-s,s,c);
-}
-
-vec2 opu(vec2 d1,vec2 d2) {
-
-    return (d1.x < d2.x) ? d1 : d2;
-} 
-
-#ifdef POLYNOMIAL
-float smin(float d1,float d2,float k) {
-
-    float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
-    return mix(d2,d1,h) - k * h * (1.0 - h);
-}
-#endif
-
-#ifdef EXPONENTIAL
-float smin(float d1,float d2,float k) {
-    float res = exp2(-k * d1) + exp2(-k * d2);
-    return -log2(res)/k;
-}
-#endif
-
-#ifdef POWER
-float smin(float d1,float d2,float k) {
-     d1 = pow(d1,k);
-     d2 = pow(d2,k);
-     return pow((d1*d2) / (d1+d2),1./k);
-}  
-#endif
-
-vec2 blend(vec2 d1,vec2 d2) {
-
-    float d = smin(d1.x,d2.x,BLEND_K);
-    float m = mix(d1.y,d2.y,clamp(d1.x-d,0.,1.));
-    return vec2(d,m);
-}
-
-float plane(vec3 p,vec4 n) {
-
-    return dot(p,n.xyz) + n.w;
 }
 
 vec2 scene(vec3 p) {
@@ -165,7 +119,7 @@ vec2 rayScene(vec3 ro,vec3 rd) {
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
    
-        if(abs(dist.x) < EPS || e <  dist.x ) { break; }
+        if(dist.x < EPS || e <  dist.x ) { break; }
         s += dist.x;
         d = dist.y;
 
@@ -255,6 +209,6 @@ vec2 uv = (2. * gl_FragCoord.xy - resolution.xy) / resolution.y;
 vec3 dir = rayCamDir(uv,cam_pos,cam_tar,1.); 
 color = render(cam_pos,dir);  
 color = pow(color,vec3(.4545));      
-FragColor = vec4(color,1.0);
+fragColor = vec4(color,1.0);
 
 }
