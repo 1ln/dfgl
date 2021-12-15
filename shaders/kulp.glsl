@@ -14,7 +14,7 @@ void main() {
  
     vec2 p = (2.*gl_FragCoord.xy-resolution.xy)/resolution.y;  
 
-    float d = length(p);
+    float d = length(p) +.025;
 
     float a = .5;
     
@@ -27,14 +27,11 @@ void main() {
     float r = plot(p,y);
     float b = plot(p,y2);
 
-    vec3 c = vec3(.5);  
-    c = mix(c,vec3(0.,1.,0.),smoothstep(.48,.5,d));
-    c += mix(c,vec3(0.,0.,1.),smoothstep(.48,.5,b));
-    c += mix(c,vec3(1.,0.,0.),smoothstep(.48,.5,r));
+    vec3 c = vec3(.1);  
+    c = mix(c,vec3(0.,1.,0.),1.-smoothstep(.48,.5,d));
+    c += mix(c,vec3(0.,0.,1.),smoothstep(.1,.5,b));
+    c += mix(c,vec3(1.,0.,0.),smoothstep(.3,.5,r));
 
-
-
-    c = pow(c,vec3(.4545));
     fragColor = vec4(c,1.);
 
 }
