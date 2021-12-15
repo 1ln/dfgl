@@ -25,11 +25,11 @@ void main() {
 
     float y2 = .001+cos(p.x*p.y*3.)-.5;
     float r = plot(p,y);
-    float b = plot(p,y2);
+    float g = plot(p,y2);
 
     vec3 c = vec3(.1);  
-    c = mix(c,vec3(0.,1.,0.),1.-smoothstep(.48,.5,d));
-    c += mix(c,vec3(0.,0.,1.),smoothstep(.1,.5,b));
+    c = mix(c,vec3(.05),1.-smoothstep(.48,.5,d));
+    c += mix(c,vec3(.12),smoothstep(.1,.5,g));
     c += mix(c,vec3(1.,0.,0.),smoothstep(.3,.5,r));
 
     fragColor = vec4(c,1.);
