@@ -85,8 +85,9 @@ vec3 render(vec3 ro,vec3 rd,float dist) {
 vec3 col = vec3(.5);
 vec3 bgcol = vec3(1.) * max(0.,rd.y);
 
-ro += rd * (dist*.98); 
-vec3 p = ro;
+//ro += rd * (dist*.98); 
+//vec3 p = ro;
+vec3 p = ro + rd * dist;
 
 vec3 n = calcNormal(p);
 vec3 l = normalize(vec3(2.,10.,1.));
@@ -138,6 +139,9 @@ for(int i = 0; i < steps; i++ ) {
     if(dist < rad) {
         float alpha = smoothstep(rad,-rad,dist);
         vec3 col = render(ro,rd,d);
+
+
+
 
         if(m == 2.) {
             col += vec3(0.,.25,0.);
