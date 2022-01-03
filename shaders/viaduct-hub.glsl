@@ -1029,33 +1029,34 @@ vec3 calcNormal(vec3 p) {
 #endif
 
 
-vec3 render(vec3 ro,vec3 rd,vec2 d) {
+vec3 render(vec3 ro,vec3 rd,float d) {
 
-       vec3 p = ro+rd*d.x;
-       vec3 n = calcNormal(p);
+vec3 p = ro+rd*d;
+vec3 n = calcNormal(p);
 
-       vec3 linear = vec3(0.);
-       vec3 r = reflect(rd,n); 
-       float ref = smoothstep(-2.,2.,r.y);
+vec3 linear = vec3(0.);
+vec3 r = reflect(rd,n); 
+float ref = smoothstep(-2.,2.,r.y);
     
-       float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
-       float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
+float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
+float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
     
-       vec3 l = normalize(vec3(10.));
-       vec3 h = normalize(l - rd);  
+vec3 l = normalize(vec3(10.));
+vec3 h = normalize(l - rd);  
 
-       float dif = clamp(dot(n,l),0.0,1.0);
-       float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
-       * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
+float dif = clamp(dot(n,l),0.0,1.0);
+float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
+* dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
-           dif *= shadow(p,l);
-           ref *= shadow(p,r);
+dif *= shadow(p,l);
+ref *= shadow(p,r);
 
-           linear += dif * vec3(1.);
-           linear += amb * vec3(0.5);
-           linear += fre * vec3(.025,.01,.03);
-           linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
-           return linear;
+linear += dif * vec3(1.);
+linear += amb * vec3(0.5);
+linear += fre * vec3(.025,.01,.03);
+linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
+return linear;
+
 } 
 
 void main() {
@@ -1067,28 +1068,28 @@ vec2 uv = (2.*(gl_FragCoord.xy) -
 resolution.xy)/resolution.y;
 
 mat3 cm = camera(ro,ta,0.);
-vec3 rd = cm * normalize(vec3(uv.xy,5.));
+vec3 rd = cm * normalize(vec3(uv.xy,FOV));
         
 vec2 d = vec2(EPS,-1.);
 
 float radius = 2. * tan(VFOV/2.) / resolution.y * 1.5;
 
 vec4 fc = vec4(0.,0.,0.,1.);
-vec3 c;
+vec3 c = vec3(.5);
 
 float s = NEAR;
 float e = FAR; 
 
 for(int i = 0; i < STEPS; i++ ) {
-    float rad = s * radius + FOV * abs(s-.5);
+    float rad = s * radius + .001 * abs(s-.5);
     d = scene(ro + s * rd); 
 
     if(d.x < rad) {
         float alpha = smoothstep(rad,-rad,d.x);
-        c = render(ro,rd,d);
+        c = render(ro,rd,s);
 
         if(d.y == 5.) {
-            c += vec3(0.,.25,0.);
+            c *= vec3(0.,.25,0.);
         } 
 
         fc.rgb += fc.a * (alpha * c.rgb);
