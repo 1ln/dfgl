@@ -868,7 +868,30 @@ float menger(vec3 p,int n,float s,float d) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-res = u(res,vec2(box(p,vec3(1.)),5.)); 
+
+res = u(res,vec2(box(p,vec3(.5)),5.)); 
+
+res = u(res,vec2(box(p-vec3(1.1,.5,-.5),vec3(.5,1.,.5)),24.));
+
+res = u(res,vec2(boxf(p-vec3(-1.05,.5,.5),vec3(.5),.01),35.1));
+
+res = u(res,vec2(boxf(p-vec3(3.),vec3(1.,.5,2.),.01),24.4));
+
+res = u(res,vec2(boxf(p-vec3(2.),vec3(.5),.01),100.));
+
+float scl = .05;
+
+vec3 q = p;
+q = rl(q/scl,1.5,vec3(5.)*scl));
+res = u(res,vec2(length(q)-scl,3.));
+
+vec3 l = p;
+l = rp(l,vec3(2.,1.,2.));
+float c = cylinder(l,.5,2.);
+
+res = u(res,vec2(max(box(p,vec3(.5)),c),25.));
+
+
 
 
 
@@ -983,7 +1006,7 @@ vec3 render(vec3 ro,vec3 rd,float d) {
 vec3 p = ro+rd*d;
 vec3 n = calcNormal(p);
 
-vec3 linear = vec3(0.);
+vec3 linear = vec3(0.1);
 vec3 r = reflect(rd,n); 
 float ref = smoothstep(-2.,2.,r.y);
     
@@ -1004,7 +1027,7 @@ linear += dif * vec3(.5);
 linear += amb * vec3(0.1);
 linear += fre * vec3(.025,.01,.01);
 linear += spe * vec3(0.4,0.5,.05);
-return linear;
+return linear+ref;
 
 } 
 
@@ -1012,6 +1035,7 @@ void main() {
 
 vec3 ta = vec3(0.);
 vec3 ro = vec3(1.,2.,5.);
+ro.xz *= rot(time*.1);
 
 vec2 uv = (2.*(gl_FragCoord.xy) -
 resolution.xy)/resolution.y;
@@ -1032,12 +1056,14 @@ float s = NEAR;
 float e = FAR; 
 
 for(int i = 0; i < STEPS; i++ ) {
-    float rad = s * radius + .01 * abs(s-.5);
+    float rad = s * radius + .001 * abs(s-.5);
     d = scene(ro + s * rd); 
 
     if(d.x < rad) {
         float alpha = smoothstep(rad,-rad,d.x);
         c = render(ro,rd,s);
+
+
 
         if(d.y == 5.) {
         c *= vec3(0.,.25,0.);
