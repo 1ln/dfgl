@@ -1070,7 +1070,8 @@ mat3 cm = camera(ro,ta,0.);
 vec3 rd = cm * normalize(vec3(uv.xy,5.));
         
 vec2 d = vec2(EPS,-1.);
-float radius = 2. * tan(vfov/2.) / resolution.y * 1.5;
+
+float radius = 2. * tan(VFOV/2.) / resolution.y * 1.5;
 
 vec4 fc = vec4(0.,0.,0.,1.);
 vec3 c;
@@ -1086,14 +1087,14 @@ for(int i = 0; i < STEPS; i++ ) {
         float alpha = smoothstep(rad,-rad,d.x);
         c = render(ro,rd,d);
 
-        if(d.y == 2.) {
+        if(d.y == 5.) {
             c += vec3(0.,.25,0.);
         } 
 
         fc.rgb += fc.a * (alpha * c.rgb);
         fc.a *= (1. - alpha);
 
-        if(fc.a < eps) break;
+        if(fc.a < EPS) break;
     
     }
 
@@ -1101,9 +1102,8 @@ for(int i = 0; i < STEPS; i++ ) {
     if(s > e) break;
 }
 
-fc = mix(fc.rgb,c,c.a);
+fc.rgb = mix(fc.rgb,c,fc.a);
+fragColor = vec4(pow(fc.rgb,vec3(.4545)),1.0);
 
-fragColor = vec4(pow(fc,vec3(.4545)),1.0);
- 
 }
 
