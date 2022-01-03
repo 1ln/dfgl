@@ -19,11 +19,10 @@ uniform int ri;
 
 #define SEED 1
 
-#define AA 1
 #define EPS 0.0001
 #define STEPS 255
 #define FOV 2.
-#define VFOV 4.
+#define VFOV 1.
 #define NEAR 0.
 #define FAR 100.
 
@@ -398,12 +397,12 @@ float ls(float a,float b,float t,float n) {
      return clamp((f-a)/(b-a),0.,1.);
 }
 
-vec3 repLim(vec3 p,float c,vec3 l) { 
+vec3 rl(vec3 p,float c,vec3 l) { 
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
     return q; 
 }
 
-vec3 rep(vec3 p,vec3 s) {
+vec3 rp(vec3 p,vec3 s) {
     vec3 q = mod(p,s) - 0.5 * s;
     return q;
 } 
@@ -706,7 +705,7 @@ float box(vec3 p,vec3 b) {
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float boxFrame(vec3 p,vec3 b,float e) {
+float boxf(vec3 p,vec3 b,float e) {
     p = abs(p)-b;
     vec3 q = abs(p+e)-e;
  
@@ -869,65 +868,15 @@ float menger(vec3 p,int n,float s,float d) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-res = u(res,vec2(icosahedron(p,1.),5.)); 
+res = u(res,vec2(box(p,vec3(1.)),5.)); 
+
+
+
+
+
+
 
 return res;
-
-}
-
-vec4 trace(vec3 ro,vec3 rd) { 
-    float d = -1.0;
-    float s = NEAR;
-    float e = FAR; 
-
-    for(int i = 0; i < STEPS; i++) {
-
-        vec3 p = ro + s * rd;
-        vec2 dist = scene(p);
-   
-        if(abs(dist.x) < EPS || e <  dist.x ) { break; }
-        s += dist.x;
-        d = dist.y;
-
-        }
-
-        if(e < s) { d = -1.0; }
-        return vec4(s,d,1.,1.);
-
-}
-
-vec4 trace(vec3 ro,vec3 rd,vec3 col) {
-
-float s = NEAR;
-float e = FAR;
-
-vec2 d = vec2(EPS,0.01);
-float radius = 2. * tan(VFOV/2.) / resolution.y * 2.;
-
-vec4 c = vec4(col,1.);
-vec3 bgc = vec3(0.);
-float alpha;
-
-for(int i = 0; i < STEPS; i++) {
-    float rad = s * radius + FOV * abs(s-.5);
-    d.x = scene(ro + s * rd).x; 
-
-    if(d.x < rad) {
-        alpha = smoothstep(rad,-rad,d.x);
-
-        c.rgb += c.a * (alpha * c.rgb);
-        c.a *= (1.-alpha);
-
-        if(d.x < EPS) break;
-    
-    }
-
-    s += max(abs(d.x * .9),.001);
-    if(s > e) break;
-}
-
-bgc = mix(c.rgb,bgc,c.a);
-return vec4(bgc,alpha);
 
 }
 
@@ -1051,10 +1000,10 @@ float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
 dif *= shadow(p,l);
 ref *= shadow(p,r);
 
-linear += dif * vec3(1.);
-linear += amb * vec3(0.5);
-linear += fre * vec3(.025,.01,.03);
-linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
+linear += dif * vec3(.5);
+linear += amb * vec3(0.1);
+linear += fre * vec3(.025,.01,.01);
+linear += spe * vec3(0.4,0.5,.05);
 return linear;
 
 } 
@@ -1069,6 +1018,8 @@ resolution.xy)/resolution.y;
 
 mat3 cm = camera(ro,ta,0.);
 vec3 rd = cm * normalize(vec3(uv.xy,FOV));
+
+
         
 vec2 d = vec2(EPS,-1.);
 
@@ -1081,7 +1032,7 @@ float s = NEAR;
 float e = FAR; 
 
 for(int i = 0; i < STEPS; i++ ) {
-    float rad = s * radius + .001 * abs(s-.5);
+    float rad = s * radius + .01 * abs(s-.5);
     d = scene(ro + s * rd); 
 
     if(d.x < rad) {
@@ -1089,8 +1040,11 @@ for(int i = 0; i < STEPS; i++ ) {
         c = render(ro,rd,s);
 
         if(d.y == 5.) {
-            c *= vec3(0.,.25,0.);
+        c *= vec3(0.,.25,0.);
         } 
+
+
+
 
         fc.rgb += fc.a * (alpha * c.rgb);
         fc.a *= (1. - alpha);
@@ -1099,7 +1053,7 @@ for(int i = 0; i < STEPS; i++ ) {
     
     }
 
-    s += max(abs(d.x * .75 ), .001);
+    s += max(abs(d.x * .9),EPS);
     if(s > e) break;
 }
 
