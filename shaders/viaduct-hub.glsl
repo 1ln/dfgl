@@ -20,11 +20,12 @@ uniform int ri;
 #define SEED 1
 
 #define EPS 0.0001
-#define STEPS 255
+#define STEPS 75
 #define FOV 2.
 #define VFOV 1.
 #define NEAR 0.
-#define FAR 100.
+#define FAR 25.
+
 
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
@@ -718,13 +719,13 @@ float boxf(vec3 p,vec3 b,float e) {
         min(max(q.x,max(q.y,p.z)),0.));
 }
 
-
-float boxf(vec3 p,vec3 b,float e) {
+//table or shelf
+float boxf2(vec3 p,vec3 b,float e) {
     p = abs(p)-b;
     vec3 q = abs(p+e)-e;
  
     return min(min(
-        length(max(vec3(p.x,q.y,q.z),0.)) 
+        length(max(vec3(p.x,q.y,p.z),0.)) 
         + min(max(p.x,max(q.y,q.z)),0.),
         length(max(vec3(q.x,p.y,q.z),0.))+ 
         min(max(q.x,max(p.y,q.z)),0.)),
@@ -732,37 +733,19 @@ float boxf(vec3 p,vec3 b,float e) {
         min(max(q.x,max(q.y,p.z)),0.));
 }
 
-
-float boxf(vec3 p,vec3 b,float e) {
+//slip or cover
+float boxf3(vec3 p,vec3 b,float e) {
     p = abs(p)-b;
     vec3 q = abs(p+e)-e;
  
     return min(min(
-        length(max(vec3(p.x,q.y,q.z),0.)) 
+        length(max(vec3(p.x,q.y,p.z),0.)) 
         + min(max(p.x,max(q.y,q.z)),0.),
-        length(max(vec3(q.x,p.y,q.z),0.))+ 
+        length(max(vec3(q.x,p.y,p.z),0.))+ 
         min(max(q.x,max(p.y,q.z)),0.)),
         length(max(vec3(q.x,q.y,p.z),0.))+
         min(max(q.x,max(q.y,p.z)),0.));
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 float torus(vec3 p,vec2 t) { 
     vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
@@ -917,29 +900,30 @@ vec2 res = vec2(1.0,0.0);
 
 res = u(res,vec2(box(p,vec3(.5)),5.)); 
 
-res = u(res,vec2(box(p-vec3(1.1,.5,-.5),vec3(.5,1.,.5)),24.));
+res = u(res,vec2(box(p-vec3(1.1,.5,-.5),
+      vec3(.5,1.,.5)),24.));
 
-res = u(res,vec2(boxf(p-vec3(-1.05,.5,.5),vec3(.5),.01),35.1));
+res = u(res,vec2(boxf(p-vec3(-1.05,.5,.5),
+      vec3(.5),.01),35.1));
 
-res = u(res,vec2(boxf(p-vec3(3.),vec3(1.,.5,2.),.01),24.4));
+res = u(res,vec2(boxf2(p-vec3(-.75,0.,-.95),
+      vec3(1.,.5,.1),.01),24.4));
 
-res = u(res,vec2(boxf(p-vec3(2.),vec3(.5),.01),100.));
+res = u(res,vec2(boxf3(p-vec3(1.3,-.5,.6),
+      vec3(.5),.01),100.));
 
-float scl = .05;
+float scl = .04;
 
-vec3 q = p;
+vec3 q = p-vec3(-1.,.5,.5);
 q = rl(q/scl,1.5,vec3(5.))*scl;
-res = u(res,vec2(length(q)-scl,3.));
+res = u(res,vec2(length(q)-.02,3.));
 
 vec3 l = p;
-l = rp(l,vec3(2.,1.,2.));
-float c = cylinder(l,.5,2.);
+l = rp(l,vec3(.05,0.,.05));
+float c = cylinder(l,.024,1e20);
 
-res = u(res,vec2(max(box(p,vec3(.5)),c),25.));
-
-
-
-
+res = u(res,vec2(max(box(p-vec3(0.,.6,.1),
+      vec3(.5,0.,.5)),-c),25.));
 
 
 
