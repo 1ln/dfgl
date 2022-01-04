@@ -718,6 +718,52 @@ float boxf(vec3 p,vec3 b,float e) {
         min(max(q.x,max(q.y,p.z)),0.));
 }
 
+
+float boxf(vec3 p,vec3 b,float e) {
+    p = abs(p)-b;
+    vec3 q = abs(p+e)-e;
+ 
+    return min(min(
+        length(max(vec3(p.x,q.y,q.z),0.)) 
+        + min(max(p.x,max(q.y,q.z)),0.),
+        length(max(vec3(q.x,p.y,q.z),0.))+ 
+        min(max(q.x,max(p.y,q.z)),0.)),
+        length(max(vec3(q.x,q.y,p.z),0.))+
+        min(max(q.x,max(q.y,p.z)),0.));
+}
+
+
+float boxf(vec3 p,vec3 b,float e) {
+    p = abs(p)-b;
+    vec3 q = abs(p+e)-e;
+ 
+    return min(min(
+        length(max(vec3(p.x,q.y,q.z),0.)) 
+        + min(max(p.x,max(q.y,q.z)),0.),
+        length(max(vec3(q.x,p.y,q.z),0.))+ 
+        min(max(q.x,max(p.y,q.z)),0.)),
+        length(max(vec3(q.x,q.y,p.z),0.))+
+        min(max(q.x,max(q.y,p.z)),0.));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 float torus(vec3 p,vec2 t) { 
     vec2 q = vec2(length(vec2(p.x,p.z)) - t.x,p.y);
     return length(q) - t.y; 
@@ -882,7 +928,7 @@ res = u(res,vec2(boxf(p-vec3(2.),vec3(.5),.01),100.));
 float scl = .05;
 
 vec3 q = p;
-q = rl(q/scl,1.5,vec3(5.)*scl));
+q = rl(q/scl,1.5,vec3(5.))*scl;
 res = u(res,vec2(length(q)-scl,3.));
 
 vec3 l = p;
