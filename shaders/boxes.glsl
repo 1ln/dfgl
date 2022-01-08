@@ -7,12 +7,12 @@ uniform float time;
 
 #define SEED 1
 
-#define EPS 0.001
+#define EPS 0.0001
 #define STEPS 75
 #define FOV 2.
 #define VFOV 1.
 #define NEAR 0.
-#define FAR 25.
+#define FAR 12.
 
 float concentric(vec2 p,float h) {
     return cos(length(p))-h;
@@ -240,6 +240,20 @@ float boxf3(vec3 p,vec3 b,float e) {
         min(max(q.x,max(q.y,p.z)),0.));
 }
 
+//structure
+float boxf4(vec3 p,vec3 b,float e) {
+    p = abs(p)-b;
+    vec3 q = abs(p+e)-e;
+ 
+    return min(min(
+        length(max(vec3(q.x,q.y,p.z),0.)) 
+        + min(max(p.x,max(q.y,q.z)),0.),
+        length(max(vec3(p.x+q.y,p.y,q.z),0.))+ 
+        min(max(q.x,max(p.y,q.z)),0.)),
+        length(max(vec3(q.x,q.y,q.z)-.025,0.))+
+        min(max(q.x,max(q.y,p.z)),0.));
+}
+
 float cylinder(vec3 p,float h,float r) {
     vec2 d = abs(vec2(length(p.xz),p.y)) - vec2(h,r);
     return min(max(d.x,d.y),0.) + length(max(d,0.));
@@ -251,27 +265,29 @@ vec2 res = vec2(1.0,0.0);
 
 if(box(p,vec3(2.,1.6,1.2)) < res.x) {   
 
-   res = u(res,vec2(box(p,vec3(.5)),-1.)); 
+   res = u(res,vec2(box(p-vec3(1.1,0.,.25),vec3(.25)),-1.)); 
 
-   res = u(res,vec2(boxf(p-vec3(-1.1,0.,0.),
+   res = u(res,vec2(boxf(p-vec3(-1.1,0.,.25),
+         vec3(.25),.01),4.));
+
+   res = u(res,vec2(boxf2(p-vec3(-1.1,0.,0.),
          vec3(.5),.01),1.));
-
-   res = u(res,vec2(boxf2(p-vec3(0.,0.,.75),
-         vec3(.5,.5,.1),.01),2.));
 
    res = u(res,vec2(boxf3(p-vec3(1.1,0.,0.),
          vec3(.5),.01),3.));
+   
+   res = u(res,vec2(boxf4(p,vec3(.5),.01),2.));
 
    float scl = .04;
 
-   vec3 q = p-vec3(-1.,0.,0.);
+   vec3 q = p;
    q = rl(q/scl,1.5,vec3(5.))*scl;
    res = u(res,vec2(length(q)-.02,4.));
 
    vec3 l = p;
    l = rp(l,vec3(.05,0.,.05));
    float c = cylinder(l,.024,1e20);
-   res = u(res,vec2(max(box(p-vec3(0.,.6,.5),
+   res = u(res,vec2(max(box(p-vec3(1.,.61,0.),
          vec3(.5,0.,.5)),-c),5.));
 
 }
@@ -288,7 +304,7 @@ float shadow(vec3 ro,vec3 rd ) {
     float t = 0.005;
     float ph = 1e10;
 
-    for(int i = 0; i < 125; i++ ) {
+    for(int i = 0; i < 25; i++ ) {
         
         float h = scene(ro + rd * t  ).x;
 
@@ -335,36 +351,34 @@ vec3 render(vec3 ro,vec3 rd,float d) {
 vec3 p = ro+rd*d;
 vec3 n = calcNormal(p);
 
-vec3 linear = vec3(0.1);
+vec3 linear = vec3(0.);
 vec3 r = reflect(rd,n); 
 float ref = smoothstep(-2.,2.,r.y);
     
 float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
 float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
     
-vec3 l = normalize(vec3(10.));
-vec3 h = normalize(l - rd);  
+vec3 l = normalize(vec3(-2.,5.,-2.));
+vec3 h = normalize(l - rd);
 
 float dif = clamp(dot(n,l),0.0,1.0);
 float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
 * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
 dif *= shadow(p,l);
-ref *= shadow(p,r);
 
 linear += dif * vec3(.5);
 linear += amb * vec3(0.1);
-linear += fre * vec3(.025,.01,.01);
+linear += fre * vec3(.25,.01,.01);
 linear += spe * vec3(0.4,0.5,.05);
 return linear+ref;
-
 
 } 
 
 void main() {
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(1.,4.,3.);
+vec3 ro = vec3(1.,3.,2.);
 ro.xz *= rot(time*.1);
 
 vec2 uv = (2.*(gl_FragCoord.xy) -
@@ -414,10 +428,10 @@ for(int i = 0; i < STEPS; i++ ) {
             }
 
             if(d.y == 12.) {
-            c *= vec3(.5);
+            c *= vec3(.7);
             }
 
-      } 
+        } 
 
         fc.rgb += fc.a * (alpha * c.rgb);
         fc.a *= (1. - alpha);
@@ -426,7 +440,7 @@ for(int i = 0; i < STEPS; i++ ) {
     
     }
 
-    s += max(abs(d.x * .9),EPS);
+    s += max(abs(d.x * .79),EPS);
     if(s > e) break;
 }
 
