@@ -23,9 +23,15 @@ uniform int ri;
 #define EPS 0.0001
 #define STEPS 255
 #define FOV 2.
-#define VFOV 4.
+#define VFOV 1.
 #define NEAR 0.
 #define FAR 100.
+
+#define DE 0
+
+
+
+
 
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
@@ -398,12 +404,12 @@ float ls(float a,float b,float t,float n) {
      return clamp((f-a)/(b-a),0.,1.);
 }
 
-vec3 repLim(vec3 p,float c,vec3 l) { 
+vec3 rl(vec3 p,float c,vec3 l) { 
     vec3 q = p - c * clamp( floor((p/c)+0.5) ,-l,l);
     return q; 
 }
 
-vec3 rep(vec3 p,vec3 s) {
+vec3 rp(vec3 p,vec3 s) {
     vec3 q = mod(p,s) - 0.5 * s;
     return q;
 } 
@@ -415,7 +421,7 @@ vec2 atanp(vec2 p,float r) {
     return p * mat2(cos(a),-sin(a),sin(a),cos(a));
 }
 
-vec2 u(vec2 d1,vec2 d2) {
+vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
@@ -706,7 +712,7 @@ float box(vec3 p,vec3 b) {
     return length(max(d,0.0)) + min(max(d.x,max(d.y,d.z)),0.0);
 }
 
-float boxFrame(vec3 p,vec3 b,float e) {
+float boxf(vec3 p,vec3 b,float e) {
     p = abs(p)-b;
     vec3 q = abs(p+e)-e;
  
@@ -739,7 +745,7 @@ float cylinder(vec3 p,float h,float r) {
     return min(max(d.x,d.y),0.) + length(max(d,0.));
 }
 
-float hexPrism(vec3 p,vec2 h) {
+float hex(vec3 p,vec2 h) {
  
     const vec3 k = vec3(-0.8660254,0.5,0.57735);
     p = abs(p); 
@@ -869,7 +875,36 @@ float menger(vec3 p,int n,float s,float d) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
-res = u(res,vec2(icosahedron(p,1.),5.)); 
+
+#ifdef MOUSE_ROT
+mat4 mx = rotAxis(vec3(1.,0.,0.),2.*radians(180.)*m.x);
+mat4 my = rotAxis(vec3(0.,1.,0.),2.*radians(180.)*m.y);
+
+p = (vec4(p,1.)*mx*my).xyz;
+#endif
+
+#if DE == 0
+p.xz *= rot(time*.1);
+res = opu(res,vec2(box(p,vec3(1.)),6.));
+#endif
+
+#if DE == 1
+res = opu(res,vec2(plane(p,vec4(0.)),2.));
+#endif
+
+#if DE == 2
+p = rp(p,vec3(1.));
+res = opu(res,vec2(sphere(p,1.),1.));
+#endif
+
+#if DE == 3
+float d = icosahedron(p,10.);
+res = opu(res,vec2(-d,5.)); 
+#endif
+
+
+
+
 
 return res;
 
@@ -1036,13 +1071,13 @@ void main() {
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(1.,2.,5.);
+vec3 ro = vec3(1.,2.,12.);
 
 #if AA > 1
-for(int k = 0; k < AA; k++ ) {
-   for(int l = 0; l < AA; l++) {
+for(int i = 0; i < AA; i++ ) {
+   for(int k = 0; k < AA; k++) {
    
-       vec2 o = vec2(float(k),float(l)) / float(AA) * .5;
+       vec2 o = vec2(float(i),float(k)) / float(AA) * .5;
        vec2 uv = (2.* (gl_FragCoord.xy+o) -
        resolution.xy)/resolution.y;
 #else
@@ -1052,20 +1087,18 @@ for(int k = 0; k < AA; k++ ) {
 #endif
 
        vec3 c = vec3(0.5);
+       vec3 bg = vec3(.5);
 
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
          
        vec4 d = trace(ro,rd);
 
-
-
-
-
        vec3 p = ro + rd * d.x;
        vec3 n = calcNormal(p);
 
        vec3 linear = vec3(0.);
+
        vec3 r = reflect(rd,n); 
        float ref = smoothstep(-2.,2.,r.y);
     
@@ -1081,7 +1114,7 @@ for(int k = 0; k < AA; k++ ) {
 
            if(d.y >= 0.) {
 
-           c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.)); 
+           c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
 
            dif *= shadow(p,l);
            ref *= shadow(p,r);
@@ -1089,8 +1122,13 @@ for(int k = 0; k < AA; k++ ) {
            linear += dif * vec3(1.);
            linear += amb * vec3(0.5);
            linear += fre * vec3(.025,.01,.03);
-           linear += .25 * spe * vec3(0.04,0.05,.05)*ref;
-            
+           linear += .25 * spe * vec3(0.04,0.05,.05);
+
+           #ifdef AO
+           float ao = calcAO(p,n);
+           linear += ao;
+           #endif
+
            }                   
 
        c = c * linear;
