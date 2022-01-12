@@ -11,9 +11,9 @@ uniform float time;
 uniform int seed;
 
 const int steps = 250;
-float eps = 0.00001;
+float eps = 0.0001;
 float dmin = 0.;
-float dmax = 750.;
+float dmax = 25.;
 const int aa = 2;
  
 const int shsteps = 45; 
@@ -138,18 +138,20 @@ vec3 twist(vec3 p,float k) {
     return vec3(m * p.xz,p.y);
 }
 
-float sphere(vec3 p,float r) { 
-     
-    return length(p) - r;
+float ico(vec3 p,float r) {
+    float d;
+    d = abs(dot(p,vec3(.577)));
+    d = max(d,abs(dot(p,vec3(-.577,.577,.577))));
+    d = max(d,abs(dot(p,vec3(.577,-.577,.577))));
+    d = max(d,abs(dot(p,vec3(.577,.577,-.577))));
+    d = max(d,abs(dot(p,vec3(0.,.357,.934))));
+    d = max(d,abs(dot(p,vec3(0.,-.357,.934))));
+    d = max(d,abs(dot(p,vec3(.934,0.,.357))));
+    d = max(d,abs(dot(p,vec3(-.934,0.,.357))));
+    d = max(d,abs(dot(p,vec3(.357,.934,0.))));
+    d = max(d,abs(dot(p,vec3(-.357,.934,0.))));
+    return d-r;
 }
-
-float gyroid(vec3 p,float s,float b,float v,float d) {
-
-    p *= s;
-    float g = abs(dot(sin(p),cos(p.zxy))-b)/s-v;
-    return max(d,g*.5);
-
-} 
 
 vec2 scene(vec3 p) {
 
@@ -157,11 +159,9 @@ vec2 scene(vec3 p) {
 
     float d = 0.;     
     float s = 0.;
-    
-    d = gyroid(p,12.,0.12,0.0045,-dot(sin(p),cos(p.zxy)));
-    s = sphere(p,8.);
 
-    res = opu(res,vec2(smod(s,d,0.25),2.)); 
+    d = ico(p,12.);
+    res = opu(res,vec2(-d,2.)); 
 
     return res;
 
@@ -254,7 +254,7 @@ if(d.y >= 0.) {
 
 vec3 p = ro + rd * d.x;
 vec3 n = calcNormal(p);
-vec3 l = normalize(vec3(0.));
+vec3 l = normalize(vec3(1.));
 vec3 h = normalize(l - rd);
 vec3 r = reflect(rd,n);
 
@@ -271,16 +271,15 @@ float ref = smoothstep(-.2,.2,r.y);
 vec3 linear = vec3(0.);
 
 dif *= shadow(p,l);
-ref *= shadow(p,r);
+ref *= shadow(p,r); 
 
 linear += dif * vec3(0.5,0.24,0.34);
 linear += amb * vec3(0.01,0.05,0.05);
 linear += ref * vec3(0.1,2.,0.45);
-linear += fre * vec3(0.25,0.005,0.0035);
+linear += fre * vec3(0.25,0.05,0.35);
 
-col = col * linear;
-col += spe * vec3(0.97); 
-col = mix(col,vec3(0.5),1.-exp(-0.00001 * d.x*d.x*d.x)); 
+col = col * linear; 
+col = mix(col,vec3(2.),1.-exp(-0.00001 * d.x*d.x*d.x));
 
 }
 
@@ -290,7 +289,7 @@ return col;
 void main() {
  
 vec3 color = vec3(0.);
-vec3 ro = vec3(0.);
+vec3 ro = vec3(-3.);
 
 for(int k = 0; k < aa; ++k) {
     for(int l = 0; l < aa; ++l) {
@@ -300,17 +299,17 @@ for(int k = 0; k < aa; ++k) {
     vec2 uv = (2. * (gl_FragCoord.xy + o) -
     resolution.xy) / resolution.y; 
 
-    mat3 cm = camEuler(time*PI2*0.01,0.45,0.);
+    mat3 cm = camEuler(time*PI2*0.01,10.,0.);
     vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
     vec3 render = renderScene(ro,rd);   
 
+    render = pow(render,vec3(.4545));
     color += render;
+
     }
 
 color /= float(aa*aa);
-color = pow(color,vec3(.4545));
-
 FragColor = vec4(color,1.0);
 }
 
