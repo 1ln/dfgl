@@ -29,10 +29,6 @@ uniform int ri;
 
 #define DE 0
 
-
-
-
-
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
@@ -890,9 +886,9 @@ res = opu(res,vec2(box(p,vec3(1.)),0.));
 res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
 #endif
 
-#if DE == 2
-p = rp(p,vec3(1.));
-res = opu(res,vec2(sphere(p,1.),1.));
+#if DE == 1
+p = rp(p,vec3(5.));
+res = opu(res,vec2(sphere(p,.5),1.));
 #endif
 
 #if DE == 3
