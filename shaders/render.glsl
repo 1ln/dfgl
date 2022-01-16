@@ -966,21 +966,22 @@ return vec4(bgc,alpha);
 
 }
 
-float glow(vec3 ro,vec3 rd,inout float glow) { 
-    float depth = 0.;
-    float dmax = 100.;
+float glow_trace(vec3 ro,vec3 rd,inout float glow) { 
+    float s = 0.;
+    float e = 100.;
 
     for(int i = 0; i < 125; i++ ) {
-        float h = scene(ro + rd * depth).x;
-        glow += glowing(h,.005,.5);
+        float d = scene(ro + rd * s).x;
+        glow += glowing(d,.0001,.5);
 
-        if(h < EPS) { return depth; }
+        if(d < EPS) { return e; }
         
-        depth += h;
-    }
+        s += d;
 
-    if(dmax <= depth ) { return dmax; }
-    return dmax;
+    if(e <= s ) { return e; }
+
+    }
+    return e;
 }
 
 float reflection(vec3 ro,vec3 rd,inout float ref) { 
@@ -1093,6 +1094,9 @@ for(int i = 0; i < AA; i++ ) {
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
          
        vec4 d = trace(ro,rd);
+    
+       float glow = 0.;
+       float glow_dist = glow_trace(ro,rd,glow);        
 
        vec3 p = ro + rd * d.x;
        vec3 n = calcNormal(p);
@@ -1112,6 +1116,8 @@ for(int i = 0; i < AA; i++ ) {
        float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
        * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
+       float ao = calcAO(p,n);
+
            if(d.y >= 0.) {
 
            c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
@@ -1119,23 +1125,17 @@ for(int i = 0; i < AA; i++ ) {
            dif *= shadow(p,l);
            ref *= shadow(p,r);
 
-           linear += dif * vec3(1.);
-           linear += amb * vec3(0.5);
+
+           linear += dif * vec3(.5);
+           linear += amb * vec3(0.001);
            linear += fre * vec3(.025,.01,.03);
            linear += .25 * spe * vec3(0.04,0.05,.05);
 
-           #ifdef AO
-           float ao = calcAO(p,n);
-           linear += ao;
-           #endif
-
            }                   
 
-       c = c * linear;
-       
-       #ifdef FOG
-       c = mix(c,vec3(1.),1.-exp(-.001*d.x*d.x*d.x)); 
-       #endif
+       c = linear;
+       c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
+    
       
        c = pow(c,vec3(.4545));
        color += c;
