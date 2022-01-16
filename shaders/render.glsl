@@ -884,12 +884,10 @@ p = (vec4(p,1.)*mx*my).xyz;
 #endif
 
 #if DE == 0
+vec3 q = p;
 p.xz *= rot(time*.1);
-res = opu(res,vec2(box(p,vec3(1.)),6.));
-#endif
-
-#if DE == 1
-res = opu(res,vec2(plane(p,vec4(0.)),2.));
+res = opu(res,vec2(box(p,vec3(1.)),0.));
+res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
 #endif
 
 #if DE == 2
@@ -1097,6 +1095,8 @@ for(int i = 0; i < AA; i++ ) {
     
        float glow = 0.;
        float glow_dist = glow_trace(ro,rd,glow);        
+
+
 
        vec3 p = ro + rd * d.x;
        vec3 n = calcNormal(p);
