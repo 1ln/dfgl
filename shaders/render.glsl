@@ -1123,10 +1123,11 @@ for(int i = 0; i < AA; i++ ) {
            linear += ao * .01;
 
            c = linear;
-           c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
-       
-       }  
-      
+       }        
+
+  
+       c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
+          
        c = pow(c,vec3(.4545));
        color += c;
    
