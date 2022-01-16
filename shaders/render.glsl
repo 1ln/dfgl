@@ -1085,57 +1085,53 @@ for(int i = 0; i < AA; i++ ) {
 
 #endif
 
-       vec3 c = vec3(0.5);
-       vec3 bg = vec3(.5);
-
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
-         
+       vec3 l = normalize(vec3(0.1,2.,0.1));
+
        vec4 d = trace(ro,rd);
-    
+       vec3 p = ro + rd * d.x;
+       vec3 n = calcNormal(p);
+       vec3 r = reflect(rd,n);    
+
        float glow = 0.;
        float glow_dist = glow_trace(ro,rd,glow);        
 
 
 
-       vec3 p = ro + rd * d.x;
-       vec3 n = calcNormal(p);
-
-       vec3 linear = vec3(0.);
-
-       vec3 r = reflect(rd,n); 
-       float ref = smoothstep(-2.,2.,r.y);
-    
+       float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
        float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
-    
-       vec3 l = normalize(vec3(10.));
-       vec3 h = normalize(l - rd);  
-
        float dif = clamp(dot(n,l),0.0,1.0);
+     
+       vec3 h = normalize(l-rd);
        float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
        * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
 
        float ao = calcAO(p,n);
 
-           if(d.y >= 0.) {
+       vec3 bg = vec3(.5);
+       vec3 c = bg * max(rd.y,0.);
+
+       if(d.y >= 0.) {
 
            c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
 
            dif *= shadow(p,l);
            ref *= shadow(p,r);
 
-
+           vec3 linear = vec3(0.);
            linear += dif * vec3(.5);
            linear += amb * vec3(0.001);
            linear += fre * vec3(.025,.01,.03);
-           linear += .25 * spe * vec3(0.04,0.05,.05);
+           linear += spe * vec3(0.04,0.05,.05);
+           linear += ao * .01;
 
-           }                   
+           c = linear;
+           c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
+       
 
-       c = linear;
-       c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
-    
+       }  
       
        c = pow(c,vec3(.4545));
        color += c;
