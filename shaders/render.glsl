@@ -1067,6 +1067,7 @@ vec3 calcNormal(vec3 p) {
 #endif
 
 void main() { 
+
 vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
@@ -1087,7 +1088,7 @@ for(int i = 0; i < AA; i++ ) {
 
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
-       vec3 l = normalize(vec3(0.1,2.,0.1));
+       vec3 l = normalize(vec3(10.));
 
        vec4 d = trace(ro,rd);
        vec3 p = ro + rd * d.x;
@@ -1096,8 +1097,6 @@ for(int i = 0; i < AA; i++ ) {
 
        float glow = 0.;
        float glow_dist = glow_trace(ro,rd,glow);        
-
-
 
        float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
@@ -1130,7 +1129,6 @@ for(int i = 0; i < AA; i++ ) {
            c = linear;
            c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
        
-
        }  
       
        c = pow(c,vec3(.4545));
