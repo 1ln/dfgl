@@ -480,13 +480,6 @@ float layer(float d,float h) {
     return abs(d) - h;
 }
 
-vec3 scatter(vec3 col,vec3 tf,vec3 ts,vec3 rd,vec3 l,float de) {
-    float fog_depth  = 1. - exp(-0.000001 * de);
-    float light_depth = max(dot(rd,l),0.);
-    vec3 fog_col = mix(tf,ts,pow(light_depth,8.));
-    return mix(col,fog_col,light_depth);
-}
-
 vec3 lightGlow(vec3 l,vec3 rd,vec3 a,vec3 b,vec3 c,vec3 d) {
 
     vec3 col = vec3(0.);
@@ -873,8 +866,8 @@ vec2 scene(vec3 p) {
 vec2 res = vec2(1.0,0.0);
 
 #ifdef MOUSE_ROT
-mat4 mx = rotAxis(vec3(1.,0.,0.),2.*radians(180.)*m.x);
-mat4 my = rotAxis(vec3(0.,1.,0.),2.*radians(180.)*m.y);
+mat4 mx = rotAxis(vec3(1.,0.,0.),2.*radians(180.)*mouse.x);
+mat4 my = rotAxis(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
 
 p = (vec4(p,1.)*mx*my).xyz;
 #endif
@@ -908,12 +901,14 @@ vec4 trace(vec3 ro,vec3 rd) {
     float d = -1.0;
     float s = NEAR;
     float e = FAR; 
+    float h = 0.;
 
     for(int i = 0; i < STEPS; i++) {
 
         vec3 p = ro + s * rd;
         vec2 dist = scene(p);
-   
+        h = float(i);   
+
         if(abs(dist.x) < EPS || e <  dist.x ) { break; }
         s += dist.x;
         d = dist.y;
@@ -921,7 +916,7 @@ vec4 trace(vec3 ro,vec3 rd) {
         }
 
         if(e < s) { d = -1.0; }
-        return vec4(s,d,1.,1.);
+        return vec4(s,d,h,1.);
 
 }
 
@@ -1112,10 +1107,13 @@ for(int i = 0; i < AA; i++ ) {
 
            c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
 
+                      
+
+
            dif *= shadow(p,l);
            ref *= shadow(p,r);
 
-           vec3 linear = vec3(0.);
+           vec3 linear = vec3(0.5);
            linear += dif * vec3(.5);
            linear += amb * vec3(0.001);
            linear += fre * vec3(.025,.01,.03);
@@ -1127,17 +1125,21 @@ for(int i = 0; i < AA; i++ ) {
 
        }        
 
-  
        c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
-          
+
+       c = mix(c,mix(c,bg,pow(max(dot(rd,l),0.),8.)),
+       1.-exp(-.5*d.x*d.x));
+       
        c = pow(c,vec3(.4545));
        color += c;
    
 #if AA > 1 
+
    }
 }   
    color /= float(AA*AA);
 #endif
+
    fragColor = vec4(color,1.0);
 
 
