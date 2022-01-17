@@ -1108,7 +1108,7 @@ for(int i = 0; i < AA; i++ ) {
        vec3 bg = vec3(.5);
        vec3 c = bg * max(rd.y,0.);
 
-       if(d.y >= 0.) {
+       if(d.y >= -.5) {
 
            c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
 
@@ -1122,7 +1122,9 @@ for(int i = 0; i < AA; i++ ) {
            linear += spe * vec3(0.04,0.05,.05);
            linear += ao * .01;
 
-           c = linear;
+           c *= linear;
+
+
        }        
 
   
