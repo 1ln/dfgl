@@ -5,7 +5,9 @@ out vec4 fragColor;
 uniform vec2 resolution;
 uniform float time;
 
-#define SEED 1
+//Structural
+//2022
+//do
 
 #define EPS 0.0001
 #define STEPS 75
@@ -13,10 +15,7 @@ uniform float time;
 #define VFOV 1.
 #define NEAR 0.
 #define FAR 12.
-
-float concentric(vec2 p,float h) {
-    return cos(length(p))-h;
-}
+#define SEED 12590
 
 #ifdef HASH_SINE
 
@@ -31,90 +30,6 @@ float h11(float p) {
     return float(h) * (1./float(0xffffffffU));
 }
 #endif
-
-vec3 h33(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) * 
-   uvec3(1391674541U,SEED,2860486313U);
-   h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,SEED,2860486313U);
-   return vec3(h) * (1.0/float(0xffffffffU));
-
-}
- 
-vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
-
-float ns2(vec2 p) {
-
-    const float k1 = (3. - sqrt(3.))/6.;
-    const float k2 = .5 * (sqrt(3.) -1.);
-    const float k3 = -.5773;
-    const float k4 = 1./41.;
-
-    const vec4 c = vec4(k1,k2,k3,k4);
-    
-    vec2 i = floor(p + dot(p,c.yy));
-    vec2 x0 = p - i + dot(i,c.xx);
-  
-    vec2 i1;
-    i1 = (x0.x > x0.y) ? vec2(1.,0.) : vec2(0.,1.);
-    vec4 x12 = x0.xyxy + c.xxzz;
-    x12.xy -= i1;
-
-    i = mod289(i);
-    
-    vec3 p1 = permute(permute(i.y + vec3(0.,i1.y,1.))
-        + i.x + vec3(0.,i1.x,1.));
-  
-    p1 = permute(mod289(p1 + vec3(float(SEED))));
-
-    vec3 m = max(.5 - 
-    vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
-    m = m * m; 
-    m = m * m;
-
-    vec3 x = fract(p1 * c.www) - 1.;
-    vec3 h = abs(x) - .5;
-    vec3 ox = floor(x + .5);
-    vec3 a0 = x - ox; 
-    m *= 1.792842 - 0.853734 * (a0 * a0 + h * h);
-     
-    vec3 g;
-    g.x = a0.x * x0.x + h.x * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-    return 130. * dot(m,g);
-}
-
-float sin3(vec3 p,float h) {
-    return sin(p.x*h)*sin(p.y*h)*sin(p.z*h);
-}
-
-float cell(vec3 x,float n) {
-    x *= n;
-    vec3 p = floor(x);
-    vec3 f = fract(x);
- 
-    float min_dist = 1.0;
-    
-    for(int i = -1; i <= 1; i++) {
-        for(int j = -1; j <= 1; j++) {
-            for(int k = -1; k <= 1; k++) { 
-
-                vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = h33( p + b );
-                
-                vec3 diff = (b + r - f);
-
-                float d = length(diff);
-                min_dist = min(min_dist,d);
-    
-            }
-        }
-    }
- 
-    return min_dist;  
-
-}
 
 float n(vec3 x) {
     vec3 p = floor(x);
@@ -145,21 +60,17 @@ float f(vec3 p) {
     q += .007825 * n(p); p = m*p*2.1;
     q += .003925 * n(p);
 
-    return q / .94;
+    return q / .81;
 }
 
 float dd(vec3 p) {
-    vec3 q = vec3(f(p+vec3(0.,1.,2.)),
+    vec3 q = vec3(f(p+vec3(1.,1.,2.)),
                   f(p+vec3(4.,2.,3.)),
-                  f(p+vec3(2.,5.,6.)));
-    vec3 r = vec3(f(p + 4. * q + vec3(4.5,2.4,5.5)),
-                  f(p + 4. * q + vec3(2.25,5.,2.)),
-                  f(p + 4. * q + vec3(3.5,1.5,6.)));
+                  f(p+vec3(2.,5.,-1.)));
+    vec3 r = vec3(f(p + 3. * q.yzx + vec3(.5,2.4,5.5)),
+                  f(p + 4. * q + vec3(2.5,5.,.5)),
+                  f(p + 4. * q + vec3(.5,1.5,2.)));
     return f(p + 4. * r);
-}
-
-vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
-    return a + b * cos((radians(180.)*2.0) * (c * t + d));
 }
 
 vec3 rl(vec3 p,float c,vec3 l) { 
@@ -175,7 +86,6 @@ vec3 rp(vec3 p,vec3 s) {
 vec2 u(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
-
 
 mat2 rot(float a) {
     float c = cos(a);
@@ -396,6 +306,7 @@ vec3 c = vec3(.5);
 
 float s = NEAR;
 float e = FAR; 
+vec3 p;
 
 for(int i = 0; i < STEPS; i++ ) {
     float rad = s * radius + .003 * abs(s-.5);
@@ -404,6 +315,7 @@ for(int i = 0; i < STEPS; i++ ) {
     if(d.x < rad) {
         float alpha = smoothstep(rad,-rad,d.x);
         c = render(ro,rd,s);
+        p = ro+rd*s;
 
          if(d.y >= 0.) {
 
@@ -425,13 +337,17 @@ for(int i = 0; i < STEPS; i++ ) {
 
             if(d.y == 5.) {
             c *= vec3(.01);
+
             }
 
             if(d.y == 12.) {
             c *= vec3(.7);
+
             }
 
-        } 
+        } else {
+        c += mix(c,p.xzy*p,dd(p*3.));
+        }
 
         fc.rgb += fc.a * (alpha * c.rgb);
         fc.a *= (1. - alpha);

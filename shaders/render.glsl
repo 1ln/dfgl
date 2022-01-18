@@ -508,6 +508,10 @@ mat2 rot(float a) {
     return mat2(c,-s,s,c);
 }
 
+vec3 rot(vec3 p,vec4 q) {
+    return 2. * cross(q.xyz,p * q.w + cross(q.xyz,p)) + p;
+}
+
 mat4 rotAxis(vec3 axis,float theta) {
 axis = normalize(axis);
 
@@ -893,6 +897,9 @@ res = opu(res,vec2(-d,5.));
 
 
 
+
+
+
 return res;
 
 }
@@ -1118,8 +1125,7 @@ for(int i = 0; i < AA; i++ ) {
            linear += amb * vec3(0.001);
            linear += fre * vec3(.025,.01,.03);
            linear += spe * vec3(0.04,0.05,.05);
-           linear += ao * .01;
-
+           
            c *= linear;
 
 
@@ -1127,9 +1133,9 @@ for(int i = 0; i < AA; i++ ) {
 
        c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
 
-       c = mix(c,mix(c,bg,pow(max(dot(rd,l),0.),8.)),
-       1.-exp(-.5*d.x*d.x));
-       
+       c = mix(c,mix(bg,vec3(1.),pow(max(dot(rd,l),0.),8.)),
+       1.-exp(-.0001*d.x*d.x));
+
        c = pow(c,vec3(.4545));
        color += c;
    
