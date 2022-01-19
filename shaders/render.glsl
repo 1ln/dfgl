@@ -1079,7 +1079,7 @@ vec3 render(vec3 ro,vec3 rd) {
        float glow_dist = glow_trace(ro,rd,glow);        
         
        float ref = smoothstep(-2.,2.,r.y);    
-       float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
+       float amb = sqrt(clamp(.5+.5*n.y,0.,1.));
        float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
        float dif = clamp(dot(n,l),0.0,1.0);
      
