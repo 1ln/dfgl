@@ -1066,23 +1066,17 @@ vec3 calcNormal(vec3 p) {
 
 vec3 render(vec3 ro,vec3 rd) {
 
-
-
-
-       mat3 cm = camera(ro,ta,0.);
-       vec3 rd = cm * normalize(vec3(uv.xy,5.));
-       vec3 l = normalize(vec3(10.));
-
        vec4 d = trace(ro,rd);
+
+       vec3 linear = vec3(0.);
        vec3 p = ro + rd * d.x;
        vec3 n = calcNormal(p);
        vec3 r = reflect(rd,n);
-           
+
+       vec3 l = normalize(vec3(10.));    
 
        float glow = 0.;
        float glow_dist = glow_trace(ro,rd,glow);        
-
-
         
        float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
@@ -1090,8 +1084,9 @@ vec3 render(vec3 ro,vec3 rd) {
        float dif = clamp(dot(n,l),0.0,1.0);
      
        vec3 h = normalize(l-rd);
-       float spe = pow(clamp(dot(n,h),0.0,1.0),16.)
-       * dif * (.04 + 0.9 * pow(clamp(1. + dot(h,rd),0.,1.),5.));
+       float spe = pow(clamp(dot(n,h),0.0,1.0),16.);
+       spe *= dif;
+       spe *= .04 + 0.9 * pow(clamp(1.+dot(h,l),0.,1.),5.);
 
        float ao = calcAO(p,n);
 
@@ -1102,34 +1097,23 @@ vec3 render(vec3 ro,vec3 rd) {
 
            c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
 
-                      
-
-
            dif *= shadow(p,l);
-           ref *= shadow(p,r);
-
-           vec3 linear = vec3(0.5);
+     
            linear += dif * vec3(.5);
-           linear += amb * vec3(0.001);
-           linear += fre * vec3(.025,.01,.03);
-           linear += spe * vec3(0.04,0.05,.05);
-           
-           c *= linear;
+           linear += amb * vec3(0.01);
+           linear += 5. * fre * vec3(.1);
+           linear += 12. * spe * vec3(1.);
+                
+           c += linear;        
 
+           c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
+        
+           c = mix(c,mix(bg,c,pow(max(dot(rd,l),0.),8.)),
+           1.-exp(-.0001*d.x*d.x*d.x));
+      }
 
-       }        
-
-       c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
-
-       c = mix(c,mix(bg,vec3(1.),pow(max(dot(rd,l),0.),8.)),
-       1.-exp(-.0001*d.x*d.x));
-
-       c = pow(c,vec3(.4545));
-       color += c;
-   
-
-
-
+return c;
+}
 
 
 void main() { 
@@ -1154,7 +1138,8 @@ for(int i = 0; i < AA; i++ ) {
 
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
-       
+           
+       vec3 c = render(ro,rd);
 
        c = pow(c,vec3(.4545));
        color += c;
