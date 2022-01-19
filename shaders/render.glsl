@@ -1064,25 +1064,10 @@ vec3 calcNormal(vec3 p) {
 
 #endif
 
-void main() { 
+vec3 render(vec3 ro,vec3 rd) {
 
-vec3 color = vec3(0.);
 
-vec3 ta = vec3(0.);
-vec3 ro = vec3(1.,2.,12.);
 
-#if AA > 1
-for(int i = 0; i < AA; i++ ) {
-   for(int k = 0; k < AA; k++) {
-   
-       vec2 o = vec2(float(i),float(k)) / float(AA) * .5;
-       vec2 uv = (2.* (gl_FragCoord.xy+o) -
-       resolution.xy)/resolution.y;
-#else
-       vec2 uv = (2.*(gl_FragCoord.xy) -
-       resolution.xy)/resolution.y;
-
-#endif
 
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
@@ -1091,11 +1076,14 @@ for(int i = 0; i < AA; i++ ) {
        vec4 d = trace(ro,rd);
        vec3 p = ro + rd * d.x;
        vec3 n = calcNormal(p);
-       vec3 r = reflect(rd,n);    
+       vec3 r = reflect(rd,n);
+           
 
        float glow = 0.;
        float glow_dist = glow_trace(ro,rd,glow);        
 
+
+        
        float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.x,0.,1.));
        float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
@@ -1135,6 +1123,38 @@ for(int i = 0; i < AA; i++ ) {
 
        c = mix(c,mix(bg,vec3(1.),pow(max(dot(rd,l),0.),8.)),
        1.-exp(-.0001*d.x*d.x));
+
+       c = pow(c,vec3(.4545));
+       color += c;
+   
+
+
+
+
+
+void main() { 
+
+vec3 color = vec3(0.);
+
+vec3 ta = vec3(0.);
+vec3 ro = vec3(1.,2.,12.);
+
+#if AA > 1
+for(int i = 0; i < AA; i++ ) {
+   for(int k = 0; k < AA; k++) {
+   
+       vec2 o = vec2(float(i),float(k)) / float(AA) * .5;
+       vec2 uv = (2.* (gl_FragCoord.xy+o) -
+       resolution.xy)/resolution.y;
+#else
+       vec2 uv = (2.*(gl_FragCoord.xy) -
+       resolution.xy)/resolution.y;
+
+#endif
+
+       mat3 cm = camera(ro,ta,0.);
+       vec3 rd = cm * normalize(vec3(uv.xy,5.));
+       
 
        c = pow(c,vec3(.4545));
        color += c;
