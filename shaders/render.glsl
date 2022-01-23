@@ -550,14 +550,14 @@ float circle(vec2 p,float r) {
     return length(p) - r;
 }
 
-float circleTan3(vec2 p,vec2 a,vec2 b,vec2 c) {
+float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     float d = distance(a,b);
     float d1 = distance(b,c);
     float d2 = distance(c,a);
 
-    float r = (d-d1+d2)*.5;                 
-    float r1 = (d+d1-d2)*.5;
-    float r2 = (-d+d1+d2)*.5;
+    float r = (d-d1+d2)*rad;
+    float r1 = (d+d1-d2)*rad;
+    float r2 = (-d+d1+d2)*rad;
 
     float de = .0005;
     de = min(de,abs(distance(p,a)-r));
@@ -591,10 +591,6 @@ float arch(vec2 p,vec2 c,float r,vec2 w) {
              (p.x>0.)?p.y:l);
     p = vec2(p.x,abs(p.y-r))-w;
     return length(max(p,0.)) + min(0.,max(p.x,p.y));
-}
-
-float ring(vec2 p,float r,float w) {
-    return abs(length(p) - r) - w;
 }
 
 float eqTriangle(vec2 p,float r) { 
@@ -876,10 +872,11 @@ mat4 my = rotAxis(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
 p = (vec4(p,1.)*mx*my).xyz;
 #endif
 
+p.xz *= rot(time*.1);
+
 #if DE == 0
 vec3 q = p;
-p.xz *= rot(time*.1);
-res = opu(res,vec2(box(p,vec3(1.)),0.));
+res = opu(res,vec2(box(p,vec3(1.)),2.));
 res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
 #endif
 
@@ -889,11 +886,42 @@ res = opu(res,vec2(sphere(p,.5),1.));
 #endif
 
 #if DE == 3
-float d = icosahedron(p,10.);
-res = opu(res,vec2(-d,5.)); 
+res = opu(res,vec2(
+re(p,spiral(p.xz,2.,1.),1.)
+,5.)); 
 #endif
 
+#if DE == 4
+res = opu(res,vec2(prism(p,vec2(.5,2.)),12.));
+#endif
 
+#if DE == 5
+res = opu(res,vec2(dodecahedron(p-vec3(-1.,0.,0.),1.),5.));
+res = opu(res,vec2(icosahedron(p-vec3(2.,0.,0.),1.),48.));
+res = opu(res,vec2(octahedron(p-vec3(1.,0.,0.),1.),95.));
+res = opu(res,vec2(tetrahedron(p-vec3(-2.,0.,0.),1.),12.));
+res = opu(res,vec2(box(p,vec3(1.)),24.));
+#endif
+
+#if DE == 6
+res = opu(res,vec2(hex(p,vec2(.5,.25)),2.));
+#endif
+
+#if DE == 7
+float d = cylinder(p,1e10,2.);
+res = opu(res,vec2(max(p.y,-d),12.));
+#endif
+
+#if DE == 8
+float d = log_polar(p.xz,12.);
+res = opu(res,vec2(re(p,d,1.),125.));
+#endif
+
+#if DE == 9
+p *= tw(p,12.);
+float d = hyperbola(p);
+res = opu(res,vec2(d,2.));
+#endif
 
 
 
@@ -908,6 +936,7 @@ vec4 trace(vec3 ro,vec3 rd) {
     float d = -1.0;
     float s = NEAR;
     float e = FAR; 
+
     float h = 0.;
 
     for(int i = 0; i < STEPS; i++) {
@@ -1105,13 +1134,12 @@ vec3 render(vec3 ro,vec3 rd) {
            linear += 12. * spe * vec3(1.);
                 
            c += linear;        
-
+       }
            c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
         
            c = mix(c,mix(bg,c,pow(max(dot(rd,l),0.),8.)),
            1.-exp(-.0001*d.x*d.x*d.x));
-      }
-
+    
 return c;
 }
 
