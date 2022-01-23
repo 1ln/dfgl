@@ -476,7 +476,7 @@ vec3 tw(vec3 p,float k) {
     return vec3(m * p.xz,p.y);
 }
 
-float layer(float d,float h) {
+float lr(float d,float h) {
     return abs(d) - h;
 }
 
@@ -923,6 +923,12 @@ float d = hyperbola(p);
 res = opu(res,vec2(d,2.));
 #endif
 
+#if DE == 10
+res = opu(res,vec2(
+max(lr(lr(lr(lr(
+box(p,vec3(1.))
+,.5),.25),.125),.06),p.x),2.));
+#endif
 
 
 
@@ -1103,10 +1109,7 @@ vec3 render(vec3 ro,vec3 rd) {
        vec3 r = reflect(rd,n);
 
        vec3 l = normalize(vec3(10.));    
-
-       float glow = 0.;
-       float glow_dist = glow_trace(ro,rd,glow);        
-        
+ 
        float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.y,0.,1.));
        float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
