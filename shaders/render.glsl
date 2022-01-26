@@ -627,10 +627,53 @@ float rhombus(vec2 p,vec2 b) {
     return d * sign(q.x*b.y + q.y*b.x - b.x*b.y);  
 }
 
+float trapezoid(vec2 p,float r1,float r2,float h) {
+    vec2 k1 = vec2(r2,h);
+    vec2 k2 = vec2(r2-r1,2.*h);
+    p.x = abs(p.x);
+    vec2 ca = vec2(p.x-min(p.x,(p.y<0.)?r1:r2),abs(p.y)-h);
+    vec2 cb = p - k1+k2*clamp(dot(k1-p,k2)/dot2(k2),0.,1.);
+    float s = (cb.x<0. && ca.y<0.) ? -1.:1.;
+    return s*sqrt(min(dot2(ca),dot2(cb)));
+}
+
+float pie(vec2 p,vec2 c,float h) {
+    p.x = abs(p.x);
+    float l = length(p)-r;
+    float m = length(p-c*clamp(dot(p,c),0.,r));
+    return max(l,m*sign(c.y*p.x-c.x*p.y));
+}
+
+float diskborder(vec2 p,float r,float h) {
+    float w = sqrt(r*r-h*h);
+    p.x = abs(p.x);
+    float s = max((h-r)*p.x*p.x+w*w*(h+r-2.*p.y),h*p.x-w*p.y);
+    return (s<0.) ? length(p)-r :
+           (p.x<w) ? h - p.y    :
+           length(p-vec2(w,h));
+}
+
 float segment(vec2 p,vec2 a,vec2 b) {
     vec2 pa = p - a, ba = b - a;
     float h = clamp(dot(pa,ba)/dot(ba,ba),0.,1.);  
     return length(pa - ba * h);
+}
+
+float pentagon(vec2 p,float r) {
+    const vec3 = vec3(.809016994,.587785252,.726542528);
+    p.x = abs(p.x);
+    p -= 2.*min(dot(vec2(-k.x,k.y),p),0.)*vec2(-k.x,k.y);
+    p -= 2.*min(dot(vec2(k.x,k.y),p),0.)*vec2(k.x,k.y);
+    p -= vec2(clamp(p.x,-r*k.z,r*k.z),r);
+    return length(p)*sign(p.y);
+}
+
+float hex(vec2 p,float r) {
+    const vec3 k = vec3(-.866025404,.5,.577350269);
+    p = abs(p);
+    p -= 2.*min(dot(k.xy,p),0.)*k.xy;
+    p -= vec2(clamp(p.x,-k.z*r,k.z*r),r);
+    return length(p)*sign(p.y);
 }
 
 float sphere(vec3 p,float r) {
