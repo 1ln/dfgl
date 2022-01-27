@@ -27,8 +27,6 @@ uniform int ri;
 #define NEAR 0.
 #define FAR 100.
 
-#define DE 0
-
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
 float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
@@ -125,6 +123,11 @@ uint rand(uint p) {
     uint st = p * 747796405u + 2891336453u; 
     uint wd = ((st >> ((st >> 28u) + 4u)) ^ st) * 277803737u;
     return (wd >> 22u) ^ wd;
+}
+
+float h31(vec3 p) {
+    p = 17.*fract(p*.46537+vec3(.11,.17,.13));
+    return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
 }
 
 #ifdef HASH_SINE
@@ -637,7 +640,7 @@ float trapezoid(vec2 p,float r1,float r2,float h) {
     return s*sqrt(min(dot2(ca),dot2(cb)));
 }
 
-float pie(vec2 p,vec2 c,float h) {
+float pie(vec2 p,vec2 c,float r) {
     p.x = abs(p.x);
     float l = length(p)-r;
     float m = length(p-c*clamp(dot(p,c),0.,r));
@@ -660,7 +663,7 @@ float segment(vec2 p,vec2 a,vec2 b) {
 }
 
 float pentagon(vec2 p,float r) {
-    const vec3 = vec3(.809016994,.587785252,.726542528);
+    const vec3 k = vec3(.809016994,.587785252,.726542528);
     p.x = abs(p.x);
     p -= 2.*min(dot(vec2(-k.x,k.y),p),0.)*vec2(-k.x,k.y);
     p -= 2.*min(dot(vec2(k.x,k.y),p),0.)*vec2(k.x,k.y);
@@ -904,6 +907,41 @@ float menger(vec3 p,int n,float s,float d) {
      return d;
 }
 
+float dfn(ivec2 i,vec3 f,ivec3 c) {
+    float rad = .5*h31(i+c);
+    return length(f-vec3(c))-rad;
+}
+
+float base_df(vec3 p) {
+     ivec3 i = ivec3(floor(p));
+     vec3 f = fract(p);
+
+     return min(min(min(dfn(i,f,ivec3(0,0,0)),
+                        dfn(i,f,ivec3(0,0,1))),
+                    min(dfn(i,f,ivec3(0,1,0)),
+                        dfn(i,f,ivec3(0,1,1)))),
+                min(min(dfn(i,f,ivec3(1,0,0)),
+                        dfn(i,f,ivec3(1,0,1))),
+                    min(dfn(i,f,ivec3(1,1,0)),
+                        dfn(i,f,ivec3(1,1,1)))));
+}
+
+float base_fractal(vec3 p,float d) {
+     float s = 1.;
+     for(int i = 0; i < 8; i++) {
+          float n = s*base_df(p);
+          n = smax(n,d-.1*s,.3*s);
+          d = smin(n,d,.3*s);
+ 
+          p = mat3( 0.,1.6,1.2,
+                   -1.6,.7,-.96,
+                   -1.2,-.96,1.28)*p;
+          s = .5*s;                      
+     }
+     return d;
+} 
+
+
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
@@ -917,61 +955,10 @@ p = (vec4(p,1.)*mx*my).xyz;
 
 p.xz *= rot(time*.1);
 
-#if DE == 0
+
 vec3 q = p;
 res = opu(res,vec2(box(p,vec3(1.)),2.));
 res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
-#endif
-
-#if DE == 1
-p = rp(p,vec3(5.));
-res = opu(res,vec2(sphere(p,.5),1.));
-#endif
-
-#if DE == 3
-res = opu(res,vec2(
-re(p,spiral(p.xz,2.,1.),1.)
-,5.)); 
-#endif
-
-#if DE == 4
-res = opu(res,vec2(prism(p,vec2(.5,2.)),12.));
-#endif
-
-#if DE == 5
-res = opu(res,vec2(dodecahedron(p-vec3(-1.,0.,0.),1.),5.));
-res = opu(res,vec2(icosahedron(p-vec3(2.,0.,0.),1.),48.));
-res = opu(res,vec2(octahedron(p-vec3(1.,0.,0.),1.),95.));
-res = opu(res,vec2(tetrahedron(p-vec3(-2.,0.,0.),1.),12.));
-res = opu(res,vec2(box(p,vec3(1.)),24.));
-#endif
-
-#if DE == 6
-res = opu(res,vec2(hex(p,vec2(.5,.25)),2.));
-#endif
-
-#if DE == 7
-float d = cylinder(p,1e10,2.);
-res = opu(res,vec2(max(p.y,-d),12.));
-#endif
-
-#if DE == 8
-float d = log_polar(p.xz,12.);
-res = opu(res,vec2(re(p,d,1.),125.));
-#endif
-
-#if DE == 9
-p *= tw(p,12.);
-float d = hyperbola(p);
-res = opu(res,vec2(d,2.));
-#endif
-
-#if DE == 10
-res = opu(res,vec2(
-max(lr(lr(lr(lr(
-box(p,vec3(1.))
-,.5),.25),.125),.06),p.x),2.));
-#endif
 
 
 
