@@ -1236,6 +1236,7 @@ for(int i = 0; i < AA; i++ ) {
 
 #endif
 
+       //mat3 cm = camEuler(.001*(2.*radians(180.))*time,10.,0.);
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,5.));
            
