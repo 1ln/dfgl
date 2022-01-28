@@ -549,6 +549,13 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
      return mat3(u,v,w); 
 } 
 
+
+
+
+
+
+
+
 float circle(vec2 p,float r) {
     return length(p) - r;
 }
@@ -647,6 +654,18 @@ float pie(vec2 p,vec2 c,float r) {
     return max(l,m*sign(c.y*p.x-c.x*p.y));
 }
 
+float tunnel(vec2 p,vec2 wh) {
+    p.x = abs(p.x);
+    p.y = -p.y;
+    vec2 q = p - wh;
+  
+    float d1 = dot2(vec2(max(q.x,0.),q.y));
+    q.x = (p.y>0.) ? q.x : length(p)-wh.x;
+    float d2 = dot2(vec2(q.x,max(q.y,0.)));
+    float d = sqrt(min(d1,d2));
+    return (max(q.x,q.y) < 0.) ? -d : d;
+}
+
 float diskborder(vec2 p,float r,float h) {
     float w = sqrt(r*r-h*h);
     p.x = abs(p.x);
@@ -683,6 +702,13 @@ float sphere(vec3 p,float r) {
     return length(p) - r;
 }
 
+float hsphere(vec3 p,float r,float h,float t) {
+    float w = sqrt(r*r-h*h);
+    vec2 q = vec2(length(p.xz),p.y);
+    return ((h*q.x<w*q.y) ? length(q-vec2(w,h)) :
+                            abs(length(q)-r))-t;
+}
+
 float ellipsoid(vec3 p,vec3 r) {
     float k0 = length(p/r); 
     float k1 = length(p/(r*r));
@@ -699,6 +725,12 @@ float cone(vec3 p,vec2 c,float h) {
     float s = max(k*(w.x*q.y-w.y*q.x),k*(w.y-q.y));
     return sqrt(d)*sign(s);
 
+}
+
+float cone(vec3 p,vec2 c) {
+    vec2 q = vec2(length(p.xz),-p.y);
+    float d = length(q-c*max(dot(q,c),0.));
+    return d *((q.x*c.y-q.y*c.x<0.) ? -1. : 1.;
 }
 
 float roundCone(vec3 p,float r1,float r2,float h) {
@@ -727,6 +759,11 @@ float link(vec3 p,float le,float r1,float r2) {
 
 float plane(vec3 p,vec4 n) {
     return dot(p,n.xyz) + n.w;
+}
+
+float vertcap(vec3 p,float h,float r) {
+    p.y -= clamp(p.y,0.,h);
+    return length(p)-r; 
 }
 
 float capsule(vec3 p,vec3 a,vec3 b,float r) {
