@@ -993,7 +993,7 @@ p = (vec4(p,1.)*mx*my).xyz;
 #endif
 
 p.xz *= rot(time*.1);
-p.xz *= rot(.5*easeInOut(sin(time*.5)*.25)+.125);
+p.xz *= rot(.5*easeInOut(sin(time*.5)*.25)-.125);
 
 vec3 q = p;
 res = opu(res,vec2(box(p,vec3(1.)),2.));
