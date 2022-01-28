@@ -552,6 +552,17 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
 
 
 
+mat3 camEuler(float yaw,float pitch,float roll) {
+
+     vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
+     vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
+     vec3 u = normalize(cross(r,f));
+
+     return rotAxis(f,roll) * mat3(r,u,f);
+}
+
+vec2 opu(vec2 d1,vec2 d2) {
+
 
 
 
