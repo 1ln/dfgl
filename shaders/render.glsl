@@ -547,10 +547,7 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
      vec3 v = normalize(cross(u,w));
 
      return mat3(u,v,w); 
-} 
-
-
-
+}
 
 mat3 camEuler(float yaw,float pitch,float roll) {
 
@@ -560,12 +557,6 @@ mat3 camEuler(float yaw,float pitch,float roll) {
 
      return rotAxis(f,roll) * mat3(r,u,f);
 }
-
-vec2 opu(vec2 d1,vec2 d2) {
-
-
-
-
 
 float circle(vec2 p,float r) {
     return length(p) - r;
