@@ -549,15 +549,6 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
      return mat3(u,v,w); 
 }
 
-mat3 camEuler(float yaw,float pitch,float roll) {
-
-     vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
-     vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
-     vec3 u = normalize(cross(r,f));
-
-     return rotAxis(f,roll) * mat3(r,u,f);
-}
-
 float circle(vec2 p,float r) {
     return length(p) - r;
 }
@@ -940,7 +931,7 @@ float menger(vec3 p,int n,float s,float d) {
      return d;
 }
 
-float dfn(ivec2 i,vec3 f,ivec3 c) {
+float dfn(ivec3 i,vec3 f,ivec3 c) {
     float rad = .5*h31(i+c);
     return length(f-vec3(c))-rad;
 }
@@ -989,20 +980,21 @@ p = (vec4(p,1.)*mx*my).xyz;
 vec3 q = p;
 
 p.xz *= rot(time*.1);
-p.xz *= rot(.5*easeInOut(sin(time*.5)*.25)-.125);
+p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
 
-float ft = mod(time*.1,4.);
+float ft = time*.1;
+float n  = 4.;
 
 float e1,e2,e3,e4;
-e1 = easeInOut4(ls(0.,1.,ft));
-e2 = easeIn4(ls(1.,2.,ft));
-e3 = easeOut3(ls(2.,1.,ft));
-e4 = easeInOut3(ls(1.,0.,ft));
+e1 = easeInOut4(ls(0.,1.,ft,n));
+e2 = easeIn4(ls(1.,2.,ft,n));
+e3 = easeOut3(ls(2.,1.,ft,n));
+e4 = easeInOut3(ls(1.,0.,ft,n));
 
 float pl = -plane(q,vec4(1.,-1.,-1.,e1+e2+e3+e4-2.));
 float d = dode(p,1.);
 
-res = opu(res,vec2(pl,d),2.);
+res = opu(res,vec2(max(pl,d),2.));
 
 return res;
 
