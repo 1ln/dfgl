@@ -603,6 +603,8 @@ vec3 q = p;
 p.xz *= rot(time*.1);
 p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
 
+
+
 float ft = time*.1;
 float n  = 4.;
 
@@ -642,41 +644,6 @@ vec4 trace(vec3 ro,vec3 rd) {
 
         if(e < s) { d = -1.0; }
         return vec4(s,d,h,1.);
-
-}
-
-vec4 trace(vec3 ro,vec3 rd,vec3 col) {
-
-float s = NEAR;
-float e = FAR;
-
-vec2 d = vec2(EPS,0.01);
-float radius = 2. * tan(VFOV/2.) / resolution.y * 2.;
-
-vec4 c = vec4(col,1.);
-vec3 bgc = vec3(0.);
-float alpha;
-
-for(int i = 0; i < STEPS; i++) {
-    float rad = s * radius + FOV * abs(s-.5);
-    d.x = scene(ro + s * rd).x; 
-
-    if(d.x < rad) {
-        alpha = smoothstep(rad,-rad,d.x);
-
-        c.rgb += c.a * (alpha * c.rgb);
-        c.a *= (1.-alpha);
-
-        if(d.x < EPS) break;
-    
-    }
-
-    s += max(abs(d.x * .9),.001);
-    if(s > e) break;
-}
-
-bgc = mix(c.rgb,bgc,c.a);
-return vec4(bgc,alpha);
 
 }
 
@@ -741,7 +708,8 @@ vec3 render(vec3 ro,vec3 rd) {
        vec3 n = calcNormal(p);
        vec3 r = reflect(rd,n);
 
-       vec3 l = normalize(vec3(10.));    
+       vec3 l = normalize(vec3(10.,0.,10.));
+       l.xz *= rot(time*.1);
  
        float ref = smoothstep(-2.,2.,r.y);    
        float amb = sqrt(clamp(.5+.5*n.y,0.,1.));
@@ -753,14 +721,17 @@ vec3 render(vec3 ro,vec3 rd) {
        spe *= dif;
        spe *= .04 + 0.9 * pow(clamp(1.+dot(h,l),0.,1.),5.);
 
-       float ao = calcAO(p,n);
-
        vec3 bg = vec3(.5);
        vec3 c = bg * max(rd.y,0.);
 
        if(d.y >= -.5) {
 
-           c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
+           c = vec3(.5);
+
+
+
+
+
 
            dif *= shadow(p,l);
      
@@ -773,9 +744,6 @@ vec3 render(vec3 ro,vec3 rd) {
        }
            c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
         
-           c = mix(c,mix(bg,c,pow(max(dot(rd,l),0.),8.)),
-           1.-exp(-.0001*d.x*d.x*d.x));
-    
 return c;
 }
 
