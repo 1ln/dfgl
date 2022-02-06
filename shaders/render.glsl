@@ -434,9 +434,7 @@ vec3 rot(vec3 p,vec4 q) {
     return 2. * cross(q.xyz,p * q.w + cross(q.xyz,p)) + p;
 }
 
-
-
-mat3 rotAxis(vec3 axis,float theta) {
+mat3 ra3(vec3 axis,float theta) {
 
 axis = normalize(axis);
 
@@ -462,7 +460,7 @@ axis = normalize(axis);
 }
 
 
-mat4 rotAxis(vec3 axis,float theta) {
+mat4 ra4(vec3 axis,float theta) {
 axis = normalize(axis);
 
     float c = cos(theta);
@@ -502,7 +500,7 @@ mat3 camEuler(float yaw,float pitch,float roll) {
      vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
      vec3 u = normalize(cross(r,f));
 
-     return rotAxis(f,roll) * mat3(r,u,f);
+     return ra4(f,roll) * mat3(r,u,f);
 }
 
 float circle(vec2 p,float r) {
@@ -1015,8 +1013,8 @@ vec2 scene(vec3 p) {
 vec2 res = vec2(1.0,0.0);
 
 #ifdef MOUSE_ROT
-mat4 mx = rotAxis(vec3(1.,0.,0.),2.*radians(180.)*mouse.x);
-mat4 my = rotAxis(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
+mat4 mx = ra4(vec3(1.,0.,0.),2.*radians(180.)*mouse.x);
+mat4 my = ra4Axis(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
 
 p = (vec4(p,1.)*mx*my).xyz;
 #endif
