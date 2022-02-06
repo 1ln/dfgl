@@ -17,6 +17,10 @@ uniform int dn;
 uniform int lf;
 uniform int ri;
 
+#define F gl_FragCoord.xy;
+#define R resolution
+#define T time
+
 #define SEED 1
 
 #define AA 1
@@ -119,30 +123,27 @@ return (-l.x-l.y+d)/2.0;
 
 }
 
-uint rand(uint p) {
-    uint st = p * 747796405u + 2891336453u; 
+#ifdef HASH_INT
+
+float h11(float p) {
+    uint st = uint(p) * 747796405u + 2891336453u; 
     uint wd = ((st >> ((st >> 28u) + 4u)) ^ st) * 277803737u;
-    return (wd >> 22u) ^ wd;
+    uint h = (wd >> 22u) ^ wd;
+    return float(h) * (1./float(uint(0xffffffff)));
 }
+
+#else
+
+float h11(float p) {
+    return fract(sin(p)*float(43758.5453));
+}
+
+#endif
 
 float h31(vec3 p) {
     p = 17.*fract(p*.46537+vec3(.11,.17,.13));
     return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
 }
-
-#ifdef HASH_SINE
-
-float h11(float p) {
-    return fract(sin(p)*float(43758.5453+SEED));
-}
-#else
-
-float h11(float p) {
-    uvec2 n = uint(int(p)) * uvec2(1391674541U,SEED);
-    uint h = (n.x ^ n.y) * 1391674541U;
-    return float(h) * (1./float(0xffffffffU));
-}
-#endif
 
 vec3 h33(vec3 p) {
    uvec3 h = uvec3(ivec3(  p)) * 
@@ -228,7 +229,7 @@ float cell(vec3 x,float n) {
 
 }
 
-float n(vec3 x) {
+float n3(vec3 x) {
     vec3 p = floor(x);
     vec3 f = fract(x);
 
@@ -241,33 +242,33 @@ float n(vec3 x) {
            mix(h11(q + 270.0),h11(q + 271.0),f.x),f.y),f.z);
 }
 
-float f(vec3 p) {
+float f3(vec3 p) {
     float q = 1.;
 
     mat3 m = mat3(vec2(.8,.6),-.6,
                   vec2(-.6,.8),.6,
                   vec2(-.8,.6),.8);
 
-    q += .5      * n(p); p = m*p*2.01;
-    q += .25     * n(p); p = m*p*2.04;
-    q += .125    * n(p); p = m*p*2.048;
-    q += .0625   * n(p); p = m*p*2.05;
-    q += .03125  * n(p); p = m*p*2.07; 
-    q += .015625 * n(p); p = m*p*2.09;
-    q += .007825 * n(p); p = m*p*2.1;
-    q += .003925 * n(p);
+    q += .5      * n3(p); p = m*p*2.01;
+    q += .25     * n3(p); p = m*p*2.04;
+    q += .125    * n3(p); p = m*p*2.048;
+    q += .0625   * n3(p); p = m*p*2.05;
+    q += .03125  * n3(p); p = m*p*2.07; 
+    q += .015625 * n3(p); p = m*p*2.09;
+    q += .007825 * n3(p); p = m*p*2.1;
+    q += .003925 * n3(p);
 
     return q / .94;
 }
 
 float dd(vec3 p) {
-    vec3 q = vec3(f(p+vec3(0.,1.,2.)),
-                  f(p+vec3(4.,2.,3.)),
-                  f(p+vec3(2.,5.,6.)));
-    vec3 r = vec3(f(p + 4. * q + vec3(4.5,2.4,5.5)),
-                  f(p + 4. * q + vec3(2.25,5.,2.)),
-                  f(p + 4. * q + vec3(3.5,1.5,6.)));
-    return f(p + 4. * r);
+    vec3 q = vec3(f3(p+vec3(0.,1.,2.)),
+                  f3(p+vec3(4.,2.,3.)),
+                  f3(p+vec3(2.,5.,6.)));
+    vec3 r = vec3(f3(p + 4. * q + vec3(4.5,2.4,5.5)),
+                  f3(p + 4. * q + vec3(2.25,5.,2.)),
+                  f3(p + 4. * q + vec3(3.5,1.5,6.)));
+    return f3(p + 4. * r);
 }
 
 float expStep(float x,float k) {
@@ -515,6 +516,8 @@ vec3 rot(vec3 p,vec4 q) {
     return 2. * cross(q.xyz,p * q.w + cross(q.xyz,p)) + p;
 }
 
+
+
 mat4 rotAxis(vec3 axis,float theta) {
 axis = normalize(axis);
 
@@ -577,6 +580,8 @@ float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     de = min(de,abs(distance(p,c)-r2));
     return de;
 }
+
+
 
 float conePetal(vec2 p,float r1,float r2,float h) {
     p.x = abs(p.x);
