@@ -402,27 +402,6 @@ float lr(float d,float h) {
     return abs(d) - h;
 }
 
-vec3 lightGlow(vec3 l,vec3 rd,vec3 a,vec3 b,vec3 c,vec3 d) {
-
-    vec3 col = vec3(0.);
-    float rad = dot(rd,l);
-    col += col * vec3(.5,.12,.25) * expStep(rad,100.);
-    col += col * vec3(.5,.1,.15) * expStep(rad,25.);
-    col += col * vec3(.1,.5,.05) * expStep(rad,2.);
-    col += col * vec3(.15) * expStep(rad,35.);
-    return col;
-}
-
-vec3 refraction(vec3 a,vec3 n,float e) {
-    if(dot(a,n) < 0.) { e = 1./e; }
-    else { n = -n; }
-    return refract(a,n,e);
-}
-
-float glowing(float d,float r,float i) {
-    return pow(r/max(d,1e-5),i);
-}
-
 mat2 rot(float a) {
     float c = cos(a);
     float s = sin(a);
@@ -458,7 +437,6 @@ axis = normalize(axis);
         oc * axis.z * axis.z + c);
 
 }
-
 
 mat4 ra4(vec3 axis,float theta) {
 axis = normalize(axis);
@@ -1086,6 +1064,10 @@ for(int i = 0; i < STEPS; i++) {
 bgc = mix(c.rgb,bgc,c.a);
 return vec4(bgc,alpha);
 
+}
+
+float glowing(float d,float r,float i) {
+    return pow(r/max(d,1e-5),i);
 }
 
 float glow_trace(vec3 ro,vec3 rd,inout float glow) { 
