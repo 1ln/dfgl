@@ -523,8 +523,6 @@ float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     return de;
 }
 
-
-
 float sine_wave(float x,float f,float a) {
     return a*sin(x/f);
 }
@@ -602,8 +600,6 @@ float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5;
 return (-l.x-l.y+d)/2.0;
 
 }
-
-
 
 float conePetal(vec2 p,float r1,float r2,float h) {
     p.x = abs(p.x);
