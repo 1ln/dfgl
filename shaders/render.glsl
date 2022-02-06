@@ -45,84 +45,6 @@ vec2 csq(vec2 z) {
     return r * vec2(cos(a),sin(a));
 }
 
-float sine_wave(float x,float f,float a) {
-    return a*sin(x/f);
-}
-
-float log_polar(vec2 p,float n) {
-    p = vec2(log(length(p)),atan(p.y,p.y));
-    p *= 6./radians(180.);
-    p = fract(p*n)-.5;
-    return length(p);
-}
-
-float petals(vec2 p,float n,float s) {
-    float r = length(p)*s;
-    float a = atan(p.y,p.x);
-    return cos(a*n);
-}
-
-float polygon(vec2 p,float n,float s) {
-    float a = atan(p.y,p.x);
-    float r = (2.*radians(180.))/n;
-    return cos(floor(.5+a/r) * r - a) * length(p)-s;
-}
-
-float spiral(vec2 p,float n,float h) {
-     float ph = pow(length(p),1./n)*32.;
-     p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
-     return h-length(p) / 
-     sin((atan(p.x,-p.y)
-     + radians(180.)/radians(180.)/2.))*radians(180.);
-}
-
-float concentric(vec2 p,float h) {
-    return cos(length(p))-h;
-}
-
-vec2 julia(vec2 p,float n,float b,float f) {
-    float k = 0.;
-    for(int i = 0; i < 64; i++) {
-    p = vec2(p.x*p.x-p.y*p.y,(p.x*p.y))-f;
-    if(dot(p,p) > b) {
-        break;
-    }
-    return p;
-    }
-}
-
-vec2 diag(vec2 uv) {
-   vec2 r = vec2(0.);
-   r.x = 1.1547 * uv.x;
-   r.y = uv.y + .5 * r.x;
-   return r;
-}
-
-vec3 simplexGrid(vec2 uv) {
-
-    vec3 q = vec3(0.);
-    vec2 p = fract(diag(uv));
-    
-    if(p.x > p.y) {
-        q.xy = 1. - vec2(p.x,p.y-p.x);
-        q.z = p.y;
-    } else {
-        q.yz = 1. - vec2(p.x-p.y,p.y);
-        q.x = p.x;
-    }
-    return q;
-
-}
-
-float hyperbola(vec3 p) { 
-
-vec2 l = vec2(length(p.xz) ,-p.y);
-float a = 0.5;
-float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
-return (-l.x-l.y+d)/2.0;
-
-}
-
 #ifdef HASH_INT
 
 float h11(float p) {
@@ -196,10 +118,6 @@ float ns2(vec2 p) {
     g.x = a0.x * x0.x + h.x * x0.y;
     g.yz = a0.yz * x12.xz + h.yz * x12.yw;
     return 130. * dot(m,g);
-}
-
-float sin3(vec3 p,float h) {
-    return sin(p.x*h)*sin(p.y*h)*sin(p.z*h);
 }
 
 float cell(vec3 x,float n) {
@@ -579,6 +497,86 @@ float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     de = min(de,abs(distance(p,b)-r1));
     de = min(de,abs(distance(p,c)-r2));
     return de;
+}
+
+
+
+float sine_wave(float x,float f,float a) {
+    return a*sin(x/f);
+}
+
+float log_polar(vec2 p,float n) {
+    p = vec2(log(length(p)),atan(p.y,p.y));
+    p *= 6./radians(180.);
+    p = fract(p*n)-.5;
+    return length(p);
+}
+
+float petals(vec2 p,float n,float s) {
+    float r = length(p)*s;
+    float a = atan(p.y,p.x);
+    return cos(a*n);
+}
+
+float polygon(vec2 p,float n,float s) {
+    float a = atan(p.y,p.x);
+    float r = (2.*radians(180.))/n;
+    return cos(floor(.5+a/r) * r - a) * length(p)-s;
+}
+
+float spiral(vec2 p,float n,float h) {
+     float ph = pow(length(p),1./n)*32.;
+     p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
+     return h-length(p) / 
+     sin((atan(p.x,-p.y)
+     + radians(180.)/radians(180.)/2.))*radians(180.);
+}
+
+float concentric(vec2 p,float h) {
+    return cos(length(p))-h;
+}
+
+vec2 julia(vec2 p,float n,float b,float f) {
+    float k = 0.;
+    for(int i = 0; i < 64; i++) {
+    p = vec2(p.x*p.x-p.y*p.y,(p.x*p.y))-f;
+    if(dot(p,p) > b) {
+        break;
+    }
+    return p;
+    }
+}
+
+vec2 diag(vec2 uv) {
+   vec2 r = vec2(0.);
+   r.x = 1.1547 * uv.x;
+   r.y = uv.y + .5 * r.x;
+   return r;
+}
+
+vec3 simplexGrid(vec2 uv) {
+
+    vec3 q = vec3(0.);
+    vec2 p = fract(diag(uv));
+    
+    if(p.x > p.y) {
+        q.xy = 1. - vec2(p.x,p.y-p.x);
+        q.z = p.y;
+    } else {
+        q.yz = 1. - vec2(p.x-p.y,p.y);
+        q.x = p.x;
+    }
+    return q;
+
+}
+
+float hyperbola(vec3 p) { 
+
+vec2 l = vec2(length(p.xz) ,-p.y);
+float a = 0.5;
+float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
+return (-l.x-l.y+d)/2.0;
+
 }
 
 
@@ -1232,11 +1230,11 @@ for(int i = 0; i < AA; i++ ) {
    for(int k = 0; k < AA; k++) {
    
        vec2 o = vec2(float(i),float(k)) / float(AA) * .5;
-       vec2 uv = (2.* (gl_FragCoord.xy+o) -
-       resolution.xy)/resolution.y;
+       vec2 uv = (2.* (F+o) -
+       R.xy)/R.y;
 #else
-       vec2 uv = (2.*(gl_FragCoord.xy) -
-       resolution.xy)/resolution.y;
+       vec2 uv = (2.*(F) -
+       R.xy)/R.y;
 
 #endif
 
