@@ -17,7 +17,7 @@ uniform int dn;
 uniform int lf;
 uniform int ri;
 
-#define F gl_FragCoord.xy;
+#define F gl_FragCoord.xy
 #define R resolution
 #define T time
 
@@ -733,7 +733,7 @@ float cone(vec3 p,vec2 c,float h) {
 float cone(vec3 p,vec2 c) {
     vec2 q = vec2(length(p.xz),-p.y);
     float d = length(q-c*max(dot(q,c),0.));
-    return d *((q.x*c.y-q.y*c.x<0.) ? -1. : 1.;
+    return d *((q.x*c.y-q.y*c.x<0.) ? -1. : 1.);
 }
 
 float roundCone(vec3 p,float r1,float r2,float h) {
@@ -947,7 +947,7 @@ float menger(vec3 p,int n,float s,float d) {
      return d;
 }
 
-float dfn(ivec2 i,vec3 f,ivec3 c) {
+float dfn(ivec3 i,vec3 f,ivec3 c) {
     float rad = .5*h31(i+c);
     return length(f-vec3(c))-rad;
 }
@@ -994,7 +994,7 @@ p = (vec4(p,1.)*mx*my).xyz;
 #endif
 
 p.xz *= rot(time*.1);
-p.xz *= rot(.5*easeInOut(sin(time*.5)*.25)-.125);
+p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
 
 vec3 q = p;
 res = opu(res,vec2(box(p,vec3(1.)),2.));
