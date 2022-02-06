@@ -1010,7 +1010,7 @@ vec2 res = vec2(1.0,0.0);
 
 #ifdef MOUSE_ROT
 mat4 mx = ra4(vec3(1.,0.,0.),2.*radians(180.)*mouse.x);
-mat4 my = ra4Axis(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
+mat4 my = ra4(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
 
 p = (vec4(p,1.)*mx*my).xyz;
 #endif
