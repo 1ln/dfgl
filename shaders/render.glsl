@@ -500,7 +500,7 @@ mat3 camEuler(float yaw,float pitch,float roll) {
      vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
      vec3 u = normalize(cross(r,f));
 
-     return ra4(f,roll) * mat3(r,u,f);
+     return ra3(f,roll) * mat3(r,u,f);
 }
 
 float circle(vec2 p,float r) {
