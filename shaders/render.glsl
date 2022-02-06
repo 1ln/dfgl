@@ -436,6 +436,32 @@ vec3 rot(vec3 p,vec4 q) {
 
 
 
+mat3 rotAxis(vec3 axis,float theta) {
+
+axis = normalize(axis);
+
+    float c = cos(theta);
+    float s = sin(theta);
+
+    float oc = 1.0 - c;
+
+    return mat3(
+ 
+        oc * axis.x * axis.x + c, 
+        oc * axis.x * axis.y - axis.z * s,
+        oc * axis.z * axis.x + axis.y * s, 
+    
+        oc * axis.x * axis.y + axis.z * s,
+        oc * axis.y * axis.y + c, 
+        oc * axis.y * axis.z - axis.x * s,
+
+        oc * axis.z * axis.x - axis.y * s,
+        oc * axis.y * axis.z + axis.x * s, 
+        oc * axis.z * axis.z + c);
+
+}
+
+
 mat4 rotAxis(vec3 axis,float theta) {
 axis = normalize(axis);
 
