@@ -191,6 +191,23 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
      return mat3(u,v,w); 
 }
 
+float re(vec3 p,float d,float h) {
+    vec2 w = vec2(d,abs(p.z) - h);
+    return min(max(w.x,w.y),0.) + length(max(w,0.)); 
+}
+
+float spiral(vec2 p,float n,float h) {
+     float ph = pow(length(p),1./n)*32.;
+     p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
+     return h-length(p) / 
+     sin((atan(p.x,-p.y)
+     + radians(180.)/radians(180.)/2.))*radians(180.);
+}
+
+
+
+
+
 float plane(vec3 p,vec4 n) {
     return dot(p,n.xyz) + n.w;
 }
