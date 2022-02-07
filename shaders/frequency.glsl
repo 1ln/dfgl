@@ -204,10 +204,6 @@ float spiral(vec2 p,float n,float h) {
      + radians(180.)/radians(180.)/2.))*radians(180.);
 }
 
-
-
-
-
 float plane(vec3 p,vec4 n) {
     return dot(p,n.xyz) + n.w;
 }
@@ -288,14 +284,11 @@ vec2 res = vec2(1.0,0.0);
 
 vec3 q = p,l = p;
 
-p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
-q.xz *= rot(time*.25);
-q.xy *= rot(time*.12);
-
-float d = dode(p,1.);
+float d = re(p,
+          spiral(p,1.,2.),1.
+          );
 
 res = opu(res,vec2(plane(l,vec4(0.,0.,1.,2.)),1.));
-res = opu(res,vec2(max(ico(q,1.),d),2.));
 
 return res;
 
