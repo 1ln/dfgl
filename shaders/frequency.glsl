@@ -22,14 +22,14 @@ float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 //pcg
 float h11(float p) {
-    uint st = uint(p) * 747796405u + 2891336453u; 
+    uint st = uint(p) * 747796405u + 2891336453u + uint(SEED);
     uint wd = ((st >> ((st >> 28u) + 4u)) ^ st) * 277803737u;
     uint h = (wd >> 22u) ^ wd;
     return float(h) *  (1./float(uint(0xffffffff))); 
 }
 
 float h31(vec3 p) {
-    p = 17.*fract(p*.46537+vec3(.11,.17,.13));
+    p = 17.*fract(p*.46537+vec3(.11,.17,.13)) + SEED;
     return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
 }
 
@@ -267,23 +267,30 @@ vec3 render(vec3 ro,vec3 rd) {
        spe *= .04 + 0.9 * pow(clamp(1.+dot(h,l),0.,1.),5.);
 
        vec3 c = vec3(.5);
+       vec3 e = vec3(1.);
 
        if(d.y >= -.5) {
 
            if(d.y == 1.) {
         
                float n;
-               vec2 e = gl_FragCoord.xy;
                p.xy *= rot(time*.05);
 
                n = dd(p+cell(p,5.));
                    
-               c = fm(n+e.x*.0005*e.y*.005,
-                   vec3(.5,-.1,-.1),
+               c = fm(n+p.x*.0005*p.y*.005,
                    vec3(.5),
-                   vec3(.5,.5,1.),
-                   vec3(1.,.6,.8));
-               c *= mix(c,vec3(.001)+c,f3(p));
+                   vec3(.5),
+                   vec3(1.),
+                   vec3(h11(25.),h11(12.),h11(3.)));
+
+               e = fm(f3(p)*p.y,
+                   vec3(1.),
+                   vec3(.5),
+                   vec3(.1),
+                   vec3(h11(35.)));                 
+
+               c *= mix(c,vec3(.5)+e,f3(p));
  
                vec3 r;
                vec2 s = vec2(.25);
@@ -295,9 +302,9 @@ vec3 render(vec3 ro,vec3 rd) {
                            
            }
 
-           linear += dif * vec3(.05);
-           linear += amb * vec3(0.1);
-           linear += .5 * spe * vec3(1.);
+           linear += dif * vec3(.0005);
+           linear += amb * vec3(.0001);
+           linear += .5 * spe * vec3(.1);
           
            c += linear;        
        } 
