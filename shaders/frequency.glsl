@@ -8,17 +8,13 @@ uniform float time;
 //Frequency
 //2022
 
-#define SEED 1221
+#define SEED 591221
 
-#define AA 2
+#define AA 1
 #define EPS 0.001
 #define STEPS 45
 #define NEAR 0.
 #define FAR 25.
-
-float dot2(vec2 v) { return dot(v,v); }
-float dot2(vec3 v) { return dot(v,v); }
-float ndot(vec2 a,vec2 b) { return a.x * b.x - a.y * b.y; }
 
 //pcg
 float h11(float p) {
@@ -90,8 +86,8 @@ float f3(vec3 p) {
                   vec2(-.8,.6),.8);
 
     q += .5      * n3(p); p = m*p*2.01;
-    q += .25     * n3(p); p = m*p*2.04;
-    q += .125    * n3(p); p = m*p*2.048;
+    q += .25     * n3(p); p = m*p*2.02;
+    q += .125    * n3(p); p = m*p*2.03;
     q += .0625   * n3(p); p = m*p*2.05;
     q += .03125  * n3(p);
 
@@ -202,8 +198,8 @@ vec2 res = vec2(1.0,0.0);
 
 vec3 q = p;
 
-q.xy *= rot(time * .05);
-p.xy *= rot(time * .1);
+q.xy *= rot(time * .25);
+p.xy *= rot(time * .11);
 
 float d = re(p,
           spiral(q.xy,3.),.5
@@ -211,7 +207,7 @@ float d = re(p,
 
 float n = base_fractal(p,d);
 float pl = plane(p,vec4(0.,0.,1.,8.));
-res = opu(res,vec2(smin(n*.5,pl,.5),1.));
+res = opu(res,vec2(min(n*.5,pl),1.));
 
 
 return res;
@@ -260,7 +256,6 @@ vec3 render(vec3 ro,vec3 rd) {
        vec3 r = reflect(rd,n);
 
        vec3 l = normalize(vec3(10.,10.,2.));
-       l.xy *= rot(time*.5);
 
        float amb = sqrt(clamp(.5+.5*n.y,0.,1.));  
        float dif = clamp(dot(n,l),0.0,1.0);
@@ -291,23 +286,35 @@ vec3 render(vec3 ro,vec3 rd) {
                e = fm(f3(p)*p.y*.005,
                    vec3(.5),
                    vec3(.5),
-                   vec3(.1),
+                   vec3(1.5),
                    vec3(0.,.33,.71));                 
 
                c *= mix(c,vec3(.5)+e,f3(p));
- 
+
                vec3 r;
                vec2 s = vec2(.25);
                vec2 q = mod(p.xy,s)-.5*s;
                float d = length(q.xy)-.09;
-               r = vec3(smoothstep(.01,.03,d));
+               r = vec3(1.-smoothstep(.01,.03,d));
                r += mix(r,c,f3(p)); 
-               c *= r;
-                           
+
+               if(p.z < -1.5) {
+                    
+                    c = fm(-n,
+                    vec3(.5),
+                    vec3(.5),
+                    vec3(1.),
+                    vec3(f3(p*.5)));
+
+                    c *= mix(c,r,.5);
+                    c += vec3(.1);
+
+               }
+           
            }
 
-           linear += dif * vec3(.0005);
-           linear += amb * vec3(.0001);
+           linear += dif * vec3(.05);
+           linear += amb * vec3(.01);
            linear += .5 * spe * vec3(.1);
           
            c += linear;        
@@ -323,6 +330,7 @@ vec3 color = vec3(0.);
 
 vec3 ta = vec3(0.);
 vec3 ro = vec3(0.,0.,5.);
+ro += sin(time*.1);
 
 #if AA > 1
 for(int i = 0; i < AA; i++ ) {
