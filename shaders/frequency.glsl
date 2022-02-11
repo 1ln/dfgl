@@ -183,8 +183,8 @@ float base_fractal(vec3 p,float d) {
      float s = 1.;
      for(int i = 0; i < 3; i++) {
           float n = s*base_df(p);
-          n = smax(n,d-.1*s,.95*s);
-          d = smin(n,d,.3*s);
+          n = smax(n,d-.1*s,.25*s);
+          d = smin(n,d,6.*s);
  
           p = mat3( 0.,1.6,1.2,
                    -1.6,.7,-.96,
@@ -200,15 +200,19 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
+vec3 q = p;
+
+q.xy *= rot(time * .05);
 p.xy *= rot(time * .1);
 
 float d = re(p,
-          spiral(p.xy,3.),12.
+          spiral(q.xy,3.),.5
           );
 
-float n = base_fractal(p*.5,d);
-float pl = plane(p,vec4(0.,0.,1.,2.));
-res = opu(res,vec2(smin(length(p)-1.7,max(-n*.5,d),.75),1.));
+float n = base_fractal(p,d);
+float pl = plane(p,vec4(0.,0.,1.,8.));
+res = opu(res,vec2(smin(n*.5,pl,.5),1.));
+
 
 return res;
 
@@ -276,19 +280,19 @@ vec3 render(vec3 ro,vec3 rd) {
                float n;
                p.xy *= rot(time*.05);
 
-               n = dd(p+cell(p,5.));
+               n = dd(p+cell(p*2.,5.));
                    
                c = fm(n+p.x*.0005*p.y*.005,
                    vec3(.5),
                    vec3(.5),
                    vec3(1.),
-                   vec3(h11(25.),h11(12.),h11(3.)));
+                   vec3(1.,h11(12.)*.5,h11(3.)*.5));
 
-               e = fm(f3(p)*p.y,
-                   vec3(1.),
+               e = fm(f3(p)*p.y*.005,
+                   vec3(.5),
                    vec3(.5),
                    vec3(.1),
-                   vec3(h11(35.)));                 
+                   vec3(0.,.33,.71));                 
 
                c *= mix(c,vec3(.5)+e,f3(p));
  
