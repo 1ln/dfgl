@@ -114,13 +114,13 @@ vec2 opu(vec2 d1,vec2 d2) {
 } 
 
 float smax(float d1,float d2,float k) {
-    float h = max(k+abs(d2+d1),0.) / k;
-    return min(d2,d1) + h*h*h*k*(1./6.);
+    float h = max(k-abs(d1-d2),0.);
+    return max(d1,d2) + h*h*.25/k;
 }
 
 float smin(float d1,float d2,float k) {
-    float h = max(k-abs(d1-d2),0.) / k;
-    return min(d1,d2) - h*h*h*k*(1./6.);
+    float h = max(k-abs(d1-d2),0.);
+    return min(d1,d2) - h*h*.25/k;
 }
  
 mat2 rot(float a) {
@@ -177,6 +177,11 @@ float base_df(vec3 p) {
 
 float base_fractal(vec3 p,float d) {
      float s = 1.;
+     
+     mat3 m = mat3(  0.,    .8,   .6,
+                   -  .8,   .36, -.48,
+                   -  .6,  -.48,  .64);       
+
      for(int i = 0; i < 3; i++) {
           float n = s*base_df(p);
           n = smax(n,d-.1*s,.25*s);
@@ -186,7 +191,9 @@ float base_fractal(vec3 p,float d) {
                    -1.6,.7,-.96,
                    -1.2,-.96,1.28)*p;
 
-          s = .5*s;                      
+          p = 2.*m*p;
+          s = .5*s;
+                    
      }
      return d;
 } 
