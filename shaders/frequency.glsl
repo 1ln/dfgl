@@ -8,11 +8,11 @@ uniform float time;
 //Frequency
 //2022
 
-#define SEED 591221
+#define SEED 1111
 
-#define AA 1
-#define EPS 0.001
-#define STEPS 45
+#define AA 2
+#define EPS 0.0001
+#define STEPS 75
 #define NEAR 0.
 #define FAR 25.
 
@@ -25,7 +25,7 @@ float h11(float p) {
 }
 
 float h31(vec3 p) {
-    p = 17.*fract(p*.46537+vec3(.11,.17,.13)) + SEED;
+    p = 17.*fract(p*(float(SEED)+.46537)+vec3(.11,.17,.13));
     return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
 }
 
@@ -176,16 +176,16 @@ float base_df(vec3 p) {
 }
 
 float base_fractal(vec3 p,float d) {
-     float s = 1.;
+     float s = 2.11;
      
      mat3 m = mat3(  0.,    .8,   .6,
                    -  .8,   .36, -.48,
                    -  .6,  -.48,  .64);       
 
-     for(int i = 0; i < 3; i++) {
+     for(int i = 0; i < 2; i++) {
           float n = s*base_df(p);
           n = smax(n,d-.1*s,.25*s);
-          d = smin(n,d,6.*s);
+          d = smin(n,d,.3*s);
  
           p = mat3( 0.,1.6,1.2,
                    -1.6,.7,-.96,
@@ -214,7 +214,7 @@ float d = re(p,
 
 float n = base_fractal(p,d);
 float pl = plane(p,vec4(0.,0.,1.,8.));
-res = opu(res,vec2(min(n*.5,pl),1.));
+res = opu(res,vec2(min(n,pl),1.));
 
 
 return res;
@@ -322,7 +322,7 @@ vec3 render(vec3 ro,vec3 rd) {
 
            linear += dif * vec3(.05);
            linear += amb * vec3(.01);
-           linear += .5 * spe * vec3(.1);
+           linear += 2.5 * spe * vec3(.1);
           
            c += linear;        
        } 
