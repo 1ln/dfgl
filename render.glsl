@@ -66,15 +66,15 @@ float h11(float p) {
 #endif
 
 float h31(vec3 p) {
-    p = 17.*fract(p*.46537+vec3(.11,.17,.13));
+    p = 17.*fract(p * .46537+vec3(.11,.17,.13));
     return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
 }
 
 vec3 h33(vec3 p) {
-   uvec3 h = uvec3(ivec3(  p)) * 
-   uvec3(1391674541U,SEED,2860486313U);
-   h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,SEED,2860486313U);
-   return vec3(h) * (1.0/float(0xffffffffU));
+    uvec3 h = uvec3(ivec3(  p)) * 
+    uvec3(1391674541U,SEED,2860486313U);
+    h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,SEED,2860486313U);
+    return vec3(h) * (1.0/float(0xffffffffU));
 
 }
  
@@ -321,8 +321,8 @@ float plot(vec2 p,float x,float h) {
 }
 
 float ls(float a,float b,float t,float n) {
-     float f = mod(t,n);
-     return clamp((f-a)/(b-a),0.,1.);
+    float f = mod(t,n);
+    return clamp((f-a)/(b-a),0.,1.);
 }
 
 vec3 rl(vec3 p,float c,vec3 l) { 
@@ -357,7 +357,6 @@ float intersect(float d1,float d2,float k) {
 }
 
 float smin(float d1,float d2,float k) {
-
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) - k * h * (1.0 - h);
 }
@@ -368,9 +367,9 @@ float smin_exp(float d1,float d2,float k) {
 }
 
 float smin_pow(float d1,float d2,float k) {
-     d1 = pow(d1,k);
-     d2 = pow(d2,k);
-     return pow((d1*d2) / (d1+d2),1./k);
+    d1 = pow(d1,k);
+    d2 = pow(d2,k);
+    return pow((d1*d2) / (d1+d2),1./k);
 }  
 
 vec2 blend(vec2 d1,vec2 d2,float k) {
@@ -394,7 +393,6 @@ vec2 rv(vec3 p,float w,float f) {
 } 
 
 vec3 tw(vec3 p,float k) {
-    
     float s = sin(k * p.y);
     float c = cos(k * p.y);
     mat2 m = mat2(c,-s,s,c);
@@ -467,21 +465,21 @@ axis = normalize(axis);
 
 mat3 camera(vec3 ro,vec3 ta,float r) {
      
-     vec3 w = normalize(ta - ro); 
-     vec3 p = vec3(sin(r),cos(r),0.);           
-     vec3 u = normalize(cross(w,p)); 
-     vec3 v = normalize(cross(u,w));
+    vec3 w = normalize(ta - ro); 
+    vec3 p = vec3(sin(r),cos(r),0.);           
+    vec3 u = normalize(cross(w,p)); 
+    vec3 v = normalize(cross(u,w));
 
-     return mat3(u,v,w); 
+    return mat3(u,v,w); 
 }
 
 mat3 camEuler(float yaw,float pitch,float roll) {
 
-     vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
-     vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
-     vec3 u = normalize(cross(r,f));
+    vec3 f = -normalize(vec3(sin(yaw),sin(pitch),cos(yaw)));
+    vec3 r = normalize(cross(f,vec3(0.0,1.0,0.0)));
+    vec3 u = normalize(cross(r,f));
 
-     return ra3(f,roll) * mat3(r,u,f);
+    return ra3(f,roll) * mat3(r,u,f);
 }
 
 float circle(vec2 p,float r) {
@@ -528,11 +526,11 @@ float polygon(vec2 p,float n,float s) {
 }
 
 float spiral(vec2 p,float n,float h) {
-     float ph = pow(length(p),1./n)*32.;
-     p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
-     return h-length(p) / 
-     sin((atan(p.x,-p.y)
-     + radians(180.)/radians(180.)/2.))*radians(180.);
+    float ph = pow(length(p),1./n)*32.;
+    p *= mat2(cos(ph),sin(ph),sin(ph),-cos(ph));
+    return h-length(p) / 
+    sin((atan(p.x,-p.y)
+    + radians(180.)/radians(180.)/2.))*radians(180.);
 }
 
 float concentric(vec2 p,float h) {
@@ -551,14 +549,13 @@ vec2 julia(vec2 p,float n,float b,float f) {
 }
 
 vec2 diag(vec2 uv) {
-   vec2 r = vec2(0.);
-   r.x = 1.1547 * uv.x;
-   r.y = uv.y + .5 * r.x;
-   return r;
+    vec2 r = vec2(0.);
+    r.x = 1.1547 * uv.x;
+    r.y = uv.y + .5 * r.x;
+    return r;
 }
 
 vec3 simplexGrid(vec2 uv) {
-
     vec3 q = vec3(0.);
     vec2 p = fract(diag(uv));
     
@@ -570,16 +567,13 @@ vec3 simplexGrid(vec2 uv) {
         q.x = p.x;
     }
     return q;
-
 }
 
 float hyperbola(vec3 p) { 
-
-vec2 l = vec2(length(p.xz) ,-p.y);
-float a = 0.5;
-float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
-return (-l.x-l.y+d)/2.0;
-
+    vec2 l = vec2(length(p.xz) ,-p.y); 
+    float a = 0.5;
+    float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
+    return (-l.x-l.y+d)/2.0;
 }
 
 float conePetal(vec2 p,float r1,float r2,float h) {
@@ -1002,6 +996,8 @@ p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
 vec3 q = p;
 res = opu(res,vec2(box(p,vec3(1.)),2.));
 res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
+
+
 
 
 
