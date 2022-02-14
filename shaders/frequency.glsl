@@ -209,7 +209,7 @@ q.xy *= rot(time * .25);
 p.xy *= rot(time * .11);
 
 float d = re(p,
-          spiral(q.xy,3.),.5
+          spiral(q.xy,4.),.5
           );
 
 float n = base_fractal(p,d);
