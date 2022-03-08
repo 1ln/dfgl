@@ -612,20 +612,12 @@ vec3 simplexGrid(vec2 uv) {
     return q;
 }
 
-<<<<<<< HEAD
-float hyperbola(vec3 p) { 
-    vec2 l = vec2(length(p.xz) ,-p.y); 
-    float a = 0.5;
-    float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
-    return (-l.x-l.y+d)/2.0;
-=======
 float hyperbola(vec3 p,float a,float b) { 
 
     vec2 l = vec2(length(p.xz) ,-p.y);
     float d = sqrt((l.x+l.y)*(l.x+l.y)- b *(l.x*l.y-a)) + 0.5; 
     return (-l.x-l.y+d)/2.0;
 
->>>>>>> shaders
 }
 
 float conePetal(vec2 p,float r1,float r2,float h) {
