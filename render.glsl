@@ -6,7 +6,7 @@ uniform vec2 resolution;
 uniform float time;
 uniform int frame;
 
-uniform vec4 mouse;
+uniform vec2 mouse;
 
 uniform sampler2D tex;
 
@@ -20,19 +20,27 @@ uniform int ri;
 //Render
 //2022
 
-#define F gl_FragCoord.xy
-#define R resolution
+#define FC gl_FragCoord.xy
+#define RE resolution
 #define T time
+#define S smoothstep
 
 #define SEED 1
 
-#define AA 1
 #define EPS 0.0001
 #define STEPS 255
 #define FOV 2.
 #define VFOV 1.
 #define NEAR 0.
-#define FAR 100.
+#define FAR 225.
+
+//zero for no gamma
+#define GAMMA .4545
+
+#define PI radians(180.)
+#define TAU (radians(180.)*2.)
+
+
 
 float dot2(vec2 v) { return dot(v,v); }
 float dot2(vec3 v) { return dot(v,v); }
@@ -51,7 +59,7 @@ vec2 csq(vec2 z) {
 #ifdef HASH_INT
 
 float h11(float p) {
-    uint st = uint(p) * 747796405u + 2891336453u; 
+    uint st = uint(p) * 747796405u + 2891336453u + uint(SEED);
     uint wd = ((st >> ((st >> 28u) + 4u)) ^ st) * 277803737u;
     uint h = (wd >> 22u) ^ wd;
     return float(h) * (1./float(uint(0xffffffff)));
@@ -192,7 +200,7 @@ float dd(vec3 p) {
     return f3(p + 4. * r);
 }
 
-float expStep(float x,float k) {
+float expstep(float x,float k) {
     return exp((x*k)-k);
 }
 
@@ -250,7 +258,7 @@ float easeInOut3(float t) {
     }
 }
 
-vec3 fmCol(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
+vec3 fm(float t,vec3 a,vec3 b,vec3 c,vec3 d) {
     return a + b * cos((radians(180.)*2.0) * (c * t + d));
 }
 
@@ -262,12 +270,8 @@ vec3 rgbHsv(vec3 c) {
     return c.z * mix(vec3(1.),rgb,c.y);
 }
 
-vec3 wbar(vec2 uv,vec3 fcol,vec3 col,float y,float h) {
-    return mix(fcol,col,step(abs(uv.y-y),h));
-}
-
-vec3 hbar(vec2 uv,vec3 fcol,vec3 col,float x,float w) {
-    return mix(fcol,col,step(abs(uv.x-x),w));
+vec3 bar(float p,vec3 fcol,vec3 col,float d,float h) {
+    return mix(fcol,col,step(abs(p-d),h));
 }
 
 vec2 boxBound(vec3 ro,vec3 rd,vec3 rad) {
@@ -315,6 +319,14 @@ float bayer(vec2 rc,int n) {
 return c / 64.;
 }
 
+vec3 bayert(vec2 p,vec3 c) {
+    float t = bayer(p,8); 
+    return vec3(
+           step(t,c.r),
+           step(t,c.b),
+           step(t,c.g));
+}
+
 float plot(vec2 p,float x,float h) {
     return smoothstep(x-h,x,p.y) -
            smoothstep(x,x+h,p.y);
@@ -335,7 +347,7 @@ vec3 rp(vec3 p,vec3 s) {
     return q;
 } 
 
-vec2 atanp(vec2 p,float r) {
+vec2 rad(vec2 p,float r) {
     float n = radians(360.)/r;
     float a = atan(p.x,p.y)+n*.5;
     a = floor(a/n)*n;
@@ -346,20 +358,35 @@ vec2 opu(vec2 d1,vec2 d2) {
     return (d1.x < d2.x) ? d1 : d2;
 } 
 
-float smax(float d1,float d2,float k) {
-    float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
-    return mix(d2,-d1,h) + k * h * (1.0 - h);
-}
-
 float intersect(float d1,float d2,float k) {
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) + k * h * (1.0 - h);
 }
 
+#ifdef SMAX 
+float smax(float d1,float d2,float k) {
+    float h = clamp(0.5 - 0.5 * (d2+d1)/k,0.0,1.0);
+    return mix(d2,-d1,h) + k * h * (1.0 - h);
+}
+#else
+float smax(float d1,float d2,float k) {
+    float h = max(k-abs(d1-d2),0.);
+    return max(d1,d2) + h*h*h*.25/k;
+}
+#endif
+
+#ifdef SMIN
 float smin(float d1,float d2,float k) {
     float h = clamp(0.5 + 0.5 * (d2-d1)/k,0.0,1.0);
     return mix(d2,d1,h) - k * h * (1.0 - h);
 }
+#else
+
+float smin(float d1,float d2,float k) {
+    float h = max(k-abs(d1-d2),0.);
+    return min(d1,d2) - h*h*h*.25/k;
+}
+#endif
 
 float smin_exp(float d1,float d2,float k) {
     float res = exp2(-k * d1) + exp2(-k * d2);
@@ -482,9 +509,25 @@ mat3 camEuler(float yaw,float pitch,float roll) {
     return ra3(f,roll) * mat3(r,u,f);
 }
 
+vec3 cam_no_clip_plane(vec3 ro,float ph) {
+    ro.y = max(ro.y,-abs(ph)-.5);
+    return ro;
+}
+
+vec3 cam_orbit(vec3 ro,float x,float y) {        
+     ro.yz *= rot(PI*x);
+     ro.xz *= rot(TAU*y);
+     return ro;
+
+}
+
 float circle(vec2 p,float r) {
     return length(p) - r;
 }
+
+
+
+
 
 float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     float d = distance(a,b);
@@ -569,11 +612,20 @@ vec3 simplexGrid(vec2 uv) {
     return q;
 }
 
+<<<<<<< HEAD
 float hyperbola(vec3 p) { 
     vec2 l = vec2(length(p.xz) ,-p.y); 
     float a = 0.5;
     float d = sqrt((l.x+l.y)*(l.x+l.y)- 4. *(l.x*l.y-a)) + 0.5; 
     return (-l.x-l.y+d)/2.0;
+=======
+float hyperbola(vec3 p,float a,float b) { 
+
+    vec2 l = vec2(length(p.xz) ,-p.y);
+    float d = sqrt((l.x+l.y)*(l.x+l.y)- b *(l.x*l.y-a)) + 0.5; 
+    return (-l.x-l.y+d)/2.0;
+
+>>>>>>> shaders
 }
 
 float conePetal(vec2 p,float r1,float r2,float h) {
@@ -733,7 +785,7 @@ float cone(vec3 p,vec2 c) {
     return d *((q.x*c.y-q.y*c.x<0.) ? -1. : 1.);
 }
 
-float roundCone(vec3 p,float r1,float r2,float h) {
+float rdcone(vec3 p,float r1,float r2,float h) {
     vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
     float b = (r1-r2)/h;
     float a = sqrt(1.0 - b*b);
@@ -745,7 +797,7 @@ float roundCone(vec3 p,float r1,float r2,float h) {
     return dot(q,vec2(a,b)) - r1;
 }
 
-float solidAngle(vec3 p,vec2 c,float ra) {    
+float sa(vec3 p,vec2 c,float ra) {    
     vec2 q = vec2(length(vec2(p.x,p.z)),p.y);
     float l = length(q) - ra;
     float m = length(q - c * clamp(dot(q,c),0.0,ra));
@@ -790,7 +842,7 @@ float boxf(vec3 p,vec3 b,float e) {
  
     return min(min(
         length(max(vec3(p.x,q.y,q.z),0.)) 
-        + min(max(p.x,max(q.y,q.z)),0.),
+        +min(max(p.x,max(q.y,q.z)),0.),
         length(max(vec3(q.x,p.y,q.z),0.))+ 
         min(max(q.x,max(p.y,q.z)),0.)),
         length(max(vec3(q.x,q.y,p.z),0.))+
@@ -804,7 +856,8 @@ float torus(vec3 p,vec2 t) {
 
 float capTorus(vec3 p,vec2 sc,float ra,float rb) {
     p.x = abs(p.x);
-    float k = (sc.y * p.x > sc.x * p.y) ? dot(p.xy,sc) : length(p.xy);
+    float k = (sc.y * p.x > sc.x * p.y) 
+    ? dot(p.xy,sc) : length(p.xy);
     return sqrt(dot(p,p) + ra*ra - 2.*k*ra) - rb;
 }
 
@@ -845,7 +898,7 @@ float pyramid(vec3 p,float h) {
     return sqrt((d2+q.z*q.z)/m2) * sign(max(q.z,-p.y));
 }
 
-float tetrahedron(vec3 p,float h) {
+float tetra(vec3 p,float h) {
      vec3 q = abs(p);
      float y = p.y;
      float d1 = q.z-max(y,0.);
@@ -853,7 +906,7 @@ float tetrahedron(vec3 p,float h) {
      return length(max(vec2(d1,d2),.005)) + min(max(d1,d2),0.);
 }
 
-float dodecahedron(vec3 p,float r) {
+float dode(vec3 p,float r) {
     vec4 v = vec4(0.,1.,-1.,0.5 + sqrt(1.25));
     v /= length(v.zw);
 
@@ -867,7 +920,7 @@ float dodecahedron(vec3 p,float r) {
     return d;
 }
  
-float icosahedron(vec3 p,float r) {
+float ico(vec3 p,float r) {
     float d;
     d = abs(dot(p,vec3(.577)));
     d = max(d,abs(dot(p,vec3(-.577,.577,.577))));
@@ -882,7 +935,7 @@ float icosahedron(vec3 p,float r) {
     return d-r;
 }
 
-float octahedron(vec3 p,float s) {
+float octa(vec3 p,float s) {
     p = abs(p);
 
     float m = p.x + p.y + p.z - s;
@@ -945,8 +998,13 @@ float menger(vec3 p,int n,float s,float d) {
 }
 
 float dfn(ivec3 i,vec3 f,ivec3 c) {
-    float rad = .5*h31(i+c);
-    return length(f-vec3(c))-rad;
+
+    float d = 0.;
+    float rad = .5*h31(i+c);  
+    d = length(f-vec3(c))-rad;
+
+    return d;
+
 }
 
 float base_df(vec3 p) {
@@ -978,26 +1036,118 @@ float base_fractal(vec3 p,float d) {
      return d;
 } 
 
-
+#define DF0
+#define R res = opu(res,vec2(
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
 
-#ifdef MOUSE_ROT
-mat4 mx = ra4(vec3(1.,0.,0.),2.*radians(180.)*mouse.x);
-mat4 my = ra4(vec3(0.,1.,0.),2.*radians(180.)*mouse.y);
+#ifdef DF0
+vec3 q = p;
+p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
+q.xz *= rot(T*.5);
 
-p = (vec4(p,1.)*mx*my).xyz;
+R sphere(q-vec3(1.,-.5,2.),.5),3.));
+R box(p,vec3(1.)),2.));
+R plane(q,vec4(0.,1.,0.,1.)),1.));
 #endif
 
-p.xz *= rot(time*.1);
-p.xz *= rot(.5*easeInOut3(sin(time*.5)*.25)-.125);
+#ifdef DF1
+p = rp(p,vec3(5.));
+R max(p.y,box(p,vec3(1.))),1.));
+#endif
 
-vec3 q = p;
-res = opu(res,vec2(box(p,vec3(1.)),2.));
-res = opu(res,vec2(plane(q,vec4(0.,1.,0.,1.)),1.));
+#ifdef DF2
+R hyperbola(p,1.,4.),1.));
+#endif
 
+#ifdef DF3
+p.xz *= rot(T*.1);
+float scl = .05;
+p = rl(p/scl,5.,vec3(5.))*scl;
+R box(p/scl,vec3(1.)) * scl,3.));
+#endif 
 
+#ifdef DF4
+R smin(length(p-vec3(0.,1.,0.))-.5,
+box(p,vec3(1.)),.1),125.));
+#endif
+
+#ifdef DF5
+R re(p.yzx,arch(-p.yz,
+vec2(0.,1.),.25,vec2(2.,.05)),.075),5.));
+#endif
+
+#ifdef DF6
+R boxf(p,vec3(1.),.05),75.));
+#endif
+
+#ifdef DF7
+float scl = .05;
+
+p = rl(p/scl,1.5,vec3(5.,0.,0.))*scl;
+
+p.y += smoothstep(.25,.5,sin(p.z*.25)+.05)*.25;
+p.y += smoothstep(.5,-2.,sin(p.z*.5)+.5)*-2.;
+
+R max(p.z-2.5,box(p/scl,vec3(.25,.25,125.))*scl),95.));
+#endif    
+
+#ifdef DF8
+float an1 = radians(180.) * (.5+.5*cos(.5));
+float an2 = radians(180.) * (.5+.5*cos(1.));
+float rb  = .1 * (.5+.5*cos(5.));
+ 
+R re(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)), 
+vec2(sin(an2),cos(an2)),1.25,rb),
+.1),2.));
+
+an1 = radians(180.) * (-.5+.5*cos(.502));
+R re(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)),
+vec2(sin(an2),cos(an2)),1.5,rb),
+.16),1.));
+#endif
+
+#ifdef DF9   
+vec3 q = p.xzy;
+q.xy = rad(q.xy,8.);
+q.y -= 2.;
+R length(q)-.5,4.));
+#endif
+
+#ifdef DF10
+float d = 0.;
+
+vec3 q = vec3(p); 
+
+float s = 5.;
+vec3 loc = floor(p/s);
+q.xz = mod(q.xz,s) - .5 * s;
+
+float h = ns2(loc.xz*.25 + ns2(loc.xz*.005));
+
+if(h < h11(25.)) {
+   d = sphere(q,2.);
+} else {
+   d = 1.;
+}
+
+float pl = plane(p,vec4(0.,1.,0.,1.));
+R smou(pl,d,.5),2.));
+
+#endif
+
+#ifdef DF11
+
+p *= 4.;
+float d; 
+
+for(int i = 0; i < 12; i++) { 
+vec2 f = 5. * sin(2.*vec2(h11(i),h11(i))); 
+float r = mix(.5,2.,h11(i));
+d = smin(d,circle(p-f,r),2.);
+}
+#endif
 
 
 
@@ -1029,6 +1179,13 @@ vec4 trace(vec3 ro,vec3 rd) {
         return vec4(s,d,h,1.);
 
 }
+
+
+
+
+
+
+
 
 vec4 trace(vec3 ro,vec3 rd,vec3 col) {
 
@@ -1075,9 +1232,9 @@ float glow_trace(vec3 ro,vec3 rd,inout float glow) {
 
     for(int i = 0; i < 125; i++ ) {
         float d = scene(ro + rd * s).x;
-        glow += glowing(d,.0001,.5);
+        glow += glowing(d,.001,.5);
 
-        if(d < EPS) { return e; }
+        if(d < EPS) { return s; }
         
         s += d;
 
@@ -1085,22 +1242,6 @@ float glow_trace(vec3 ro,vec3 rd,inout float glow) {
 
     }
     return e;
-}
-
-float reflection(vec3 ro,vec3 rd,inout float ref) { 
-    float depth = 0.;
-    float dmax = 100.;
-
-    for(int i = 0; i < 125; i++ ) {
-        float h = scene(ro + rd * depth).x;
-        
-        if(h < EPS) { return depth; }
-        
-        depth += h;
-    }
-
-    if(dmax <= depth ) { return dmax; }
-    return dmax;
 }
 
 float shadow(vec3 ro,vec3 rd ) {
@@ -1165,97 +1306,192 @@ vec3 calcNormal(vec3 p) {
     vec3(e.y,e.y,e.x) * scene(p + vec3(e.y,e.y,e.x)).x + 
     vec3(e.x,e.x,e.x) * scene(p + vec3(e.x,e.x,e.x)).x
 
-    ));
-    
+    ));    
 }
 
 #endif
 
-vec3 render(vec3 ro,vec3 rd) {
+vec3 aces(vec3 x) {
+    return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);
+}  
 
-       vec4 d = trace(ro,rd);
+vec3 glow_exp(vec3 c,vec3 rd,vec3 l) {
+    float rad = dot(rd,l);
+    c += c * vec3(2.,1.,.1) * expstep(rad,250.);
+    c += c * vec3(2.,.5,1.) * expstep(rad,125.);  
+    c += c * vec3(1.,.1,.5) * expstep(rad,100.);       
+    c += c * vec3(.5,1.,1.) * expstep(rad,75.);
+    return c;
+}
 
-       vec3 linear = vec3(0.);
-       vec3 p = ro + rd * d.x;
-       vec3 n = calcNormal(p);
-       vec3 r = reflect(rd,n);
-
-       vec3 l = normalize(vec3(10.));    
- 
-       float ref = smoothstep(-2.,2.,r.y);    
-       float amb = sqrt(clamp(.5+.5*n.y,0.,1.));
-       float fre = pow(clamp(1.+dot(n,rd),0.,1.),2.);    
-       float dif = clamp(dot(n,l),0.0,1.0);
-     
-       vec3 h = normalize(l-rd);
-       float spe = pow(clamp(dot(n,h),0.0,1.0),16.);
-       spe *= dif;
-       spe *= .04 + 0.9 * pow(clamp(1.+dot(h,l),0.,1.),5.);
-
-       float ao = calcAO(p,n);
-
-       vec3 bg = vec3(.5);
-       vec3 c = bg * max(rd.y,0.);
-
-       if(d.y >= -.5) {
-
-           c = .2+.2*sin(2.*d.y+vec3(2.,3.,4.));
-
-           dif *= shadow(p,l);
-     
-           linear += dif * vec3(.5);
-           linear += amb * vec3(0.01);
-           linear += 5. * fre * vec3(.1);
-           linear += 12. * spe * vec3(1.);
-                
-           c += linear;        
-       }
-           c = mix(c,bg,1.-exp(-.0001*d.x*d.x*d.x)); 
-        
-           c = mix(c,mix(bg,c,pow(max(dot(rd,l),0.),8.)),
-           1.-exp(-.0001*d.x*d.x*d.x));
+vec3 fog(vec3 c,vec3 b,float f,float d) {
+    return mix(c,b,1.-exp(-f*d*d*d));
+}
     
-return c;
+vec3 scatter(vec3 c,vec3 b,float f,float d,vec3 rd,vec3 l) {
+    return mix(c,mix(b,c,pow(max(dot(rd,l),0.),8.)),
+               1.-exp(-f*d*d*d));      
+}
+
+float ambient(vec3 n) {
+    return sqrt(clamp(.5+.5*n.y,0.,1.));
+}
+
+float fresnel(vec3 n,vec3 rd) {
+    return pow(clamp(1.+dot(n,rd),0.,1.),2.);    
+}
+
+float diffuse(vec3 n,vec3 l) {
+    return clamp(dot(n,l),0.0,1.0);
+} 
+
+float specular(vec3 n,vec3 rd,vec3 l) {
+    vec3 h = normalize(l-rd);
+    float spe = pow(clamp(dot(n,h),0.0,1.0),16.);
+    spe *= pow(clamp(1.+dot(h,l),0.,1.),5.);
+    return spe;
+}
+
+float spotlight(vec3 p,vec3 n,vec3 l,float ca,float cd) {
+    vec3 dir = normalize(vec3(0.,-1.,0));
+    vec3 r = normalize(l-p);
+    return (dot(r,-dir)-cos(radians(cd)))/
+           (cos(radians(ca))-cos(radians(cd)));
+}
+
+vec3 linear(vec3 ro,
+            vec3 rd,
+            vec3 n,            
+            vec3 l,           
+            vec4 d
+            ) {
+
+    vec3 p = ro + rd * d.x;
+
+    vec3 linear = vec3(0.);
+
+    vec3 r = reflect(rd,n);
+    float ref = smoothstep(-2.,2.,rd.y);
+
+    ref *= shadow(p,r); 
+
+    float amb = ambient(n);
+    float dif = diffuse(n,l);
+    float spe = specular(n,rd,l);
+    float fre = fresnel(n,rd);   
+  
+    float sh = shadow(ro,l);
+    float ao = calcAO(p,n);
+         
+    linear += dif * vec3(.5) * sh;
+    linear += amb * vec3(0.01);
+    linear += 5. * fre * vec3(.1);
+    linear += .5 * spe * vec3(1.);                
+
+    return linear;   
+    
 }
 
 
+
+
+
+vec3 render(vec3 ro,vec3 rd,vec3 l) {
+
+    vec3 c = vec3(0.),
+         fc = vec3(.5);   
+    
+    c = fc - max(rd.y,1.); 
+
+    vec4 d;
+
+    for(int i = 0; i < 3; i++) {
+       d = trace(ro,rd);
+        
+       vec3 p = ro + rd * d.x;
+       vec3 n = calcNormal(p);
+       vec3 r = reflect(rd,n);
+       c = linear(p,rd,n,l,d);
+       ro = p + n * .005;  
+      
+       if(d.y >= 0.) {
+
+           if(d.y == 1.) {
+               c *= vec3(.5,1.,.5);   
+           }
+    
+           if(d.y == 2.) {
+               rd = r;   
+               c *= vec3(.5);
+           }
+
+           if(d.y == 3.) {
+               rd = r;              
+               c *= vec3(1.,0.,0.); 
+           }                  
+
+
+   
+       }
+
+       c = fog(c,fc,.0001,d.x);
+
+       c *= glow_exp(c,rd,l);   
+
+
+       
+       if(i == 0) {
+           fc = c;
+       } else {
+           fc *= mix(c,vec3(1.),1. - exp(-.5 * float(i)));
+       }
+
+}
+return fc;
+}
+
+
+#define AA 1
 void main() { 
 
-vec3 color = vec3(0.);
+vec3 fc = vec3(0.);
 
 vec3 ta = vec3(0.);
-vec3 ro = vec3(1.,2.,12.);
+vec3 ro = vec3(1.,2.,5.);
+vec3 rd = vec3(0.);
+vec3 l = normalize(vec3(10.));
 
-#if AA > 1
 for(int i = 0; i < AA; i++ ) {
    for(int k = 0; k < AA; k++) {
    
        vec2 o = vec2(float(i),float(k)) / float(AA) * .5;
-       vec2 uv = (2.* (F+o) -
-       R.xy)/R.y;
-#else
-       vec2 uv = (2.*(F) -
-       R.xy)/R.y;
-
-#endif
+       vec2 uv = (2.* (FC+o) -
+       RE.xy)/RE.y;
 
        //mat3 cm = camEuler(.001*(2.*radians(180.))*time,10.,0.);
        mat3 cm = camera(ro,ta,0.);
-       vec3 rd = cm * normalize(vec3(uv.xy,5.));
-           
-       vec3 c = render(ro,rd);
+       rd = cm * normalize(vec3(uv.xy,2.));
+       vec4 d = trace(ro,rd);            
+       vec3 p = ro + rd * d.x;
+       vec3 n = calcNormal(p);
+       vec3 c = render(ro,rd,l);
 
-       c = pow(c,vec3(.4545));
-       color += c;
-   
-#if AA > 1 
-
+       #ifdef ACES
+       c = aces(c);
+       #endif  
+    
+       c = pow(c,vec3(GAMMA));
+       fc += c;
    }
 }   
-   color /= float(AA*AA);
-#endif
+  
+   #ifdef VERT_BAR
+   fc = bar(uv.x,fc,vec3(.5),1.25,.5);
+   #endif
 
-   fragColor = vec4(color,1.0);
+   fc /= float(AA*AA);
+
+   fragColor = vec4(fc,1.0);
 
 
 }
