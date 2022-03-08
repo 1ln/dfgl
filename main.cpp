@@ -18,6 +18,7 @@ void scroll_callback(GLFWwindow* window,double xoff,double yoff);
 void key_callback(GLFWwindow* window,int key,int scancode,int action,int mods);  
 void processInput(GLFWwindow *window);
 void saveImage(char* filepath,GLFWwindow* window);
+void reload(GLuint* program,const char* vert,const char* frag);
 
 const unsigned int width  = 800;
 const unsigned int height = 600;
@@ -129,6 +130,10 @@ int main(int argc,char** argv) {
     
     while (!glfwWindowShouldClose(window)) {
   
+        if(glfwGetKey(window,GLFW_KEY_R)) {  
+        reload_shader(&shader_program,"vert.glsl",frag.c_str);
+        }
+
         float current_frame = glfwGetTime(); 
         dt = current_frame - last_frame;
         last_frame = current_frame;
@@ -201,6 +206,21 @@ void processInput(GLFWwindow *window) {
 
 void framebuffer_size_callback(GLFWwindow* window,int w,int h) {
     glViewport(0,0,w,h);
+}
+
+void reload_shader( 
+    GLuint* program,
+    const char * vert,
+    const char * frag) {
+
+    assert(program && vert && frag); 
+    Shader shader("vert.glsl","render.glsl");  
+    GLuint reload_program = shader;
+
+    if(reload_program) {
+    glDeleteProgram(*program)
+    *program = reload;
+    }
 }
 
 void mouse_callback(GLFWwindow* window,double xpos,double ypos) { 
