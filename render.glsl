@@ -73,64 +73,6 @@ float h11(float p) {
 
 #endif
 
-float h31(vec3 p) {
-    p = 17.*fract(p * .46537+vec3(.11,.17,.13));
-    return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
-}
-
-vec3 h33(vec3 p) {
-    uvec3 h = uvec3(ivec3(  p)) * 
-    uvec3(1391674541U,SEED,2860486313U);
-    h = (h.x ^ h.y ^ h.z) * uvec3(1391674541U,SEED,2860486313U);
-    return vec3(h) * (1.0/float(0xffffffffU));
-
-}
- 
-vec2 mod289(vec2 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 mod289(vec3 p) { return p - floor(p * (1. / 289.)) * 289.; }
-vec3 permute(vec3 p) { return mod289(((p * 34.) + 1.) * p); } 
-
-float ns2(vec2 p) {
-
-    const float k1 = (3. - sqrt(3.))/6.;
-    const float k2 = .5 * (sqrt(3.) -1.);
-    const float k3 = -.5773;
-    const float k4 = 1./41.;
-
-    const vec4 c = vec4(k1,k2,k3,k4);
-    
-    vec2 i = floor(p + dot(p,c.yy));
-    vec2 x0 = p - i + dot(i,c.xx);
-  
-    vec2 i1;
-    i1 = (x0.x > x0.y) ? vec2(1.,0.) : vec2(0.,1.);
-    vec4 x12 = x0.xyxy + c.xxzz;
-    x12.xy -= i1;
-
-    i = mod289(i);
-    
-    vec3 p1 = permute(permute(i.y + vec3(0.,i1.y,1.))
-        + i.x + vec3(0.,i1.x,1.));
-  
-    p1 = permute(mod289(p1 + vec3(float(SEED))));
-
-    vec3 m = max(.5 - 
-    vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);
-    m = m * m; 
-    m = m * m;
-
-    vec3 x = fract(p1 * c.www) - 1.;
-    vec3 h = abs(x) - .5;
-    vec3 ox = floor(x + .5);
-    vec3 a0 = x - ox; 
-    m *= 1.792842 - 0.853734 * (a0 * a0 + h * h);
-     
-    vec3 g;
-    g.x = a0.x * x0.x + h.x * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-    return 130. * dot(m,g);
-}
-
 float cell(vec3 x,float n) {
     x *= n;
     vec3 p = floor(x);
@@ -226,10 +168,6 @@ float sincPh(float x,float k) {
     return sin(a)/a;
 }
 
-float easeIn4(float t) {
-    return t * t;
-}
-
 float easeOut4(float t) {
     return -1.0 * t * (t - 2.0);
 }
@@ -240,10 +178,6 @@ float easeInOut4(float t) {
     } else {
         return -0.5 * ((t - 1.0) * (t - 3.0) - 1.0);
     }
-}
-
-float easeIn3(float t) {
-    return t * t * t;
 }
 
 float easeOut3(float t) {
@@ -332,9 +266,13 @@ float plot(vec2 p,float x,float h) {
            smoothstep(x,x+h,p.y);
 }
 
-float ls(float a,float b,float t,float n) {
-    float f = mod(t,n);
+float ls(float a,float b,float n) {
+    float f = mod(T,n);
     return clamp((f-a)/(b-a),0.,1.);
+}
+
+float rept(float rs,float s) {
+    return mod(T,rs)/s;
 }
 
 vec3 rl(vec3 p,float c,vec3 l) { 
@@ -347,7 +285,7 @@ vec3 rp(vec3 p,vec3 s) {
     return q;
 } 
 
-vec2 rad(vec2 p,float r) {
+vec2 plr(vec2 p,float r) {
     float n = radians(360.)/r;
     float a = atan(p.x,p.y)+n*.5;
     a = floor(a/n)*n;
@@ -440,56 +378,7 @@ mat2 rot(float a) {
 vec3 rot(vec3 p,vec4 q) {
     return 2. * cross(q.xyz,p * q.w + cross(q.xyz,p)) + p;
 }
-
-mat3 ra3(vec3 axis,float theta) {
-
-axis = normalize(axis);
-
-    float c = cos(theta);
-    float s = sin(theta);
-
-    float oc = 1.0 - c;
-
-    return mat3(
  
-        oc * axis.x * axis.x + c, 
-        oc * axis.x * axis.y - axis.z * s,
-        oc * axis.z * axis.x + axis.y * s, 
-    
-        oc * axis.x * axis.y + axis.z * s,
-        oc * axis.y * axis.y + c, 
-        oc * axis.y * axis.z - axis.x * s,
-
-        oc * axis.z * axis.x - axis.y * s,
-        oc * axis.y * axis.z + axis.x * s, 
-        oc * axis.z * axis.z + c);
-
-}
-
-mat4 ra4(vec3 axis,float theta) {
-axis = normalize(axis);
-
-    float c = cos(theta);
-    float s = sin(theta);
-
-    float oc = 1.0 - c;
-
-    return mat4(
- 
-        oc * axis.x * axis.x + c, 
-        oc * axis.x * axis.y - axis.z * s,
-        oc * axis.z * axis.x + axis.y * s,0.,
-    
-        oc * axis.x * axis.y + axis.z * s,
-        oc * axis.y * axis.y + c, 
-        oc * axis.y * axis.z - axis.x * s,0.,
-
-        oc * axis.z * axis.x - axis.y * s,
-        oc * axis.y * axis.z + axis.x * s,
-        oc * axis.z * axis.z + c,0.,0.,0.,0.,1.);
-
-}
-
 mat3 camera(vec3 ro,vec3 ta,float r) {
      
     vec3 w = normalize(ta - ro); 
@@ -1102,34 +991,12 @@ vec2(sin(an2),cos(an2)),1.5,rb),
 
 #ifdef DF9   
 vec3 q = p.xzy;
-q.xy = rad(q.xy,8.);
+q.xy = plr(q.xy,8.);
 q.y -= 2.;
 R length(q)-.5,4.));
 #endif
 
 #ifdef DF10
-float d = 0.;
-
-vec3 q = vec3(p); 
-
-float s = 5.;
-vec3 loc = floor(p/s);
-q.xz = mod(q.xz,s) - .5 * s;
-
-float h = ns2(loc.xz*.25 + ns2(loc.xz*.005));
-
-if(h < h11(25.)) {
-   d = sphere(q,2.);
-} else {
-   d = 1.;
-}
-
-float pl = plane(p,vec4(0.,1.,0.,1.));
-R smou(pl,d,.5),2.));
-
-#endif
-
-#ifdef DF11
 
 p *= 4.;
 float d; 
@@ -1215,7 +1082,7 @@ return vec4(bgc,alpha);
 }
 
 float glowing(float d,float r,float i) {
-    return pow(r/max(d,1e-5),i);
+    return pow(r/max(d,EPS),i);
 }
 
 float glow_trace(vec3 ro,vec3 rd,inout float glow) { 
@@ -1322,7 +1189,7 @@ vec3 fog(vec3 c,vec3 b,float f,float d) {
     
 vec3 scatter(vec3 c,vec3 b,float f,float d,vec3 rd,vec3 l) {
     return mix(c,mix(b,c,pow(max(dot(rd,l),0.),8.)),
-               1.-exp(-f*d*d*d));      
+    1.-exp(-f*d*d*d));      
 }
 
 float ambient(vec3 n) {
@@ -1348,7 +1215,7 @@ float spotlight(vec3 p,vec3 n,vec3 l,float ca,float cd) {
     vec3 dir = normalize(vec3(0.,-1.,0));
     vec3 r = normalize(l-p);
     return (dot(r,-dir)-cos(radians(cd)))/
-           (cos(radians(ca))-cos(radians(cd)));
+    (cos(radians(ca))-cos(radians(cd)));
 }
 
 vec3 linear(vec3 ro,
@@ -1393,8 +1260,6 @@ vec3 render(vec3 ro,vec3 rd,vec3 l) {
     vec3 c = vec3(0.),
          fc = vec3(.5);   
     
-    c = fc - max(rd.y,1.); 
-
     vec4 d;
 
     for(int i = 0; i < 3; i++) {
