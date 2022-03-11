@@ -1060,13 +1060,6 @@ vec4 trace(vec3 ro,vec3 rd) {
 
 }
 
-
-
-
-
-
-
-
 vec4 trace(vec3 ro,vec3 rd,vec3 col) {
 
 float s = NEAR;
@@ -1307,16 +1300,10 @@ vec3 render(vec3 ro,vec3 rd,vec3 l) {
                rd = r;              
                c *= vec3(1.,0.,0.); 
            }                  
-
-
    
        }
 
        c = fog(c,fc,.0001,d.x);
-
-       c *= glow_exp(c,rd,l);   
-
-
        
        if(i == 0) {
            fc = c;
