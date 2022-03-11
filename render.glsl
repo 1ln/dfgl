@@ -27,7 +27,7 @@ uniform int ri;
 
 #define SEED 1
 
-#define EPS 0.0001
+#define EPS 0.00001
 #define STEPS 255
 #define FOV 2.
 #define VFOV 1.
@@ -1105,7 +1105,7 @@ float glow_trace(vec3 ro,vec3 rd,inout float glow) {
 
     for(int i = 0; i < 125; i++ ) {
         float d = scene(ro + rd * s).x;
-        glow += glowing(d,.001,.5);
+        glow += glowing(d,.0001,.5);
 
         if(d < EPS) { return s; }
         
@@ -1267,8 +1267,6 @@ vec3 linear(vec3 ro,
 
 
 
-
-
 vec3 render(vec3 ro,vec3 rd,vec3 l) {
 
     vec3 c = vec3(0.),
@@ -1325,6 +1323,7 @@ vec3 ta = vec3(0.);
 vec3 ro = vec3(1.,2.,5.);
 vec3 rd = vec3(0.);
 vec3 l = normalize(vec3(10.));
+float glow = 0.; 
 
 for(int i = 0; i < AA; i++ ) {
    for(int k = 0; k < AA; k++) {
@@ -1341,9 +1340,14 @@ for(int i = 0; i < AA; i++ ) {
        vec3 n = calcNormal(p);
        vec3 c = render(ro,rd,l);
 
+       #ifdef GLOW 
+       float glo = glow_trace(ro,rd,glow); 
+       c = glow*vec3(.5);
+       #endif     
+
        #ifdef ACES
        c = aces(c);
-       #endif  
+       #endif   
     
        c = pow(c,vec3(GAMMA));
        fc += c;
