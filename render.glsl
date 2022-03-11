@@ -378,7 +378,7 @@ mat2 rot(float a) {
 vec3 rot(vec3 p,vec4 q) {
     return 2. * cross(q.xyz,p * q.w + cross(q.xyz,p)) + p;
 }
- 
+
 mat3 camera(vec3 ro,vec3 ta,float r) {
      
     vec3 w = normalize(ta - ro); 
@@ -387,6 +387,31 @@ mat3 camera(vec3 ro,vec3 ta,float r) {
     vec3 v = normalize(cross(u,w));
 
     return mat3(u,v,w); 
+}
+
+mat3 ra3(vec3 axis,float theta) {
+
+axis = normalize(axis);
+
+    float c = cos(theta);
+    float s = sin(theta);
+
+    float oc = 1.0 - c;
+
+    return mat3(
+ 
+        oc * axis.x * axis.x + c, 
+        oc * axis.x * axis.y - axis.z * s,
+        oc * axis.z * axis.x + axis.y * s, 
+    
+        oc * axis.x * axis.y + axis.z * s,
+        oc * axis.y * axis.y + c, 
+        oc * axis.y * axis.z - axis.x * s,
+
+        oc * axis.z * axis.x - axis.y * s,
+        oc * axis.y * axis.z + axis.x * s, 
+        oc * axis.z * axis.z + c);
+
 }
 
 mat3 camEuler(float yaw,float pitch,float roll) {
@@ -413,10 +438,6 @@ vec3 cam_orbit(vec3 ro,float x,float y) {
 float circle(vec2 p,float r) {
     return length(p) - r;
 }
-
-
-
-
 
 float circle3(vec2 p,vec2 a,vec2 b,vec2 c,float rad) {
     float d = distance(a,b);
