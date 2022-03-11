@@ -58,7 +58,7 @@ vec2 csq(vec2 z) {
 
 #ifdef HASH_INT
 
-float h11(float p) {
+float h(float p) {
     uint st = uint(p) * 747796405u + 2891336453u + uint(SEED);
     uint wd = ((st >> ((st >> 28u) + 4u)) ^ st) * 277803737u;
     uint h = (wd >> 22u) ^ wd;
@@ -67,7 +67,7 @@ float h11(float p) {
 
 #else
 
-float h11(float p) {
+float h(float p) {
     return fract(sin(p)*float(43758.5453));
 }
 
@@ -85,7 +85,7 @@ float cell(vec3 x,float n) {
             for(int k = -1; k <= 1; k++) { 
 
                 vec3 b = vec3(float(k),float(j),float(i));
-                vec3 r = h33( p + b );
+                vec3 r = vec3(h(p.x+b.x+h(p.y+b.y+h(p.z+b.z))));
                 
                 vec3 diff = (b + r - f);
 
@@ -107,10 +107,10 @@ float n3(vec3 x) {
     f = f * f * (3.0 - 2.0 * f);
     float q = p.x + p.y * 157.0 + 113.0 * p.z;
 
-    return mix(mix(mix(h11(q + 0.0),h11(q + 1.0),f.x),
-           mix(h11(q + 157.0),h11(q + 158.0),f.x),f.y),
-           mix(mix(h11(q + 113.0),h11(q + 114.0),f.x),
-           mix(h11(q + 270.0),h11(q + 271.0),f.x),f.y),f.z);
+    return mix(mix(mix(h(q + 0.0),h(q + 1.0),f.x),
+           mix(h(q + 157.0),h(q + 158.0),f.x),f.y),
+           mix(mix(h(q + 113.0),h(q + 114.0),f.x),
+           mix(h(q + 270.0),h(q + 271.0),f.x),f.y),f.z);
 }
 
 float f3(vec3 p) {
@@ -881,7 +881,7 @@ float menger(vec3 p,int n,float s,float d) {
 float dfn(ivec3 i,vec3 f,ivec3 c) {
 
     float d = 0.;
-    float rad = .5*h31(i+c);  
+    float rad = .5*h(i.x+c.x+h(i.y+c.y+h(i.z+c.z))); 
     d = length(f-vec3(c))-rad;
 
     return d;
@@ -1002,8 +1002,8 @@ p *= 4.;
 float d; 
 
 for(int i = 0; i < 12; i++) { 
-vec2 f = 5. * sin(2.*vec2(h11(i),h11(i))); 
-float r = mix(.5,2.,h11(i));
+vec2 f = 5. * sin(2.*vec2(h(i),h(i))); 
+float r = mix(.5,2.,h(i));
 d = smin(d,circle(p-f,r),2.);
 }
 #endif
