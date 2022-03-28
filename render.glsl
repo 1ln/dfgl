@@ -17,8 +17,8 @@ uniform int dn;
 uniform int lf;
 uniform int ri;
 
-uniform vec3 ro;
-uniform vec3 ta;
+uniform vec3 cam_pos;
+uniform vec3 cam_tar;
 
 //Render
 //2022
@@ -1309,6 +1309,9 @@ return fc;
 }
 
 void main() { 
+
+vec3 ro = cam_pos; 
+vec3 ta = cam_tar;
 
 vec3 fc = vec3(0.);
 vec3 rd = vec3(0.);
