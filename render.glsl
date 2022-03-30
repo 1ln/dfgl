@@ -1264,22 +1264,39 @@ vec3 linear(vec3 ro,
 
 vec3 render(vec3 ro,vec3 rd,vec3 l) {
 
-    vec3 c = vec3(0.),
-         fc = vec3(.5);   
-    
+    vec3 c = vec3(0.);
+    vec3 bg = vec3(0.5);   
+    vec3 fc = vec3(.5);     
+    vec3 linear = vec3(0.); 
+
     vec4 d;
 
     for(int i = 0; i < 3; i++) {
        d = trace(ro,rd);
-        
-       vec3 p = ro + rd * d.x;
-       vec3 n = calcNormal(p);
-       vec3 r = reflect(rd,n);
-       c = linear(p,rd,n,l,d);
-       ro = p + n * .005;  
       
        if(d.y >= 0.) {
+        
+           vec3 p = ro + rd * d.x;
+           vec3 n = calcNormal(p);
+           vec3 r = reflect(rd,n);
+      
+           float amb = ambient(n);
+           float dif = diffuse(n,l);
+           float spe = specular(n,rd,l);
+           float fre = fresnel(n,rd);   
+  
+           float sh = shadow(ro,l);
+           float ao = calcAO(p,n);
+         
+           linear += dif * vec3(.5) * sh;
+           linear += amb * vec3(0.01);
+           linear += 5. * fre * vec3(.1);
+           linear += .5 * spe * vec3(1.);                
+           c = linear;
+           c += bg;
 
+           ro = p + n * .005;  
+           
            if(d.y == 1.) {
                c *= vec3(.5,1.,.5);   
            }
@@ -1296,7 +1313,7 @@ vec3 render(vec3 ro,vec3 rd,vec3 l) {
    
        }
 
-       c = fog(c,fc,.0001,d.x);
+       c = fog(c,bg,.0001,d.x);
        
        if(i == 0) {
            fc = c;
@@ -1314,7 +1331,6 @@ vec3 ro = cam_pos;
 vec3 ta = cam_tar;
 
 vec3 fc = vec3(0.);
-vec3 rd = vec3(0.);
 vec3 l = normalize(vec3(10.));
 float glow = 0.; 
 
@@ -1327,10 +1343,7 @@ for(int i = 0; i < AA; i++ ) {
 
        //mat3 cm = camEuler(.001*(2.*radians(180.))*time,10.,0.);
        mat3 cm = camera(ro,ta,0.);
-       rd = cm * normalize(vec3(uv.xy,2.));
-       vec4 d = trace(ro,rd);            
-       vec3 p = ro + rd * d.x;
-       vec3 n = calcNormal(p);
+       vec3 rd = cm * normalize(vec3(uv.xy,2.));
        vec3 c = render(ro,rd,l);
 
        #ifdef GLOW 
