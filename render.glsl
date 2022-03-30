@@ -32,7 +32,7 @@ uniform vec3 cam_tar;
 #define SEED 1
 
 #define AA 1
-#define EPS 0.00001
+#define EPS 0.0001
 #define STEPS 255
 #define FOV 2.
 #define VFOV 1.
@@ -1227,46 +1227,11 @@ float spotlight(vec3 p,vec3 n,vec3 l,float ca,float cd) {
     (cos(radians(ca))-cos(radians(cd)));
 }
 
-vec3 linear(vec3 ro,
-            vec3 rd,
-            vec3 n,            
-            vec3 l,           
-            vec4 d
-            ) {
-
-    vec3 p = ro + rd * d.x;
-
-    vec3 linear = vec3(0.);
-
-    vec3 r = reflect(rd,n);
-    float ref = smoothstep(-2.,2.,rd.y);
-
-    ref *= shadow(p,r); 
-
-    float amb = ambient(n);
-    float dif = diffuse(n,l);
-    float spe = specular(n,rd,l);
-    float fre = fresnel(n,rd);   
-  
-    float sh = shadow(ro,l);
-    float ao = calcAO(p,n);
-         
-    linear += dif * vec3(.5) * sh;
-    linear += amb * vec3(0.01);
-    linear += 5. * fre * vec3(.1);
-    linear += .5 * spe * vec3(1.);                
-
-    return linear;   
-    
-}
-
-
-
 vec3 render(vec3 ro,vec3 rd,vec3 l) {
 
     vec3 c = vec3(0.);
     vec3 bg = vec3(0.5);   
-    vec3 fc = vec3(.5);     
+    vec3 fc = vec3(.0);     
     vec3 linear = vec3(0.); 
 
     vec4 d;
