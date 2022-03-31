@@ -1288,6 +1288,7 @@ vec3 c = vec3(0.);
 vec3 fc = vec3(0.); 
 
 vec3 r = vec3(.5);
+vec3 ref = vec3(0.);
 
 vec3 l = normalize(vec3(10.));
 float glow = 0.; 
