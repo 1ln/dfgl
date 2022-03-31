@@ -1256,12 +1256,12 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
     
            if(d.y == 1.) {
                c += vec3(.5,1.,.5);   
-               ref = vec3(.5);     
+               ref = vec3(.01);     
            }
     
            if(d.y == 2.) {      
                c += vec3(.5);
-               ref = vec3(.1,.05,.1);
+               ref = vec3(.1);
 
            }
 
@@ -1270,12 +1270,12 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
                ref = vec3(.1);
            }                  
    
-          ro = p * EPS;
+          ro = p + n * EPS;
           rd = r; 
 
        }
 
-c = fog(c,bg,.0001,d.x);       
+c = fog(c,bg,.01,d.x);       
 return c;
 }
 
