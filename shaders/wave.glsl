@@ -592,7 +592,7 @@ float rhombus(vec2 p,vec2 b) {
 float trapezoid(vec2 p,float r1,float r2,float h) {
     vec2 k1 = vec2(r2,h);
     vec2 k2 = vec2(r2-r1,2.*h);
-    p.x = abs(p.x);
+    \p.x = abs(p.x);
     vec2 ca = vec2(p.x-min(p.x,(p.y<0.)?r1:r2),abs(p.y)-h);
     vec2 cb = p - k1+k2*clamp(dot(k1-p,k2)/dot2(k2),0.,1.);
     float s = (cb.x<0. && ca.y<0.) ? -1.:1.;
@@ -937,53 +937,15 @@ float base_fractal(vec3 p,float d) {
      return d;
 } 
 
-#define DF0
 #define R res = opu(res,vec2(
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
 
-#ifdef DF0
 vec3 q = p;
 p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
-q.xz *= rot(T*.5);
 
-R sphere(q-vec3(1.,-.5,2.),.5),3.));
-R box(p,vec3(1.)),2.));
-R plane(q,vec4(0.,1.,0.,1.)),1.));
-#endif
 
-#ifdef DF1
-p = rp(p,vec3(5.));
-R max(p.y,box(p,vec3(1.))),1.));
-#endif
-
-#ifdef DF2
-R hyperbola(p,1.,4.),1.));
-#endif
-
-#ifdef DF3
-p.xz *= rot(T*.1);
-float scl = .05;
-p = rl(p/scl,5.,vec3(5.))*scl;
-R box(p/scl,vec3(1.)) * scl,3.));
-#endif 
-
-#ifdef DF4
-R smin(length(p-vec3(0.,1.,0.))-.5,
-box(p,vec3(1.)),.1),125.));
-#endif
-
-#ifdef DF5
-R re(p.yzx,arch(-p.yz,
-vec2(0.,1.),.25,vec2(2.,.05)),.075),5.));
-#endif
-
-#ifdef DF6
-R boxf(p,vec3(1.),.05),75.));
-#endif
-
-#ifdef DF7
 float scl = .05;
 
 p = rl(p/scl,1.5,vec3(5.,0.,0.))*scl;
@@ -992,44 +954,6 @@ p.y += S(.25,.5,sin(p.z*.25)+.05)*.25;
 p.y += S(.5,-2.,sin(p.z*.5)+.5)*-2.;
 
 R max(p.z-2.5,box(p/scl,vec3(.25,.25,125.))*scl),95.));
-#endif    
-
-#ifdef DF8
-float an1 = PI * (.5+.5*cos(.5));
-float an2 = PI * (.5+.5*cos(1.));
-float rb  = .1 * (.5+.5*cos(5.));
- 
-R re(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)), 
-vec2(sin(an2),cos(an2)),1.25,rb),
-.1),2.));
-
-an1 = PI * (-.5+.5*cos(.502));
-R re(p.xzy,arc(p.xz,vec2(sin(an1),cos(an1)),
-vec2(sin(an2),cos(an2)),1.5,rb),
-.16),1.));
-#endif
-
-#ifdef DF9   
-vec3 q = p.xzy;
-q.xy = plr(q.xy,8.);
-q.y -= 2.;
-R length(q)-.5,4.));
-#endif
-
-#ifdef DF10
-
-p *= 4.;
-float d; 
-
-for(int i = 0; i < 12; i++) { 
-vec2 f = 5. * sin(2.*vec2(h(i),h(i))); 
-float r = mix(.5,2.,h(i));
-d = smin(d,circle(p-f,r),2.);
-}
-#endif
-
-
-
 
 return res;
 
