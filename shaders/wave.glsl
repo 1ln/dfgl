@@ -17,10 +17,7 @@ uniform int dn;
 uniform int lf;
 uniform int ri;
 
-uniform vec3 cam_pos;
-uniform vec3 cam_tar;
-
-//Render
+//Wave
 //2022
 
 #define FC gl_FragCoord.xy
@@ -73,7 +70,7 @@ float h(float p) {
 #else
 
 float h(float p) {
-    return fract(sin(p)*float(43758.5453));
+    return fract(sin(p)*float(43758.5453+SEED));
 }
 
 #endif
@@ -944,10 +941,11 @@ vec2 res = vec2(1.0,0.0);
 
 float scl = .105;
 
-p.y += S(.25,.5,sin(p.z*.25)+.05)*.25;
-p.y += S(.5,-2.,sin(p.z*.5)+.5)*-2.;
+p.y += sin(p.z+n3(p)+22.25)*.5;
 
-R max(0.,box(p/scl,vec3(.25,.025,1e10))*scl),95.));
+
+
+R max(0.,box(p/scl,vec3(10.,.25,1e10))*scl),95.));
 
 
 
@@ -977,28 +975,6 @@ vec4 trace(vec3 ro,vec3 rd) {
         if(e < s) { d = -1.0; }
         return vec4(s,d,h,1.);
 
-}
-
-float glowing(float d,float r,float i) {
-    return pow(r/max(d,EPS),i);
-}
-
-float glow_trace(vec3 ro,vec3 rd,inout float glow) { 
-    float s = 0.;
-    float e = 100.;
-
-    for(int i = 0; i < 125; i++ ) {
-        float d = scene(ro + rd * s).x;
-        glow += glowing(d,.0001,.5);
-
-        if(d < EPS) { return s; }
-        
-        s += d;
-
-    if(e <= s ) { return e; }
-
-    }
-    return e;
 }
 
 float shadow(vec3 ro,vec3 rd ) {
@@ -1068,15 +1044,6 @@ vec3 aces(vec3 x) {
     return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);
 }  
 
-vec3 glow_exp(vec3 c,vec3 rd,vec3 l) {
-    float rad = dot(rd,l);
-    c += c * vec3(2.,1.,.1) * expstep(rad,250.);
-    c += c * vec3(2.,.5,1.) * expstep(rad,125.);  
-    c += c * vec3(1.,.1,.5) * expstep(rad,100.);       
-    c += c * vec3(.5,1.,1.) * expstep(rad,75.);
-    return c;
-}
-
 vec3 fog(vec3 c,vec3 b,float f,float d) {
     return mix(c,b,1.-exp(-f*d*d*d));
 }
@@ -1105,13 +1072,6 @@ float specular(vec3 n,vec3 rd,vec3 l) {
     return spe;
 }
 
-float spotlight(vec3 p,vec3 n,vec3 l,float ca,float cd) {
-    vec3 dir = normalize(vec3(0.,-1.,0));
-    vec3 r = normalize(l-p);
-    return (dot(r,-dir)-cos(radians(cd)))/
-    (cos(radians(ca))-cos(radians(cd)));
-}
-
 vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
 
     vec3 c = vec3(0.);
@@ -1138,6 +1098,9 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
            c += 5. * fre * vec3(.1);
            c += .5 * spe * vec3(1.);                
     
+           float lr = dot(rd,l);
+           c += c * vec3(1.,.4,.1)*expstep(lr,100.);            
+           c += c * vec3(.1,.4,.1)*expstep(lr,25.);
     
            if(d.y == 1.) {
                c += vec3(.5,1.,.5);   
@@ -1160,14 +1123,15 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
 
        }
 
-c = fog(c,bg,.01,d.x);       
+c = scatter(c,bg,.01,d.x,rd,l);       
 return c;
+
 }
 
 void main() { 
 
 vec3 ro = vec3(2.,1.,2.);
-vec3 ta = cam_tar;
+vec3 ta = vec3(0.); 
 
 vec3 c = vec3(0.);
 vec3 fc = vec3(0.); 
@@ -1175,8 +1139,7 @@ vec3 fc = vec3(0.);
 vec3 r = vec3(.5);
 vec3 ref = vec3(0.);
 
-vec3 l = normalize(vec3(10.));
-float glow = 0.; 
+vec3 l = normalize(vec3(10.,2.,2.));
 
 for(int i = 0; i < AA; i++ ) {
    for(int k = 0; k < AA; k++) {
@@ -1185,20 +1148,13 @@ for(int i = 0; i < AA; i++ ) {
        vec2 uv = (2.* (FC+o) -
        RE.xy)/RE.y;
 
-       //mat3 cm = camEuler(.001*(2.*radians(180.))*time,10.,0.);
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,2.));
-
 
        for(int i = 0; i < 3; i++) {      
        c += render(ro,rd,ref,l)*r;
        r *= ref;    
        }
-
-       #ifdef GLOW 
-       float glo = glow_trace(ro,rd,glow); 
-       c = glow*vec3(.5);
-       #endif     
 
        #ifdef ACES
        c = aces(c);
@@ -1209,10 +1165,6 @@ for(int i = 0; i < AA; i++ ) {
    }
 }   
   
-   #ifdef VERT_BAR
-   fc = bar(uv.x,fc,vec3(.5),1.25,.5);
-   #endif
-
    fc /= float(AA*AA);
 
    fragColor = vec4(fc,1.0);
