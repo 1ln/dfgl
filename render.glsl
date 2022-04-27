@@ -29,6 +29,7 @@ uniform vec3 cam_tar;
 #define S smoothstep
 #define L length
 
+#define BOXES
 #define SEED 1
 
 #define AA 1
@@ -44,6 +45,12 @@ uniform vec3 cam_tar;
 
 #define PI radians(180.)
 #define TAU radians(180.)*2.
+
+#define UNIT_BOX
+#define PLANE
+#define ROT
+#define FOG
+
 
 
 
@@ -302,7 +309,7 @@ vec3 rp(vec3 p,vec3 s) {
     return q;
 } 
 
-vec2 plr(vec2 p,float r) {
+vec2 polar(vec2 p,float r) {
     float n = TAU/r;
     float a = atan(p.x,p.y)+n*.5;
     a = floor(a/n)*n;
@@ -937,7 +944,6 @@ float base_fractal(vec3 p,float d) {
      return d;
 } 
 
-#define DF0
 #define R res = opu(res,vec2(
 vec2 scene(vec3 p) { 
 
@@ -946,7 +952,6 @@ vec2 res = vec2(1.0,0.0);
 vec3 q = p;
 
 #ifdef ROT
-//p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
 q.xz *= rot(T*.5);
 #endif
 
@@ -958,8 +963,10 @@ R plane(q,vec4(0.,1.,0.,1.)),1.));
 R boxf(p,vec3(1.),.05),2.));
 #endif
 
+//demos =====
+
 #ifdef BOXES
-p.xz *= rot(T*.1);
+p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
 float scl = .05;
 p = rl(p/scl,5.,vec3(5.))*scl;
 R box(p/scl,vec3(1.)) * scl,3.));
@@ -970,7 +977,7 @@ R re(p.yzx,arch(-p.yz,
 vec2(0.,1.),.25,vec2(2.,.05)),.075),5.));
 #endif
 
-#ifdef DF7
+#ifdef WAVE_FORM 
 float scl = .05;
 
 p = rl(p/scl,1.5,vec3(5.,0.,0.))*scl;
@@ -981,7 +988,7 @@ p.y += S(.5,-2.,sin(p.z*.5)+.5)*-2.;
 R max(p.z-2.5,box(p/scl,vec3(.25,.25,125.))*scl),95.));
 #endif    
 
-#ifdef DF8
+#ifdef ARCS
 float an1 = PI * (.5+.5*cos(.5));
 float an2 = PI * (.5+.5*cos(1.));
 float rb  = .1 * (.5+.5*cos(5.));
@@ -996,9 +1003,9 @@ vec2(sin(an2),cos(an2)),1.5,rb),
 .16),1.));
 #endif
 
-#ifdef DF9   
+#ifdef POLAR_SPHERES
 vec3 q = p.xzy;
-q.xy = plr(q.xy,8.);
+q.xy = polar(q.xy,8.);
 q.y -= 2.;
 R length(q)-.5,4.));
 #endif
