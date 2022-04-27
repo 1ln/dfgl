@@ -73,7 +73,7 @@ float h(float p) {
 #else
 
 float h(float p) {
-    return fract(sin(p)*float(43758.5453));
+    return fract(sin(p)*float(43758.5453+SEED));
 }
 
 #endif
@@ -943,44 +943,31 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
-#ifdef DF0
 vec3 q = p;
-p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
-q.xz *= rot(T*.5);
 
-R sphere(q-vec3(1.,-.5,2.),.5),3.));
-R box(p,vec3(1.)),2.));
+#ifdef ROT
+//p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
+q.xz *= rot(T*.5);
+#endif
+
+#ifdef PLANE
 R plane(q,vec4(0.,1.,0.,1.)),1.));
 #endif
 
-#ifdef DF1
-p = rp(p,vec3(5.));
-R max(p.y,box(p,vec3(1.))),1.));
+#ifdef UNIT_BOX
+R boxf(p,vec3(1.),.05),2.));
 #endif
 
-#ifdef DF2
-R hyperbola(p,1.,4.),1.));
-#endif
-
-#ifdef DF3
+#ifdef BOXES
 p.xz *= rot(T*.1);
 float scl = .05;
 p = rl(p/scl,5.,vec3(5.))*scl;
 R box(p/scl,vec3(1.)) * scl,3.));
 #endif 
 
-#ifdef DF4
-R smin(length(p-vec3(0.,1.,0.))-.5,
-box(p,vec3(1.)),.1),125.));
-#endif
-
-#ifdef DF5
+#ifdef ARCH
 R re(p.yzx,arch(-p.yz,
 vec2(0.,1.),.25,vec2(2.,.05)),.075),5.));
-#endif
-
-#ifdef DF6
-R boxf(p,vec3(1.),.05),75.));
 #endif
 
 #ifdef DF7
@@ -1260,7 +1247,14 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
 
        }
 
+#ifdef FOG
 c = fog(c,bg,.01,d.x);       
+#endif
+
+#ifdef SCATTER
+c = scatter(c,bg,.01,d.x,rd,l); 
+#endif
+
 return c;
 }
 
