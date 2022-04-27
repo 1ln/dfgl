@@ -1016,21 +1016,6 @@ q.y -= 2.;
 R length(q)-.5,4.));
 #endif
 
-#ifdef DF10
-
-p *= 4.;
-float d; 
-
-for(int i = 0; i < 12; i++) { 
-vec2 f = 5. * sin(2.*vec2(h(i),h(i))); 
-float r = mix(.5,2.,h(i));
-d = smin(d,circle(p-f,r),2.);
-}
-#endif
-
-
-
-
 return res;
 
 }
