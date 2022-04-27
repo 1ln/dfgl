@@ -956,18 +956,22 @@ q.xz *= rot(T*.5);
 #endif
 
 #ifdef PLANE
-R plane(q,vec4(0.,1.,0.,1.)),1.));
+R plane(q,vec4(0.,1.,0.,2.)),1.));
 #endif
 
 #ifdef UNIT_BOX
-R boxf(p,vec3(1.),.05),2.));
+R boxf(p,vec3(1.),.01),2.));
 #endif
 
 //demos =====
 
+#ifdef SPHERE
+R L(p)-1.,24.));
+#endif
+
 #ifdef BOXES
 p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
-float scl = .05;
+float scl = .025;
 p = rl(p/scl,5.,vec3(5.))*scl;
 R box(p/scl,vec3(1.)) * scl,3.));
 #endif 
@@ -1231,11 +1235,10 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
            c += amb * vec3(0.01);
            c += 5. * fre * vec3(.1);
            c += .5 * spe * vec3(1.);                
-    
-    
+        
            if(d.y == 1.) {
-               c += vec3(.5,1.,.5);   
-               ref = vec3(.01);     
+               c += vec3(.5);   
+               ref = vec3(.05);     
            }
     
            if(d.y == 2.) {      
@@ -1255,7 +1258,7 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
        }
 
 #ifdef FOG
-c = fog(c,bg,.01,d.x);       
+c = fog(c,bg,.0001,d.x);       
 #endif
 
 #ifdef SCATTER
@@ -1268,6 +1271,9 @@ return c;
 void main() { 
 
 vec3 ro = cam_pos; 
+ro += vec3(1.5);
+
+
 vec3 ta = cam_tar;
 
 vec3 c = vec3(0.);
@@ -1286,7 +1292,6 @@ for(int i = 0; i < AA; i++ ) {
        vec2 uv = (2.* (FC+o) -
        RE.xy)/RE.y;
 
-       //mat3 cm = camEuler(.001*(2.*radians(180.))*time,10.,0.);
        mat3 cm = camera(ro,ta,0.);
        vec3 rd = cm * normalize(vec3(uv.xy,2.));
 
