@@ -592,7 +592,7 @@ float rhombus(vec2 p,vec2 b) {
 float trapezoid(vec2 p,float r1,float r2,float h) {
     vec2 k1 = vec2(r2,h);
     vec2 k2 = vec2(r2-r1,2.*h);
-    \p.x = abs(p.x);
+    p.x = abs(p.x);
     vec2 ca = vec2(p.x-min(p.x,(p.y<0.)?r1:r2),abs(p.y)-h);
     vec2 cb = p - k1+k2*clamp(dot(k1-p,k2)/dot2(k2),0.,1.);
     float s = (cb.x<0. && ca.y<0.) ? -1.:1.;
@@ -942,18 +942,14 @@ vec2 scene(vec3 p) {
 
 vec2 res = vec2(1.0,0.0);
 
-vec3 q = p;
-p.xz *= rot(.5*easeInOut3(sin(T*.5)*1.25)-.125);
-
-
-float scl = .05;
-
-p = rl(p/scl,1.5,vec3(5.,0.,0.))*scl;
+float scl = .105;
 
 p.y += S(.25,.5,sin(p.z*.25)+.05)*.25;
 p.y += S(.5,-2.,sin(p.z*.5)+.5)*-2.;
 
-R max(p.z-2.5,box(p/scl,vec3(.25,.25,125.))*scl),95.));
+R max(0.,box(p/scl,vec3(.25,.025,1e10))*scl),95.));
+
+
 
 return res;
 
@@ -980,41 +976,6 @@ vec4 trace(vec3 ro,vec3 rd) {
 
         if(e < s) { d = -1.0; }
         return vec4(s,d,h,1.);
-
-}
-
-vec4 trace(vec3 ro,vec3 rd,vec3 col) {
-
-float s = NEAR;
-float e = FAR;
-
-vec2 d = vec2(EPS,0.01);
-float radius = 2. * tan(VFOV/2.) / resolution.y * 2.;
-
-vec4 c = vec4(col,1.);
-vec3 bgc = vec3(0.);
-float alpha;
-
-for(int i = 0; i < STEPS; i++) {
-    float rad = s * radius + FOV * abs(s-.5);
-    d.x = scene(ro + s * rd).x; 
-
-    if(d.x < rad) {
-        alpha = smoothstep(rad,-rad,d.x);
-
-        c.rgb += c.a * (alpha * c.rgb);
-        c.a *= (1.-alpha);
-
-        if(d.x < EPS) break;
-    
-    }
-
-    s += max(abs(d.x * .9),.001);
-    if(s > e) break;
-}
-
-bgc = mix(c.rgb,bgc,c.a);
-return vec4(bgc,alpha);
 
 }
 
@@ -1205,7 +1166,7 @@ return c;
 
 void main() { 
 
-vec3 ro = cam_pos; 
+vec3 ro = vec3(2.,1.,2.);
 vec3 ta = cam_tar;
 
 vec3 c = vec3(0.);
