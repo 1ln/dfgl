@@ -437,7 +437,6 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
            float fre = fresnel(n,rd);   
   
            float sh = shadow(p,l);
-           float ao = calcAO(p,n);
          
            c += dif * vec3(.5) * sh;
            c += amb * vec3(0.01);
