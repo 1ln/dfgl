@@ -275,11 +275,6 @@ float plane(vec3 p,vec4 n) {
     return dot(p,n.xyz) + n.w;
 }
 
-float vertcap(vec3 p,float h,float r) {
-    p.y -= clamp(p.y,0.,h);
-    return length(p)-r; 
-}
-
 float capsule(vec3 p,vec3 a,vec3 b,float r) {
     vec3 pa = p - a;
     vec3 ba = b - a;
@@ -307,11 +302,14 @@ float box(vec3 p,vec3 b) {
 vec2 scene(vec3 p) { 
 
 vec2 res = vec2(1.0,0.0);
+vec3 q = p;
 
 float scl = .105;
 
 p.y += sin(p.z+n3(p)+22.25)*.5;
-R max(0.,box(p/scl,vec3(10.,.25,1e10))*scl),95.));
+
+R max(0.,box(p/scl,vec3(1.,.25,1e10))*scl),1.));
+R box(q-vec3(0.,-1.,0.),vec3(.5)),2.));
 
 
 
@@ -440,12 +438,17 @@ vec3 render(inout vec3 ro,inout vec3 rd,inout vec3 ref,vec3 l) {
          
            c += dif * vec3(.5) * sh;
            c += amb * vec3(0.01);
-           c += 5. * fre * vec3(.1);
+           c += .1 * fre * vec3(.1);
            c += .5 * spe * vec3(1.);                
     
-           if(d.y == 3.) {          
-               c += vec3(1.,0.,0.); 
+           if(d.y == 2.) { 
+               c += vec3(.1);
                ref = vec3(.1);
+           }
+
+           if(d.y == 1.) {          
+               c += vec3(1.,0.,0.); 
+               ref = vec3(.0);
            }                  
    
           ro = p + n * EPS;
@@ -460,7 +463,7 @@ return c;
 
 void main() { 
 
-vec3 ro = vec3(2.,1.,2.);
+vec3 ro = vec3(2.,4.,2.);
 vec3 ta = vec3(0.); 
 
 vec3 c = vec3(0.);
