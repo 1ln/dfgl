@@ -44,33 +44,7 @@ float h(float p) {
 
 #endif
 
-float cell(vec2 x,float n,float md) {
-    x *= n;
-    vec2 p = floor(x);
-    vec2 f = fract(x);
-     
-    for(int i = -1; i <= 1; i++) {
-        for(int k = -1; k <= 1; k++) {
-
-                vec2 b = vec2(float(k),float(i));
-
-                vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));
-                r = .5 + .5*sin(TAU+T*r);                
-
-                vec2 diff = (b + r - f);
-
-                float d = length(diff);
-
-                md = .5 *
-                1./
-                max(min(md,2.*d),
-                p.x-p.y);                               
                         
-        }
-    }
- 
-    return md;
-}
 
 float expstep(float x,float k) {
     return exp((x*k)-k);
@@ -96,6 +70,32 @@ for(int i = 0; i < AA; i++ ) {
 
        float d = cell(uv,12.,m_dist); 
        vec2 h = fract(uv); 
+
+
+    vec2 p = floor(x);
+    vec2 f = fract(x);
+     
+    for(int i = -1; i <= 1; i++) {
+        for(int k = -1; k <= 1; k++) {
+
+                vec2 b = vec2(float(k),float(i));
+
+                vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));
+                r = .5 + .5*sin(TAU+T*r);                
+
+                vec2 diff = (b + r - f);
+
+                float d = length(diff);
+
+                md = .5 *
+                1./
+                max(min(md,2.*d),
+                p.x-p.y);                               
+                        
+        }
+    }
+ 
+
 
        c += vec3(d);    
        c += 1.-step(.02,m_dist); 
