@@ -46,15 +46,15 @@ float h(float p) {
 
 float cell(vec2 x,float n,float md) {
     x *= n;
-    vec3 p = floor(x);
-    vec3 f = fract(x);
+    vec2 p = floor(x);
+    vec2 f = fract(x);
      
     for(int i = -1; i <= 1; i++) {
         for(int k = -1; k <= 1; k++) {
 
                 vec2 b = vec2(float(k),float(i));
 
-                vec2 r = vec2(h(p.x+b.x)+h(p.y+b.y)) ;
+                vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));
                 r = .5 + .5*sin(TAU+T*r);                
 
                 vec2 diff = (b + r - f);
