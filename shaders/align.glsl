@@ -86,12 +86,9 @@ for(int i = 0; i < AA; i++ ) {
 
             vec2 diff = (b + r - f);
 
-            d = length(diff)-1.;
+            d = length(diff);
 
-            md = .5 *
-            1./
-            max(.25/min(md,2.5*d),
-            md);                               
+            md = max(md,d) - min(d,md);                              
                         
         }
     }
