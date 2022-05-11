@@ -82,27 +82,28 @@ for(int i = 0; i < AA; i++ ) {
             vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));
             r = .5 + .5*sin(TAU+T*r);                
             r *= .5 + .5 * cos(TAU*T*r);
+            r *= .5;        
 
             vec2 diff = (b + r - f);
 
-            d = length(diff);
+            d = length(diff)-1.;
 
             md = .5 *
             1./
-            max(.5/min(md,2.5*d),
+            max(.25/min(md,2.5*d),
             md);                               
                         
         }
     }
  
-    c += vec3(md);    
-    c += 1.-step(.02,md); 
-    c.g += step(.98,f.x) + step(.98,f.y);
+    c = vec3(md);    
+    c += 1.-step(.2,md); 
+    c.g = step(.98,f.x) + step(.98,f.y);
     c.rg += fm(md,
-    vec2(.1,5.),
-    vec2(.2,.1),
-    vec2(2.,.1),
-    vec2(.5,-.5));
+    vec2(.1,d),
+    vec2(d,.1),
+    vec2(2.,d),
+    vec2(d,-.5));
 
 
     c = pow(c,vec3(GAMMA));
