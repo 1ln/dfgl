@@ -16,7 +16,7 @@ uniform int frame;
 
 #define SEED 1
 
-#define AA 222
+#define AA 2
 
 #define EPS 0.00001
 #define STEPS 255
