@@ -6,15 +6,16 @@ uniform vec2 resolution;
 uniform float time;
 uniform int frame;
 
-//align
+//bars 
 //2022
+//do
 
 #define FC gl_FragCoord.xy
 #define RE resolution
 #define T time
 #define S smoothstep
 
-#define SEED 1
+#define SEED 33
 
 #define AA 2
 
@@ -42,9 +43,7 @@ float h(float p) {
     return fract(sin(p)*float(43758.5453+SEED));
 }
 
-#endif
-
-                        
+#endif                        
 
 float expstep(float x,float k) {
     return exp((x*k)-k);
@@ -66,14 +65,15 @@ for(int i = 0; i < AA; i++ ) {
        vec2 uv = (2.* (FC+o) -
        RE.xy)/RE.y;
 
-       uv *= 3.;
+       uv *= 33.;
 
        vec2 p = floor(uv);
        vec2 f = fract(uv);
+       c += vec3(h(p.y),h(p.y+133.),1.);
 
+       c = pow(c,vec3(GAMMA));
+       fc += c;
 
-    c = pow(c,vec3(GAMMA));
-    fc += c;
    }
 }   
   
