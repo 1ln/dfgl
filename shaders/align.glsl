@@ -69,7 +69,7 @@ for(int i = 0; i < AA; i++ ) {
        vec2 uv = (2.* (FC+o) -
        RE.xy)/RE.y;
 
-       uv *= 5.;
+       uv *= 3.;
 
        vec2 p = floor(uv);
        vec2 f = fract(uv);
@@ -79,30 +79,21 @@ for(int i = 0; i < AA; i++ ) {
 
             vec2 b = vec2(float(k),float(i));
 
-            vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));
-            r = .5 + .5*sin(TAU+T*r);                
-            r *= .5 + .5 * cos(TAU*T*r);
-            r *= .5;        
+            vec2 r = vec2(h(p.x+b.x+h(p.y+b.y)));               
 
             vec2 diff = (b + r - f);
 
             d = length(diff);
 
-            md = max(md,d) - min(d,md);                              
+            md = min(md,d);                              
                         
         }
     }
  
-    c = vec3(md);    
+    c += md;    
     c += 1.-step(.2,md); 
     c.g = step(.98,f.x) + step(.98,f.y);
-    c.rg += fm(md,
-    vec2(.1,d),
-    vec2(d,.1),
-    vec2(2.,d),
-    vec2(d,-.5));
-
-
+ 
     c = pow(c,vec3(GAMMA));
     fc += c;
 
