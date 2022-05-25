@@ -59,9 +59,6 @@ void main() {
 vec3 c = vec3(0.);
 vec3 fc = vec3(0.);
 
-float md = 1.;
-float d = 0.;
-
 for(int i = 0; i < AA; i++ ) {
    for(int k = 0; k < AA; k++) {
    
